@@ -30,6 +30,10 @@ VALID_OPTION_TYPES: frozenset[str] = frozenset({"CALL", "PUT"})
 # Stock categories
 VALID_STOCK_CATEGORIES: frozenset[str] = frozenset({"US_STOCK", "US_ETF"})
 
+# Futures categories by region
+VALID_FUTURES_CATEGORIES_US: frozenset[str] = frozenset({"US_FUTURES"})
+VALID_FUTURES_CATEGORIES_HK: frozenset[str] = frozenset({"US_FUTURES", "HK_FUTURES"})
+
 # K-line timeframes for stocks
 VALID_TIMEFRAMES: frozenset[str] = frozenset({
     "1m", "5m", "15m", "30m", "1h", "4h", "1d", "1w",

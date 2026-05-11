@@ -199,6 +199,8 @@ See [.env.example](.env.example) for the full configuration template.
 | **Futures** | `futures-snapshot`, `futures-bars`, `futures-tick`, `futures-depth`, `futures-footprint` | US |
 | **Crypto** | `crypto-snapshot`, `crypto-bars` | US |
 | **Event** | `event-snapshot`, `event-depth`, `event-bars`, `event-tick` | US |
+| **Screener** | `stock-gainers-losers`, `stock-most-active` | US, HK, JP |
+| **Watchlist** | `watchlist-list`, `watchlist-create`, `watchlist-delete`, `watchlist-update`, `watchlist-instruments-list`, `watchlist-instruments-add`, `watchlist-instruments-remove`, `watchlist-instruments-update` | US, HK, JP |
 
 ### Trading
 
