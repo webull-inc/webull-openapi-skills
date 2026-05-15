@@ -1,7 +1,8 @@
 """Stock market data tools for Webull OpenAPI Skill.
 
 Provides: get_stock_tick, get_stock_snapshot, get_stock_quotes,
-          get_stock_footprint, get_stock_bars, get_stock_bars_single.
+          get_stock_footprint, get_stock_bars, get_stock_bars_single,
+          get_stock_noii_bars, get_stock_noii_snapshot.
 """
 
 from __future__ import annotations
@@ -11,6 +12,8 @@ from typing import TYPE_CHECKING, Any, Optional
 from webull_skill.errors import handle_sdk_exception
 from webull_skill.formatters import (
     extract_response_data,
+    format_noii_bars,
+    format_noii_snapshot,
     format_stock_bars,
     format_stock_footprint,
     format_stock_quotes,
@@ -142,10 +145,15 @@ def get_stock_bars(
     count: int = 200,
     real_time_required: bool = False,
     trading_sessions: Optional[str] = None,
+    start_time: Optional[int] = None,
+    end_time: Optional[int] = None,
 ) -> str:
     """Get stock OHLCV bars in batch. Supports multiple symbols.
 
     Returns: time, open, high, low, close, volume.
+
+    :param start_time: Start timestamp in milliseconds (Long). Optional.
+    :param end_time: End timestamp in milliseconds (Long). Optional.
     """
     try:
         sym_list = [s.strip() for s in symbols.split(",") if s.strip()]
@@ -153,6 +161,8 @@ def get_stock_bars(
             {"symbols": sym_list, "category": category, "timespan": timespan, "count": str(count)},
             real_time_required=real_time_required,
             trading_sessions=trading_sessions,
+            start_time=start_time,
+            end_time=end_time,
         )
         data = extract_response_data(sdk.data.market_data.get_batch_history_bar(**kwargs))
         return prepend_disclaimer(format_stock_bars(data))
@@ -169,18 +179,87 @@ def get_stock_bars_single(
     count: int = 200,
     real_time_required: bool = False,
     trading_sessions: Optional[str] = None,
+    start_time: Optional[int] = None,
+    end_time: Optional[int] = None,
 ) -> str:
     """Get OHLCV bars for a single stock.
 
     Returns: time, open, high, low, close, volume.
+
+    :param start_time: Start timestamp in milliseconds (Long). Optional.
+    :param end_time: End timestamp in milliseconds (Long). Optional.
     """
     try:
         kwargs = _build_kwargs(
             {"symbol": symbol, "category": category, "timespan": timespan, "count": str(count)},
             real_time_required=real_time_required,
             trading_sessions=trading_sessions,
+            start_time=start_time,
+            end_time=end_time,
         )
         data = extract_response_data(sdk.data.market_data.get_history_bar(**kwargs))
         return prepend_disclaimer(format_stock_bars(data))
     except Exception as e:
         return handle_sdk_exception(e, "get_stock_bars_single", config.region_id)
+
+
+def get_stock_noii_bars(
+    sdk: "SDKClient",
+    config: "SkillConfig",
+    symbol: str,
+    category: str = "US_STOCK",
+    imbalance_action_type: str = "PRE_OPEN",
+) -> str:
+    """Get NOII (Net Order Imbalance Indicator) K-line data for a stock.
+
+    NOII data is published by NASDAQ before opening and closing auctions,
+    providing a preview of market supply and demand.
+
+    :param symbol: Security symbol, e.g. AAPL. Single symbol only.
+    :param category: Security category. Currently only US_STOCK is supported.
+    :param imbalance_action_type: PRE_OPEN (opening imbalance) or PRE_CLOSE (closing imbalance).
+    Returns: imbalance_time, imbalance_ref_price, imbalance_near_price, imbalance_far_price.
+    """
+    try:
+        data = extract_response_data(
+            sdk.data.market_data.get_noii_bars(
+                symbol=symbol,
+                category=category,
+                imbalance_action_type=imbalance_action_type,
+            )
+        )
+        return prepend_disclaimer(format_noii_bars(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "get_stock_noii_bars", config.region_id)
+
+
+def get_stock_noii_snapshot(
+    sdk: "SDKClient",
+    config: "SkillConfig",
+    symbol: str,
+    category: str = "US_STOCK",
+    imbalance_action_type: str = "PRE_OPEN",
+) -> str:
+    """Get the latest NOII snapshot for a stock during auction phases.
+
+    NOII data is only published during specific auction periods (every 5s):
+    - Opening auction: 9:28–9:30 AM ET
+    - Closing auction: 3:50–4:00 PM ET
+    Outside these periods, historical data is returned.
+
+    :param symbol: Security symbol, e.g. AAPL. Single symbol only.
+    :param category: Security category. Currently only US_STOCK is supported.
+    :param imbalance_action_type: PRE_OPEN or PRE_CLOSE.
+    Returns: paired_shares, imbalance_shares, imbalance_side, ref/near/far prices.
+    """
+    try:
+        data = extract_response_data(
+            sdk.data.market_data.get_noii_snapshot(
+                symbol=symbol,
+                category=category,
+                imbalance_action_type=imbalance_action_type,
+            )
+        )
+        return prepend_disclaimer(format_noii_snapshot(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "get_stock_noii_snapshot", config.region_id)

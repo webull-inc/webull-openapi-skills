@@ -986,6 +986,32 @@ def format_futures_products(data: Any) -> str:
     return _format_flat_list(data, "Futures Products")
 
 
+def format_futures_product_classes(data: Any) -> str:
+    """Format futures product classification groups.
+
+    Each item contains product_class_id and product_class_name.
+    """
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        data = [data]
+    if not isinstance(data, list):
+        return _NO_DATA
+
+    lines: list[str] = ["=== Futures Product Classes ==="]
+    for i, item in enumerate(data, 1):
+        if not isinstance(item, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        lines.append(f"  Class ID:        {_get_any(item, ('product_class_id', 'class_id'))}")
+        lines.append(f"  Class Name:      {_get_any(item, ('product_class_name', 'name'))}")
+        # 部分响应可能包含 product_codes
+        codes = item.get("product_codes")
+        if isinstance(codes, list):
+            lines.append(f"  Product Codes:   {', '.join(str(c) for c in codes)}")
+    return "\n".join(lines)
+
+
 def format_event_series(data: Any) -> str:
     """Format event series list."""
     return _format_flat_list(data, "Event Series")
@@ -1026,4 +1052,307 @@ def format_replace_order_result(data: dict | None) -> str:
         f"Client Order ID: {_get(data, 'client_order_id')}",
         f"Status:          {_get(data, 'status')}",
     ]
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# NOII formatters
+# ---------------------------------------------------------------------------
+
+def format_noii_bars(data: Any) -> str:
+    """Format NOII (Net Order Imbalance Indicator) K-line data."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        items = data.get("result") or data.get("items") or [data]
+    elif isinstance(data, list):
+        items = data
+    else:
+        return _NO_DATA
+
+    # 提取首条记录的 instrument_id 和 symbol 作为标题信息
+    first = items[0] if items and isinstance(items[0], dict) else {}
+    symbol = _get(first, "symbol")
+    instrument_id = _get(first, "instrument_id")
+
+    title = "=== NOII Bars"
+    if symbol != "N/A":
+        title += f": {symbol}"
+    title += " ==="
+    lines: list[str] = [title]
+    lines.append(f"  Instrument ID:   {instrument_id}")
+    lines.append(f"  Symbol:          {symbol}")
+    lines.append("")
+    header = (
+        f"  {'Time':<22s}"
+        f"{'Ref Price':>12s}"
+        f"{'Near Price':>12s}"
+        f"{'Far Price':>12s}"
+        f"{'Action Type':>14s}"
+    )
+    lines.append(header)
+    for bar in items:
+        if not isinstance(bar, dict):
+            continue
+        lines.append(
+            f"  {_get(bar, 'imbalance_time'):<22s}"
+            f"{_get(bar, 'imbalance_ref_price'):>12s}"
+            f"{_get(bar, 'imbalance_near_price'):>12s}"
+            f"{_get(bar, 'imbalance_far_price'):>12s}"
+            f"{_get(bar, 'imbalance_action_type'):>14s}"
+        )
+    return "\n".join(lines)
+
+
+def format_noii_snapshot(data: Any) -> str:
+    """Format NOII snapshot data."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, list):
+        data = data[0] if data else None
+    if not isinstance(data, dict):
+        return _NO_DATA
+
+    lines: list[str] = [f"=== NOII Snapshot: {_get(data, 'symbol')} ==="]
+    lines.append(f"  Instrument ID:       {_get(data, 'instrument_id')}")
+    lines.append(f"  Symbol:              {_get(data, 'symbol')}")
+    lines.append(f"  Imbalance Time:      {_get(data, 'imbalance_time')}")
+    lines.append(f"  Action Type:         {_get(data, 'imbalance_action_type')}")
+    lines.append(f"  Paired Shares:       {_get(data, 'paired_shares')}")
+    lines.append(f"  Imbalance Shares:    {_get(data, 'imbalance_shares')}")
+    lines.append(f"  Imbalance Side:      {_get(data, 'imbalance_side')}")
+    lines.append(f"  Ref Price:           {_get(data, 'imbalance_ref_price')}")
+    lines.append(f"  Near Price:          {_get(data, 'imbalance_near_price')}")
+    lines.append(f"  Far Price:           {_get(data, 'imbalance_far_price')}")
+    lines.append(f"  Var Indicator:       {_get(data, 'imbalance_var_indicator')}")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Screener formatters
+# ---------------------------------------------------------------------------
+
+def _format_screener_item(item: dict) -> list[str]:
+    """Format a single screener result row."""
+    return [
+        f"  Instrument ID:   {_get(item, 'instrument_id')}",
+        f"  Symbol:          {_get(item, 'symbol')}",
+        f"  Name:            {_get(item, 'name')}",
+        f"  Exchange:        {_get(item, 'exchange_code')}",
+        f"  Currency:        {_get(item, 'currency_code')}",
+        f"  Price:           {_get(item, 'price')}",
+        f"  Pre Close:       {_get(item, 'pre_close')}",
+        f"  Open:            {_get(item, 'open')}",
+        f"  High:            {_get(item, 'high')}",
+        f"  Low:             {_get(item, 'low')}",
+        f"  Close:           {_get(item, 'close')}",
+        f"  Change:          {_get(item, 'change')}",
+        f"  Change Ratio:    {_get(item, 'change_ratio')}",
+        f"  Volume:          {_get(item, 'volume')}",
+        f"  Turnover:        {_get(item, 'turnover')}",
+        f"  Turnover Rate:   {_get(item, 'turnover_rate')}",
+        f"  Market Value:    {_get(item, 'market_value')}",
+        f"  Amplitude:       {_get(item, 'amplitude')}",
+    ]
+
+
+def format_gainers_losers(data: Any) -> str:
+    """Format gainers/losers screener response."""
+    if not data:
+        return _NO_DATA
+    has_more: bool | None = None
+    if isinstance(data, dict):
+        has_more = data.get("has_more")
+        items = data.get("data") or data.get("items") or data.get("result") or []
+    elif isinstance(data, list):
+        items = data
+    else:
+        return _NO_DATA
+    if not items:
+        return _NO_DATA
+
+    lines: list[str] = ["=== Gainers / Losers ==="]
+    for i, item in enumerate(items, 1):
+        if not isinstance(item, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        lines.extend(_format_screener_item(item))
+    if has_more is not None:
+        lines.append("")
+        lines.append(f"  [Has More: {'Yes' if has_more else 'No'}]")
+    return "\n".join(lines)
+
+
+def format_most_active(data: Any) -> str:
+    """Format most active screener response."""
+    if not data:
+        return _NO_DATA
+    has_more: bool | None = None
+    if isinstance(data, dict):
+        has_more = data.get("has_more")
+        items = data.get("data") or data.get("items") or data.get("result") or []
+    elif isinstance(data, list):
+        items = data
+    else:
+        return _NO_DATA
+    if not items:
+        return _NO_DATA
+
+    lines: list[str] = ["=== Most Active ==="]
+    for i, item in enumerate(items, 1):
+        if not isinstance(item, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        lines.extend(_format_screener_item(item))
+        if item.get("relative_volume_10d"):
+            lines.append(f"  Rel Vol 10D:     {_get(item, 'relative_volume_10d')}")
+    if has_more is not None:
+        lines.append("")
+        lines.append(f"  [Has More: {'Yes' if has_more else 'No'}]")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Watchlist formatters
+# ---------------------------------------------------------------------------
+
+def format_watchlist(data: Any) -> str:
+    """Format watchlist list response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, list):
+        items = data
+    elif isinstance(data, dict):
+        items = data.get("items") or data.get("result") or [data]
+    else:
+        return _NO_DATA
+
+    lines: list[str] = ["=== Watchlists ==="]
+    for i, wl in enumerate(items, 1):
+        if not isinstance(wl, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        lines.append(f"  Watchlist ID:    {_get(wl, 'watchlist_id')}")
+        lines.append(f"  Name:            {_get(wl, 'name')}")
+        lines.append(f"  Sort:            {_get(wl, 'sort')}")
+        lines.append(f"  Created:         {_get(wl, 'create_time')}")
+        lines.append(f"  Updated:         {_get(wl, 'update_time')}")
+    return "\n".join(lines)
+
+
+def format_watchlist_instruments(data: Any) -> str:
+    """Format watchlist instruments response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        wl_id = _get(data, "watchlist_id")
+        items = data.get("items") or data.get("instruments") or []
+    elif isinstance(data, list):
+        wl_id = "N/A"
+        items = data
+    else:
+        return _NO_DATA
+
+    lines: list[str] = [f"=== Watchlist Instruments (ID: {wl_id}) ==="]
+    for i, inst in enumerate(items, 1):
+        if not isinstance(inst, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        lines.append(f"  Instrument ID:   {_get(inst, 'instrument_id')}")
+        lines.append(f"  Symbol:          {_get(inst, 'symbol')}")
+        lines.append(f"  Name:            {_get(inst, 'name')}")
+        lines.append(f"  Exchange:        {_get(inst, 'exchange_code')}")
+        lines.append(f"  Sort:            {_get(inst, 'sort')}")
+        lines.append(f"  Added Time:      {_get(inst, 'added_time')}")
+    return "\n".join(lines)
+
+
+def format_watchlist_result(data: Any, operation: str = "Watchlist Operation") -> str:
+    """Format watchlist create/update/delete/add/remove result."""
+    lines: list[str] = [f"=== {operation} ==="]
+    if not data:
+        lines.append("  Success")
+        return "\n".join(lines)
+    if isinstance(data, dict):
+        if data.get("watchlist_id"):
+            lines.append(f"  Watchlist ID:    {_get(data, 'watchlist_id')}")
+        if data.get("success") is not None:
+            lines.append(f"  Success:         {_get(data, 'success')}")
+        if not data:
+            lines.append("  Success")
+    else:
+        lines.append("  Success")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Company profile / Analyst formatters
+# ---------------------------------------------------------------------------
+
+def format_company_profile(data: Any) -> str:
+    """Format company profile response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, list):
+        data = data[0] if data else None
+    if not isinstance(data, dict):
+        return _NO_DATA
+
+    lines: list[str] = [f"=== Company Profile: {_get(data, 'symbol')} ==="]
+    lines.append(f"  Symbol:          {_get(data, 'symbol')}")
+    lines.append(f"  Company Name:    {_get(data, 'company_name')}")
+    lines.append(f"  Established:     {_get(data, 'establish_date')}")
+    lines.append(f"  CEO:             {_get(data, 'ceo')}")
+    lines.append(f"  Employees:       {_get(data, 'employees')}")
+    lines.append(f"  Exchange:        {_get(data, 'exhibition_code')}")
+    lines.append(f"  Address:         {_get(data, 'address')}")
+    industries = data.get("industries")
+    if industries and isinstance(industries, list):
+        lines.append(f"  Industries:      {', '.join(str(i) for i in industries)}")
+    desc = data.get("profile") or ""
+    if desc:
+        lines.append(f"\n  Description:")
+        for chunk in [desc[i:i+100] for i in range(0, len(desc), 100)]:
+            lines.append(f"    {chunk}")
+    return "\n".join(lines)
+
+
+def format_analyst_rating(data: Any) -> str:
+    """Format analyst rating response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, list):
+        data = data[0] if data else None
+    if not isinstance(data, dict):
+        return _NO_DATA
+
+    lines: list[str] = [f"=== Analyst Rating: {_get(data, 'symbol')} ==="]
+    lines.append(f"  Symbol:          {_get(data, 'symbol')}")
+    lines.append(f"  Total Analysts:  {_get(data, 'number')}")
+    lines.append(f"  Strong Buy:      {_get(data, 'strong_buy')}")
+    lines.append(f"  Buy:             {_get(data, 'buy')}")
+    lines.append(f"  Hold:            {_get(data, 'hold')}")
+    lines.append(f"  Underperform:    {_get(data, 'under_perform')}")
+    lines.append(f"  Sell:            {_get(data, 'sell')}")
+    lines.append(f"  Effective Date:  {_get(data, 'effective_start_date')}")
+    return "\n".join(lines)
+
+
+def format_analyst_target_price(data: Any) -> str:
+    """Format analyst target price response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, list):
+        data = data[0] if data else None
+    if not isinstance(data, dict):
+        return _NO_DATA
+
+    lines: list[str] = [f"=== Analyst Target Price: {_get(data, 'symbol')} ==="]
+    lines.append(f"  Symbol:          {_get(data, 'symbol')}")
+    lines.append(f"  Currency:        {_get(data, 'currency')}")
+    lines.append(f"  Mean Target:     {_get(data, 'mean')}")
+    lines.append(f"  Median Target:   {_get(data, 'median')}")
+    lines.append(f"  High Target:     {_get(data, 'high')}")
+    lines.append(f"  Low Target:      {_get(data, 'low')}")
+    lines.append(f"  Effective Date:  {_get(data, 'effective_start_date')}")
     return "\n".join(lines)

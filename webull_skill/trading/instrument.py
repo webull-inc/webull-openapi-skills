@@ -1,8 +1,10 @@
 """Instrument query tools for Webull OpenAPI Skill.
 
 Provides: get_instruments, get_futures_instruments, get_futures_instruments_by_code,
-          get_futures_products, get_crypto_instruments, get_event_series,
-          get_event_instruments, get_event_categories, get_event_events.
+          get_futures_products, get_futures_product_class,
+          get_crypto_instruments, get_event_series,
+          get_event_instruments, get_event_categories, get_event_events,
+          get_company_profile, get_analyst_rating, get_analyst_target_price.
 """
 
 from __future__ import annotations
@@ -12,9 +14,13 @@ from typing import TYPE_CHECKING, Any, Optional
 from webull_skill.errors import handle_sdk_exception
 from webull_skill.formatters import (
     extract_response_data,
+    format_analyst_rating,
+    format_analyst_target_price,
+    format_company_profile,
     format_event_categories,
     format_event_events,
     format_event_series,
+    format_futures_product_classes,
     format_futures_products,
     format_instruments,
     prepend_disclaimer,
@@ -111,6 +117,21 @@ def get_futures_products(
         return prepend_disclaimer(format_futures_products(data))
     except Exception as e:
         return handle_sdk_exception(e, "get_futures_products")
+
+
+def get_futures_product_class(
+    sdk: "SDKClient",
+    category: str = "US_FUTURES",
+) -> str:
+    """Get all futures product classification groups.
+
+    Returns: class_id, name, product codes in each class.
+    """
+    try:
+        data = extract_response_data(sdk.data.instrument.get_futures_product_class(category=category))
+        return prepend_disclaimer(format_futures_product_classes(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "get_futures_product_class")
 
 
 def get_crypto_instruments(
@@ -216,3 +237,64 @@ def get_event_events(
         return prepend_disclaimer(format_event_events(data))
     except Exception as e:
         return handle_sdk_exception(e, "get_event_events")
+
+
+def get_company_profile(
+    sdk: "SDKClient",
+    symbol: str,
+    category: str = "US_STOCK",
+) -> str:
+    """Get company profile for a stock instrument.
+
+    :param symbol: Security symbol, e.g. AAPL.
+    :param category: Security type. Currently only US_STOCK is supported.
+    Returns: company name, establish date, CEO, employees, address,
+             profile description, industries, sector, etc.
+    """
+    try:
+        data = extract_response_data(
+            sdk.data.instrument.get_company_profile(symbol=symbol, category=category)
+        )
+        return prepend_disclaimer(format_company_profile(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "get_company_profile")
+
+
+def get_analyst_rating(
+    sdk: "SDKClient",
+    symbol: str,
+    category: str = "US_STOCK",
+) -> str:
+    """Get analyst rating for a stock instrument.
+
+    :param symbol: Security symbol, e.g. AAPL.
+    :param category: Security type. Currently only US_STOCK is supported.
+    Returns: total analysts, buy/hold/sell counts, strong buy, underperform counts.
+    """
+    try:
+        data = extract_response_data(
+            sdk.data.instrument.get_analyst_rating(symbol=symbol, category=category)
+        )
+        return prepend_disclaimer(format_analyst_rating(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "get_analyst_rating")
+
+
+def get_analyst_target_price(
+    sdk: "SDKClient",
+    symbol: str,
+    category: str = "US_STOCK",
+) -> str:
+    """Get analyst target price for a stock instrument.
+
+    :param symbol: Security symbol, e.g. AAPL.
+    :param category: Security type. Currently only US_STOCK is supported.
+    Returns: mean, low, high, median target prices and currency.
+    """
+    try:
+        data = extract_response_data(
+            sdk.data.instrument.get_analyst_target_price(symbol=symbol, category=category)
+        )
+        return prepend_disclaimer(format_analyst_target_price(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "get_analyst_target_price")

@@ -30,10 +30,14 @@ from webull_skill.runtime import set_sdk_logging
 TRADING_ACTIONS = [
     # Instrument queries
     "instrument-stock", "instrument-crypto",
-    "instrument-futures-products", "instrument-futures-list",
+    "instrument-futures-products", "instrument-futures-product-class",
+    "instrument-futures-list",
     "instrument-futures-by-code",
     "instrument-event-series", "instrument-event-list",
     "instrument-event-categories", "instrument-event-events",
+    # Instrument fundamentals
+    "instrument-company-profile", "instrument-analyst-rating",
+    "instrument-analyst-target-price",
     # Account / asset
     "account-list", "balance", "position", "position-detail",
     # Order operations
@@ -50,6 +54,7 @@ MARKET_DATA_ACTIONS = [
     # Stock
     "stock-snapshot", "stock-bars", "stock-batch-bars",
     "stock-tick", "stock-quotes", "stock-footprint",
+    "stock-noii-bars", "stock-noii-snapshot",
     # Futures
     "futures-snapshot", "futures-bars", "futures-tick",
     "futures-depth", "futures-footprint",
@@ -57,12 +62,19 @@ MARKET_DATA_ACTIONS = [
     "crypto-snapshot", "crypto-bars",
     # Event
     "event-snapshot", "event-depth", "event-bars", "event-tick",
+    # Screener
+    "stock-gainers-losers", "stock-most-active",
+    # Watchlist
+    "watchlist-list", "watchlist-create", "watchlist-delete", "watchlist-update",
+    "watchlist-instruments-list", "watchlist-instruments-add",
+    "watchlist-instruments-remove", "watchlist-instruments-update",
 ]
 
 
 _JP_UNSUPPORTED_TRADING_ACTIONS = frozenset({
     "instrument-crypto",
     "instrument-futures-products",
+    "instrument-futures-product-class",
     "instrument-futures-list",
     "instrument-futures-by-code",
     "instrument-event-series",
@@ -91,6 +103,27 @@ def _region_trading_error(config: SkillConfig, action: str, category: str) -> st
     if action == "position-detail" and region_id != "jp":
         return "Action 'position-detail' is only supported in region 'jp'"
     if region_id != "jp":
+        # 期货 instrument 查询的 category 验证（仅 US 和 HK 支持）
+        futures_actions = {
+            "instrument-futures-products",
+            "instrument-futures-product-class",
+            "instrument-futures-list",
+            "instrument-futures-by-code",
+        }
+        if action in futures_actions:
+            from webull_skill.constants import (
+                VALID_FUTURES_CATEGORIES_HK,
+                VALID_FUTURES_CATEGORIES_US,
+            )
+            if region_id == "us":
+                valid_cats = VALID_FUTURES_CATEGORIES_US
+            elif region_id == "hk":
+                valid_cats = VALID_FUTURES_CATEGORIES_HK
+            else:
+                return f"Action '{action}' is not supported in region '{region_id}'"
+            if category and category not in valid_cats:
+                valid = ", ".join(sorted(valid_cats))
+                return f"Invalid futures category '{category}' for region '{region_id}'. Valid values: {valid}"
         return ""
     if action in _JP_UNSUPPORTED_TRADING_ACTIONS:
         return f"Action '{action}' is not supported in region 'jp'"
@@ -102,9 +135,13 @@ def _region_trading_error(config: SkillConfig, action: str, category: str) -> st
 
 def _region_market_data_error(config: SkillConfig, action: str) -> str:
     """Return a validation error for unsupported market-data actions."""
-    if config.region_id.lower() != "jp":
+    region_id = config.region_id.lower()
+
+    # Screener 和 Watchlist 全市场支持，无需区域限制
+
+    if region_id != "jp":
         return ""
-    if not action.startswith("stock-"):
+    if not action.startswith("stock-") and not action.startswith("watchlist-"):
         return f"Market data action '{action}' is not supported in region 'jp'"
     return ""
 
@@ -155,6 +192,26 @@ def build_parser() -> argparse.ArgumentParser:
     mp.add_argument("--real-time-required", action="store_true")
     mp.add_argument("--extend-hour-required", action="store_true")
     mp.add_argument("--overnight-required", action="store_true")
+    # K线时间范围（long 毫秒时间戳）
+    mp.add_argument("--start-time", type=int, default=None, help="Start timestamp in milliseconds (Long)")
+    mp.add_argument("--end-time", type=int, default=None, help="End timestamp in milliseconds (Long)")
+    # NOII
+    mp.add_argument("--imbalance-action-type", default="PRE_OPEN",
+                    choices=["PRE_OPEN", "PRE_CLOSE"],
+                    help="NOII imbalance action type: PRE_OPEN or PRE_CLOSE")
+    # Screener
+    mp.add_argument("--rank-type", default="", help="Rank type for screener (e.g. DAY_1, VOLUME)")
+    mp.add_argument("--sort-by", default="", help="Secondary sort field for screener")
+    mp.add_argument("--direction", default="", help="Sort direction: ASC or DESC")
+    mp.add_argument("--page-index", type=int, default=None, help="Page number starting from 1")
+    mp.add_argument("--page-size", type=int, default=None, help="Records per page")
+    # Watchlist
+    mp.add_argument("--watchlist-id", default="", help="Watchlist unique identifier")
+    mp.add_argument("--watchlist-name", default="", help="Watchlist name")
+    mp.add_argument("--watchlist-sort", type=int, default=None, help="Watchlist sort order")
+    mp.add_argument("--instruments-json", default="",
+                    help="JSON array of instruments for watchlist operations, "
+                         "e.g. '[{\"symbol\":\"AAPL\",\"category\":\"US_STOCK\"}]'")
 
     # auth subcommand
     subparsers.add_parser("auth", help="Authenticate and obtain access token (interactive 2FA)")
@@ -213,12 +270,16 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
         get_instruments,
         get_crypto_instruments,
         get_futures_products,
+        get_futures_product_class,
         get_futures_instruments,
         get_futures_instruments_by_code,
         get_event_series,
         get_event_instruments,
         get_event_categories,
         get_event_events,
+        get_company_profile,
+        get_analyst_rating,
+        get_analyst_target_price,
     )
     from webull_skill.trading.order import (
         cancel_order,
@@ -253,6 +314,8 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
         return _wrap_tool_result(get_crypto_instruments(sdk, symbols_str, category=cat), action)
     if action == "instrument-futures-products":
         return _wrap_tool_result(get_futures_products(sdk, category=cat), action)
+    if action == "instrument-futures-product-class":
+        return _wrap_tool_result(get_futures_product_class(sdk, category=cat), action)
     if action == "instrument-futures-list":
         return _wrap_tool_result(get_futures_instruments(sdk, symbols_str, category=cat), action)
     if action == "instrument-futures-by-code":
@@ -265,6 +328,23 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
         return _wrap_tool_result(get_event_categories(sdk), action)
     if action == "instrument-event-events":
         return _wrap_tool_result(get_event_events(sdk, series_symbol=args.series_symbol), action)
+
+    # -- Instrument fundamentals --------------------------------------------
+    if action == "instrument-company-profile":
+        sym = symbols_str or args.symbol
+        if not sym:
+            return failure(detail="--symbol is required for instrument-company-profile")
+        return _wrap_tool_result(get_company_profile(sdk, symbol=sym, category=cat or "US_STOCK"), action)
+    if action == "instrument-analyst-rating":
+        sym = symbols_str or args.symbol
+        if not sym:
+            return failure(detail="--symbol is required for instrument-analyst-rating")
+        return _wrap_tool_result(get_analyst_rating(sdk, symbol=sym, category=cat or "US_STOCK"), action)
+    if action == "instrument-analyst-target-price":
+        sym = symbols_str or args.symbol
+        if not sym:
+            return failure(detail="--symbol is required for instrument-analyst-target-price")
+        return _wrap_tool_result(get_analyst_target_price(sdk, symbol=sym, category=cat or "US_STOCK"), action)
 
     # -- Account / asset ----------------------------------------------------
     if action == "account-list":
@@ -526,6 +606,7 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         get_futures_depth,
         get_futures_footprint,
     )
+    from webull_skill.market_data.screener import get_gainers_losers, get_most_active
     from webull_skill.market_data.stock import (
         get_stock_snapshot,
         get_stock_bars,
@@ -533,6 +614,18 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         get_stock_tick,
         get_stock_quotes,
         get_stock_footprint,
+        get_stock_noii_bars,
+        get_stock_noii_snapshot,
+    )
+    from webull_skill.market_data.watchlist import (
+        get_watchlist,
+        create_watchlist,
+        delete_watchlist,
+        update_watchlist,
+        get_watchlist_instruments,
+        add_watchlist_instruments,
+        remove_watchlist_instruments,
+        update_watchlist_instruments,
     )
     from webull_skill.sdk_client import SDKClient
 
@@ -555,14 +648,18 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         return _wrap_tool_result(
             get_stock_bars_single(sdk, config, symbol, category=cat,
                                  timespan=args.timespan, count=args.count,
-                                 trading_sessions=args.trading_sessions or None),
+                                 trading_sessions=args.trading_sessions or None,
+                                 start_time=args.start_time,
+                                 end_time=args.end_time),
             action,
         )
     if action == "stock-batch-bars":
         return _wrap_tool_result(
             get_stock_bars(sdk, config, symbols_str, category=cat,
                            timespan=args.timespan, count=args.count,
-                           trading_sessions=args.trading_sessions or None),
+                           trading_sessions=args.trading_sessions or None,
+                           start_time=args.start_time,
+                           end_time=args.end_time),
             action,
         )
     if action == "stock-tick":
@@ -648,6 +745,126 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         return _wrap_tool_result(
             get_event_tick(sdk, config, symbol, category=cat, count=args.count), action,
         )
+
+    # NOII
+    if action == "stock-noii-bars":
+        if not symbol:
+            return failure(detail="--symbol is required for stock-noii-bars")
+        return _wrap_tool_result(
+            get_stock_noii_bars(sdk, config, symbol=symbol, category=cat or "US_STOCK",
+                                imbalance_action_type=args.imbalance_action_type),
+            action,
+        )
+    if action == "stock-noii-snapshot":
+        if not symbol:
+            return failure(detail="--symbol is required for stock-noii-snapshot")
+        return _wrap_tool_result(
+            get_stock_noii_snapshot(sdk, config, symbol=symbol, category=cat or "US_STOCK",
+                                    imbalance_action_type=args.imbalance_action_type),
+            action,
+        )
+
+    # Screener
+    if action == "stock-gainers-losers":
+        if not args.rank_type:
+            return failure(detail="--rank-type is required for stock-gainers-losers")
+        return _wrap_tool_result(
+            get_gainers_losers(
+                sdk, config,
+                rank_type=args.rank_type,
+                category=cat or "US_STOCK",
+                sort_by=args.sort_by or "CHANGE_RATIO",
+                direction=args.direction or None,
+                page_index=args.page_index,
+                page_size=args.page_size,
+            ),
+            action,
+        )
+    if action == "stock-most-active":
+        return _wrap_tool_result(
+            get_most_active(
+                sdk, config,
+                category=cat or "US_STOCK",
+                rank_type=args.rank_type or None,
+                sort_by=args.sort_by or None,
+                direction=args.direction or None,
+                page_index=args.page_index,
+                page_size=args.page_size,
+            ),
+            action,
+        )
+
+    # Watchlist
+    if action == "watchlist-list":
+        return _wrap_tool_result(get_watchlist(sdk, config), action)
+
+    if action == "watchlist-create":
+        if not args.watchlist_name:
+            return failure(detail="--watchlist-name is required for watchlist-create")
+        return _wrap_tool_result(
+            create_watchlist(sdk, config, name=args.watchlist_name, sort=args.watchlist_sort),
+            action,
+        )
+    if action == "watchlist-delete":
+        if not args.watchlist_id:
+            return failure(detail="--watchlist-id is required for watchlist-delete")
+        return _wrap_tool_result(delete_watchlist(sdk, config, watchlist_id=args.watchlist_id), action)
+
+    if action == "watchlist-update":
+        if not args.watchlist_id:
+            return failure(detail="--watchlist-id is required for watchlist-update")
+        return _wrap_tool_result(
+            update_watchlist(
+                sdk, config,
+                watchlist_id=args.watchlist_id,
+                name=args.watchlist_name or None,
+                sort=args.watchlist_sort,
+            ),
+            action,
+        )
+    if action == "watchlist-instruments-list":
+        if not args.watchlist_id:
+            return failure(detail="--watchlist-id is required for watchlist-instruments-list")
+        return _wrap_tool_result(
+            get_watchlist_instruments(sdk, config, watchlist_id=args.watchlist_id), action
+        )
+
+    # Watchlist instrument mutation actions — parse --instruments-json
+    _watchlist_instrument_actions = {
+        "watchlist-instruments-add",
+        "watchlist-instruments-remove",
+        "watchlist-instruments-update",
+    }
+    if action in _watchlist_instrument_actions:
+        if not args.watchlist_id:
+            return failure(detail=f"--watchlist-id is required for {action}")
+        if not args.instruments_json:
+            return failure(detail=f"--instruments-json is required for {action}")
+        try:
+            instruments = json.loads(args.instruments_json)
+            if not isinstance(instruments, list):
+                return failure(detail="--instruments-json must be a JSON array")
+        except json.JSONDecodeError as exc:
+            return failure(detail=f"Invalid --instruments-json: {exc}")
+
+        if action == "watchlist-instruments-add":
+            return _wrap_tool_result(
+                add_watchlist_instruments(sdk, config, watchlist_id=args.watchlist_id,
+                                          instruments=instruments),
+                action,
+            )
+        if action == "watchlist-instruments-remove":
+            return _wrap_tool_result(
+                remove_watchlist_instruments(sdk, config, watchlist_id=args.watchlist_id,
+                                             instruments=instruments),
+                action,
+            )
+        if action == "watchlist-instruments-update":
+            return _wrap_tool_result(
+                update_watchlist_instruments(sdk, config, watchlist_id=args.watchlist_id,
+                                             instruments=instruments),
+                action,
+            )
 
     return failure(detail=f"Unknown market-data action: {action}")
 
