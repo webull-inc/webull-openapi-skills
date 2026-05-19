@@ -46,6 +46,11 @@ UAT_ENDPOINTS: dict[str, dict[str, str]] = {
         "quotes-api": "data-api.uat.webullbroker.com",
         "events-api": "jp-openapi-events.uat.webullbroker.com",
     },
+    "sg": {
+        "api": "sg-api.uat.webullbroker.com",
+        "quotes-api": "data-api.uat.webullbroker.com",
+        "events-api": "sg-events-api.uat.webullbroker.com",
+    },
 }
 
 
@@ -58,6 +63,8 @@ DEFAULT_HOSTS: dict[tuple[str, str], str] = {
     ("prod", "hk"): "api.webull.hk",
     ("uat", "hk"): "api.sandbox.webull.hk",
     ("uat", "jp"): "jp-openapi-alb.uat.webullbroker.com",
+    ("prod", "sg"): "api.webull.com.sg",
+    ("uat", "sg"): "sg-api.uat.webullbroker.com",
 }
 
 

@@ -1005,7 +1005,7 @@ def format_futures_product_classes(data: Any) -> str:
         lines.append(f"\n[{i}]")
         lines.append(f"  Class ID:        {_get_any(item, ('product_class_id', 'class_id'))}")
         lines.append(f"  Class Name:      {_get_any(item, ('product_class_name', 'name'))}")
-        # 部分响应可能包含 product_codes
+        # Some responses may include product_codes
         codes = item.get("product_codes")
         if isinstance(codes, list):
             lines.append(f"  Product Codes:   {', '.join(str(c) for c in codes)}")
@@ -1070,7 +1070,7 @@ def format_noii_bars(data: Any) -> str:
     else:
         return _NO_DATA
 
-    # 提取首条记录的 instrument_id 和 symbol 作为标题信息
+    # Extract instrument_id and symbol from the first record for the title
     first = items[0] if items and isinstance(items[0], dict) else {}
     symbol = _get(first, "symbol")
     instrument_id = _get(first, "instrument_id")

@@ -47,12 +47,13 @@ def _build_futures_order(
     coid: str,
     limit_price: float | None,
     stop_price: float | None,
+    market: str = "US",
 ) -> dict:
     """Build the futures order dict for the SDK."""
     order: dict = {
         "combo_type": "NORMAL",
         "instrument_type": "FUTURES",
-        "market": "US",
+        "market": market,
         "symbol": symbol,
         "side": side,
         "order_type": order_type,
@@ -72,6 +73,17 @@ def _build_futures_order(
 # Futures order functions
 # ---------------------------------------------------------------------------
 
+def _infer_futures_market(category: str | None) -> str:
+    """Infer futures market from category.
+
+    - HK_FUTURES → "HK"
+    - US_FUTURES or unspecified → "US"
+    """
+    if category and category.upper() == "HK_FUTURES":
+        return "HK"
+    return "US"
+
+
 def place_futures_order(
     sdk: "SDKClient",
     config: "SkillConfig",
@@ -84,11 +96,16 @@ def place_futures_order(
     client_order_id: Optional[str] = None,
     limit_price: Optional[float] = None,
     stop_price: Optional[float] = None,
+    market: Optional[str] = None,
+    category: Optional[str] = None,
 ) -> str:
     """Place a futures order. QTY only.
 
     Account: Futures account. Call get_account_list first.
     order_type: MARKET, LIMIT, STOP_LOSS, STOP_LOSS_LIMIT, TRAILING_STOP_LOSS.
+    market: "US" or "HK". If not specified, inferred from category
+            (HK_FUTURES → "HK", US_FUTURES or default → "US").
+    category: "US_FUTURES" or "HK_FUTURES". Used to infer market if not provided.
     Returns: {client_order_id, order_id}
     """
     try:
@@ -101,9 +118,12 @@ def place_futures_order(
     except ValidationError as e:
         return f"Validation error: {e.message}"
 
+    # Resolve market: prefer explicit value, otherwise infer from category
+    resolved_market = market.upper() if market else _infer_futures_market(category)
+
     params: dict = {
         "side": side, "order_type": order_type, "time_in_force": time_in_force,
-        "quantity": quantity, "symbol": symbol,
+        "quantity": quantity, "symbol": symbol, "market": resolved_market,
     }
     if limit_price is not None:
         params["limit_price"] = limit_price
@@ -120,6 +140,7 @@ def place_futures_order(
         symbol=symbol, side=side, order_type=order_type,
         time_in_force=time_in_force, quantity=quantity, coid=coid,
         limit_price=limit_price, stop_price=stop_price,
+        market=resolved_market,
     )
 
     try:
