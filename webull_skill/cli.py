@@ -103,7 +103,7 @@ def _region_trading_error(config: SkillConfig, action: str, category: str) -> st
     if action == "position-detail" and region_id != "jp":
         return "Action 'position-detail' is only supported in region 'jp'"
     if region_id != "jp":
-        # 期货 instrument 查询的 category 验证（仅 US 和 HK 支持）
+        # Futures instrument query category validation (US and HK only)
         futures_actions = {
             "instrument-futures-products",
             "instrument-futures-product-class",
@@ -137,7 +137,7 @@ def _region_market_data_error(config: SkillConfig, action: str) -> str:
     """Return a validation error for unsupported market-data actions."""
     region_id = config.region_id.lower()
 
-    # Screener 和 Watchlist 全市场支持，无需区域限制
+    # Screener and Watchlist are supported across all regions, no restriction needed
 
     if region_id != "jp":
         return ""
@@ -192,7 +192,7 @@ def build_parser() -> argparse.ArgumentParser:
     mp.add_argument("--real-time-required", action="store_true")
     mp.add_argument("--extend-hour-required", action="store_true")
     mp.add_argument("--overnight-required", action="store_true")
-    # K线时间范围（long 毫秒时间戳）
+    # K-line time range (long millisecond timestamps)
     mp.add_argument("--start-time", type=int, default=None, help="Start timestamp in milliseconds (Long)")
     mp.add_argument("--end-time", type=int, default=None, help="End timestamp in milliseconds (Long)")
     # NOII
