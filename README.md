@@ -5,7 +5,7 @@
 
 AI agent skill for [Webull OpenAPI](https://developer.webull.com) — enables AI assistants to trade stocks, options, futures, crypto, and event contracts, query market data, and manage accounts via CLI.
 
-Built on the official [webull-openapi-python-sdk](https://github.com/webull-inc/webull-openapi-python-sdk). Supports US, HK, and JP regions with configurable risk controls.
+Built on the official [webull-openapi-python-sdk](https://github.com/webull-inc/webull-openapi-python-sdk). Supports US, HK, JP, and SG regions with configurable risk controls.
 
 ---
 
@@ -19,7 +19,7 @@ See [DISCLAIMER.md](DISCLAIMER.md) for the full disclaimer.
 
 ## Features
 
-- **Multi-Region Support** — US, HK, and JP regions with region-specific order types, trading sessions, and validation
+- **Multi-Region Support** — US, HK, JP, and SG regions with region-specific order types, trading sessions, and validation
 - **Market Data** — Real-time snapshots, tick data, quotes (depth), footprint, and OHLCV bars for stocks, futures, crypto, and event contracts
 - **Trading** — Place, modify, cancel orders for stocks, options, futures, crypto, and event contracts
 - **Combo Orders** — OTO, OCO, OTOCO combo orders (US only)
@@ -67,11 +67,13 @@ Here are some prompts you can use with your AI assistant:
    - US: [developer.webull.com](https://developer.webull.com/apis/home)
    - HK: [developer.webull.hk](https://developer.webull.hk/apis/home)
    - JP: [developer.webull.co.jp](https://developer.webull.co.jp/apis/home)
+   - SG: [developer.webull.com.sg](https://developer.webull.com.sg/apis/home)
 2. **API Credentials** — Obtain your `App Key` and `App Secret`
 3. **Market Data Subscription** — Subscribe to quotes for market data access:
    - US: [webullapp.com/quote](https://www.webullapp.com/quote) | [Guide](https://developer.webull.com/apis/docs/market-data-api/subscribe-quotes)
    - HK: [webullapp.hk/quote](https://www.webullapp.hk/quote) | [Guide](https://developer.webull.hk/apis/docs/market-data-api/subscribe-quotes)
    - JP: [webull.co.jp/pricing](https://www.webull.co.jp/pricing) | [Guide](https://developer.webull.co.jp/apis/docs/market-data-api/subscribe-quotes)
+   - SG：[webullapp.com.sg/quote](https://www.webullapp.com.sg/quote) | [Guide](https://developer.webull.com.sg/apis/docs/market-data-api/subscribe-quotes)
 4. **Python 3.10+**
 
 ---
@@ -151,7 +153,7 @@ webull-skill trading --action place --account-id <id> \
 | `WEBULL_APP_KEY` | App Key (required) | — |
 | `WEBULL_APP_SECRET` | App Secret (required) | — |
 | `WEBULL_ENVIRONMENT` | `uat` (sandbox) or `prod` | `uat` |
-| `WEBULL_REGION_ID` | `us`, `hk`, or `jp` | `us` |
+| `WEBULL_REGION_ID` | `us`, `hk`, `jp`, or `sg` | `us` |
 | `WEBULL_MAX_ORDER_NOTIONAL_USD` | Max order value for US market (USD) | `10000` |
 | `WEBULL_MAX_ORDER_NOTIONAL_HKD` | Max order value for HK market (HKD) | `80000` |
 | `WEBULL_MAX_ORDER_NOTIONAL_CNH` | Max order value for CN market (CNH) | `70000` |
@@ -163,7 +165,7 @@ webull-skill trading --action place --account-id <id> \
 | `WEBULL_AUDIT_LOG_FILE` | Audit log file path | stderr only |
 | `WEBULL_LOG_LEVEL` | SDK log level | `WARNING` |
 
-> **Note:** `WEBULL_REGION_ID=us` represents **Webull US** ([developer.webull.com](https://developer.webull.com/apis/home)), `WEBULL_REGION_ID=hk` represents **Webull Hong Kong** ([developer.webull.hk](https://developer.webull.hk/apis/home)), and `WEBULL_REGION_ID=jp` represents **Webull Japan** ([developer.webull.co.jp](https://developer.webull.co.jp/api-doc/)).
+> **Note:** `WEBULL_REGION_ID=us` represents **Webull US** ([developer.webull.com](https://developer.webull.com/apis/home)), `WEBULL_REGION_ID=hk` represents **Webull Hong Kong** ([developer.webull.hk](https://developer.webull.hk/apis/home)), `WEBULL_REGION_ID=jp` represents **Webull Japan** ([developer.webull.co.jp](https://developer.webull.co.jp/api-doc/)), and `WEBULL_REGION_ID=sg` represents **Webull Singapore** ([developer.webull.com.sg](https://developer.webull.com.sg/apis/home)).
 
 ### Region Configuration Examples
 
@@ -185,6 +187,12 @@ WEBULL_ENVIRONMENT=uat
 WEBULL_REGION_ID=jp
 ```
 
+SG sandbox:
+```env
+WEBULL_ENVIRONMENT=uat
+WEBULL_REGION_ID=sg
+```
+
 See [.env.example](.env.example) for the full configuration template.
 
 ---
@@ -195,8 +203,8 @@ See [.env.example](.env.example) for the full configuration template.
 
 | Category | Actions | Region |
 |----------|---------|--------|
-| **Stock** | `stock-snapshot`, `stock-bars`, `stock-batch-bars`, `stock-tick`, `stock-quotes`, `stock-footprint` | US, HK, JP |
-| **Futures** | `futures-snapshot`, `futures-bars`, `futures-tick`, `futures-depth`, `futures-footprint` | US |
+| **Stock** | `stock-snapshot`, `stock-bars`, `stock-batch-bars`, `stock-tick`, `stock-quotes`, `stock-footprint` | US, HK, JP, SG |
+| **Futures** | `futures-snapshot`, `futures-bars`, `futures-tick`, `futures-depth`, `futures-footprint` | US, HK |
 | **Crypto** | `crypto-snapshot`, `crypto-bars` | US |
 | **Event** | `event-snapshot`, `event-depth`, `event-bars`, `event-tick` | US |
 | **Screener** | `stock-gainers-losers`, `stock-most-active` | US, HK, JP |
@@ -206,32 +214,32 @@ See [.env.example](.env.example) for the full configuration template.
 
 | Category | Actions | Region |
 |----------|---------|--------|
-| **Account** | `account-list` | US, HK, JP |
-| **Assets** | `balance`, `position`, `position-detail` (position details by instrument, JP only) | US, HK, JP |
+| **Account** | `account-list` | US, HK, JP, SG |
+| **Assets** | `balance`, `position`, `position-detail` (position details by instrument, JP only) | US, HK, JP, SG |
 | **Instrument** | `instrument-stock`, `instrument-crypto`, `instrument-futures-products`, `instrument-futures-list`, `instrument-futures-by-code`, `instrument-event-series`, `instrument-event-list`, `instrument-event-categories`, `instrument-event-events` | varies |
-| **Stock Order** | `place`, `preview`, `replace` | US, HK, JP |
+| **Stock Order** | `place`, `preview`, `replace` | US, HK, JP, SG |
 | **Combo Order** | `batch-place` (OTO/OCO/OTOCO) | US |
 | **Option Order** | `option-place`, `option-preview`, `option-replace`, `option-strategy-place` | US, HK |
 | **Algo Order** | `algo-place` (TWAP/VWAP/POV) | US |
-| **Futures Order** | `futures-place`, `futures-replace` | US |
+| **Futures Order** | `futures-place`, `futures-replace` | US, HK |
 | **Crypto Order** | `crypto-place` | US |
 | **Event Order** | `event-place`, `event-replace` | US |
-| **Order Mgmt** | `cancel`, `open`, `history`, `detail`, `local-check` | US, HK, JP |
+| **Order Mgmt** | `cancel`, `open`, `history`, `detail`, `local-check` | US, HK, JP, SG |
 
 ### Region Differences
 
-| Feature | US | HK | JP |
-|---------|:--:|:--:|:--:|
-| Stock Trading | ✅ | ✅ | ✅ |
-| Option Trading | ✅ | ✅ | ❌ |
-| Futures Trading | ✅ | ❌ | ❌ |
-| Crypto Trading | ✅ | ❌ | ❌ |
-| Event Contracts | ✅ | ❌ | ❌ |
-| Combo Orders | ✅ | ❌ | ❌ |
-| Option Strategies | ✅ | ❌ | ❌ |
-| Algo Orders | ✅ | ❌ | ❌ |
-| Order Markets | US | US, HK, CN | US, JP |
-| Instrument Categories | US_STOCK, US_ETF | US/HK/CN stock categories | US_STOCK, US_ETF |
+| Feature | US | HK | JP | SG |
+|---------|:--:|:--:|:--:|:--:|
+| Stock Trading | ✅ | ✅ | ✅ | ✅ |
+| Option Trading | ✅ | ✅ | ❌ | ❌ |
+| Futures Trading | ✅ | ✅ | ❌ | ❌ |
+| Crypto Trading | ✅ | ❌ | ❌ | ❌ |
+| Event Contracts | ✅ | ❌ | ❌ | ❌ |
+| Combo Orders | ✅ | ❌ | ❌ | ❌ |
+| Option Strategies | ✅ | ❌ | ❌ | ❌ |
+| Algo Orders | ✅ | ❌ | ❌ | ❌ |
+| Order Markets | US | US, HK, CN | US, JP | US |
+| Instrument Categories | US_STOCK, US_ETF | US/HK/CN stock categories | US_STOCK, US_ETF | US_STOCK, US_ETF |
 
 ### JP Configuration And Order Fields
 
