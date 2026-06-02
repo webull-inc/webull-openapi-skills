@@ -1,6 +1,6 @@
 ---
 name: webull-openapi
-description: Trade stocks, options, futures, crypto, and event contracts on Webull. Query real-time and historical market data. Manage accounts and positions. Supports US, HK, JP, SG, and TH regions with configurable risk controls.
+description: Trade stocks, options, futures, crypto, and event contracts on Webull. Query real-time and historical market data. Manage accounts and positions. Supports US, HK, JP, SG, TH, MY, and UK regions with configurable risk controls.
 ---
 
 # Webull OpenAPI Skill
@@ -109,7 +109,7 @@ All operations output formatted text directly to stdout, with a region-aware dis
 
 - Success: disclaimer + formatted data to stdout, exit code 0
 - Error: error message to stderr, exit code 1
-- US/JP/SG/TH region: English disclaimer only
+- US/JP/SG/TH/MY/UK region: English disclaimer only
 - HK region: English + Simplified Chinese + Traditional Chinese disclaimer
 
 ---
@@ -132,6 +132,8 @@ WEBULL_REGION_ID=us
 # WEBULL_REGION_ID=jp
 # WEBULL_REGION_ID=sg
 # WEBULL_REGION_ID=th
+# WEBULL_REGION_ID=my
+# WEBULL_REGION_ID=uk
 
 # Sandbox by default; set prod only for live trading.
 WEBULL_ENVIRONMENT=uat
@@ -149,7 +151,7 @@ Optional:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `WEBULL_ENVIRONMENT` | `uat` | `uat` (sandbox) or `prod` (live) |
-| `WEBULL_REGION_ID` | `us` | `us`, `hk`, `jp`, `sg`, or `th` |
+| `WEBULL_REGION_ID` | `us` | `us`, `hk`, `jp`, `sg`, `th`, `my`, or `uk` |
 | `WEBULL_MAX_ORDER_NOTIONAL_USD` | `10000` | Max order value (USD) |
 | `WEBULL_MAX_ORDER_NOTIONAL_HKD` | `80000` | Max order value for HK market (HKD) |
 | `WEBULL_MAX_ORDER_NOTIONAL_CNH` | `70000` | Max order value for CN market (CNH) |
@@ -165,22 +167,22 @@ Optional:
 
 ## Region Support
 
-| Feature | US | HK | JP | SG | TH |
-|---------|:--:|:--:|:--:|:--:|:--:|
-| Stock trading | ✓ | ✓ (US/HK/CN) | ✓ (US/JP) | ✓ (US) | ✓ (US) |
-| Options | ✓ | ✓ (US only) | ✗ | ✗ | ✗ |
-| Futures | ✓ | ✓ | ✗ | ✗ | ✗ |
-| Crypto | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Event contracts | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Combo orders | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Algo orders | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Trailing stop loss | ✓ | ✗ | ✗ | ✗ | ✗ |
-| Fractional shares | ✓ (US market) | ✗ | ✗ | ✗ | ✗ |
-| Company profile | ✓ | ✓ | ✓ | ✗ | ✓ |
-| Analyst rating / target price | ✓ | ✓ | ✓ | ✗ | ✓ |
-| NOII bars / snapshot | ✓ | ✓ | ✓ | ✗ | ✓ |
-| Screener (gainers/losers/active) | ✓ | ✓ | ✓ | ✗ | ✓ |
-| Watchlist | ✓ | ✓ | ✓ | ✗ | ✓ |
+| Feature | US | HK | JP | SG | TH | MY | UK |
+|---------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| Stock trading | ✓ | ✓ (US/HK/CN) | ✓ (US/JP) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) |
+| Options | ✓ | ✓ (US only) | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Futures | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Crypto | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Event contracts | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Combo orders | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Algo orders | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Trailing stop loss | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Fractional shares | ✓ (US market) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Company profile | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ |
+| Analyst rating / target price | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ |
+| NOII bars / snapshot | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ |
+| Screener (gainers/losers/active) | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ |
+| Watchlist | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ |
 
 ### HK-Specific Notes
 
@@ -224,6 +226,26 @@ Optional:
 - TH order market is `US` only.
 - No futures, crypto, options, event contracts, combo orders, or algo orders in TH region.
 
+### MY-Specific Notes
+
+- Configure MY with `WEBULL_REGION_ID=my`; sandbox uses `WEBULL_ENVIRONMENT=uat`.
+- MY supports US stock/ETF trading for Malaysia-based clients.
+- Supported order types: `MARKET`, `LIMIT`, `STOP_LOSS`, `STOP_LOSS_LIMIT`.
+- Time in force: `DAY`, `GTC`.
+- Trading sessions: `CORE`, `ALL`, `NIGHT`, `ALL_DAY`.
+- MY order market is `US` only.
+- No futures, crypto, options, event contracts, combo orders, or algo orders in MY region.
+
+### UK-Specific Notes
+
+- Configure UK with `WEBULL_REGION_ID=uk`; sandbox uses `WEBULL_ENVIRONMENT=uat`.
+- UK supports US stock/ETF trading for UK-based clients.
+- Supported order types: `MARKET`, `LIMIT`, `STOP_LOSS`, `STOP_LOSS_LIMIT`.
+- Time in force: `DAY`, `GTC`.
+- Trading sessions: `CORE`, `ALL`, `NIGHT`, `ALL_DAY`.
+- UK order market is `US` only.
+- No futures, crypto, options, event contracts, combo orders, or algo orders in UK region.
+
 ---
 
 ## Rate Limits
@@ -256,6 +278,18 @@ Optional:
 - Order query: 2 req/2s
 - Auth: 10 req/30s
 
+### MY Region
+- Market data: 300 req/60s
+- Order place/replace/cancel: 600 req/60s
+- Order query: 2 req/2s
+- Auth: 10 req/30s
+
+### UK Region
+- Market data: 300 req/60s
+- Order place/replace/cancel: 600 req/60s
+- Order query: 2 req/2s
+- Auth: 10 req/30s
+
 ---
 
 ## Detailed Module Documentation
@@ -270,6 +304,8 @@ Optional:
 - JP: https://developer.webull.co.jp/apis/docs/webull-open-api-reference
 - SG: https://developer.webull.com.sg/apis/docs/index.md
 - TH: https://developer.webull.co.th/apis/docs/
+- MY: https://developer.webull.com.my/apis/docs/
+- UK: https://developer.webull-uk.com/apis/docs/
 
 ---
 
