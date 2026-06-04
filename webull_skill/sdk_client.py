@@ -34,6 +34,7 @@ _2FA_GUIDE_LINKS: dict[str, str] = {
     "hk": "https://developer.webull.hk/apis/docs/authentication/token",
     "jp": "https://developer.webull.co.jp/api-doc/authentication/token/",
     "sg": "https://developer.webull.com.sg/apis/docs/authentication/token",
+    "th": "https://developer.webull.co.th/apis/docs/authentication/token",
     "us": "https://developer.webull.com/apis/docs/authentication/token",
 }
 
