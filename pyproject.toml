@@ -7,11 +7,11 @@ name = "webull-openapi-skills"
 version = "1.0.0"
 description = "Webull OpenAPI Skill built on the official Python SDK"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 license = { text = "Apache-2.0" }
 
 dependencies = [
-    "webull-openapi-python-sdk==2.0.8",
+    "webull-openapi-python-sdk==2.0.9",
     "python-dotenv>=1.0",
     "pyyaml>=6.0",
     "requests>=2.28",
