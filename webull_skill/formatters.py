@@ -53,7 +53,7 @@ def set_disclaimer_region(region_id: str) -> None:
     elif _current_region == "jp":
         DISCLAIMER = _DISCLAIMER_JP
     else:
-        # US, SG, TH, MY, UK — English only
+        # US, SG, TH, MY, UK, MX, BR — English only
         DISCLAIMER = _DISCLAIMER_US
 
 _NO_DATA = "No data available."
@@ -1357,3 +1357,430 @@ def format_analyst_target_price(data: Any) -> str:
     lines.append(f"  Low Target:      {_get(data, 'low')}")
     lines.append(f"  Effective Date:  {_get(data, 'effective_start_date')}")
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Fundamentals data formatters
+# ---------------------------------------------------------------------------
+
+def format_capital_flow(data: Any) -> str:
+    """Format capital flow distribution response."""
+    return _format_generic_list(data, "Capital Flow")
+
+
+def format_industry_comparison(data: Any) -> str:
+    """Format industry comparison response."""
+    if not data:
+        return _NO_DATA
+    sort_type = ""
+    industry_name = ""
+    if isinstance(data, dict):
+        sort_type = data.get("type", "")
+        industry_name = data.get("industry_name", "")
+        items = data.get("data") or data.get("result") or data.get("items") or data.get("stocks")
+        if items and isinstance(items, list):
+            data = items
+        else:
+            data = [data]
+    if not isinstance(data, list):
+        return _NO_DATA
+    lines: list[str] = ["=== Industry Comparison ==="]
+    if industry_name:
+        lines.append(f"  Industry:        {industry_name}")
+    if sort_type:
+        lines.append(f"  Sort By:         {sort_type}")
+    for i, item in enumerate(data, 1):
+        if not isinstance(item, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        lines.append(f"  Symbol:          {_get(item, 'symbol')}")
+        lines.append(f"  Name:            {_get(item, 'name')}")
+        lines.append(f"  Rank:            {_get(item, 'rank')}")
+        lines.append(f"  Value:           {_get(item, 'value')}")
+    return "\n".join(lines)
+
+
+def format_sec_filings(data: Any) -> str:
+    """Format SEC filings response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        items = data.get("filings") or data.get("data") or data.get("result") or data.get("items")
+        if items and isinstance(items, list):
+            data = items
+        else:
+            data = [data]
+    if not isinstance(data, list):
+        return _NO_DATA
+    lines: list[str] = ["=== SEC Filings ==="]
+    for i, item in enumerate(data, 1):
+        if not isinstance(item, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        lines.append(f"  Title:           {_get(item, 'title')}")
+        lines.append(f"  Publish Date:    {_get(item, 'publish_date')}")
+        url = item.get("url") or item.get("filing_url")
+        if url:
+            lines.append(f"  URL:             {url}")
+    return "\n".join(lines)
+
+
+def format_earnings_calendar(data: Any) -> str:
+    """Format earnings calendar response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        items = data.get("data") or data.get("result") or data.get("items")
+        if items and isinstance(items, list):
+            data = items
+        else:
+            data = [data]
+    if not isinstance(data, list):
+        return _NO_DATA
+    lines: list[str] = ["=== Earnings Calendar ==="]
+    for i, item in enumerate(data, 1):
+        if not isinstance(item, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        lines.append(f"  Fiscal Year:     {_get(item, 'fiscal_year')}")
+        lines.append(f"  Fiscal Period:   {_get(item, 'fiscal_period')}")
+        lines.append(f"  Publish Date:    {_get(item, 'expected_publish_date')}")
+        lines.append(f"  Currency:        {_get(item, 'currency')}")
+        lines.append(f"  EPS Estimate:    {_get(item, 'eps_est')}")
+        lines.append(f"  EPS Actual:      {_get(item, 'eps_actual')}")
+        lines.append(f"  Revenue Estimate:{_get(item, 'rev_est')}")
+        lines.append(f"  Revenue Actual:  {_get(item, 'rev_actual')}")
+    return "\n".join(lines)
+
+
+def format_dividend_calendar(data: Any) -> str:
+    """Format dividend calendar response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        items = data.get("data") or data.get("result") or data.get("items")
+        if items and isinstance(items, list):
+            data = items
+        else:
+            data = [data]
+    if not isinstance(data, list):
+        return _NO_DATA
+    lines: list[str] = ["=== Dividend Calendar ==="]
+    for i, item in enumerate(data, 1):
+        if not isinstance(item, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        lines.append(f"  Ex-Dividend Date:{_get(item, 'ex_dividend_date')}")
+        lines.append(f"  Record Date:     {_get(item, 'record_date')}")
+        lines.append(f"  Pay Date:        {_get(item, 'pay_date')}")
+        lines.append(f"  Amount:          {_get(item, 'amount')}")
+        lines.append(f"  Currency:        {_get(item, 'currency')}")
+    return "\n".join(lines)
+
+
+def _format_generic_list(data: Any, title: str, key_candidates: tuple[str, ...] = ()) -> str:
+    """Generic list formatter for screener/fund responses.
+
+    Extracts items from a dict wrapper (trying key_candidates + common keys),
+    then renders each item's key-value pairs.
+    """
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        items = None
+        for key in (*key_candidates, "data", "result", "items"):
+            candidate = data.get(key)
+            if candidate and isinstance(candidate, list):
+                items = candidate
+                break
+        if items is not None:
+            data = items
+        else:
+            data = [data]
+    if not isinstance(data, list):
+        return _NO_DATA
+    lines: list[str] = [f"=== {title} ==="]
+    for i, item in enumerate(data, 1):
+        if not isinstance(item, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        for k, v in item.items():
+            if v is not None:
+                lines.append(f"  {k}: {v}")
+    return "\n".join(lines)
+
+
+def _format_financials_table(data: Any, title: str) -> str:
+    """Generic formatter for financial statement data."""
+    return _format_generic_list(data, title)
+
+
+def format_financials_indicators(data: Any) -> str:
+    """Format financials indicators response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict) and "values" in data:
+        lines: list[str] = ["=== Financials Indicators ==="]
+        currency = data.get("currency", "")
+        if currency:
+            lines.append(f"  Currency:        {currency}")
+        values = data.get("values", {})
+        for metric, records in values.items():
+            lines.append(f"\n  --- {metric} ---")
+            if isinstance(records, list):
+                for rec in records:
+                    if isinstance(rec, dict):
+                        fy = rec.get("fiscal_year", "")
+                        fp = rec.get("fiscal_period", "")
+                        val = rec.get("value", "")
+                        lines.append(f"    FY{fy} Q{fp}: {val}")
+        return "\n".join(lines)
+    return _format_financials_table(data, "Financials Indicators")
+
+
+def format_financials_income(data: Any) -> str:
+    """Format financials income statement response."""
+    return _format_financials_table(data, "Financials Income Statement")
+
+
+def format_financials_cashflow(data: Any) -> str:
+    """Format financials cashflow statement response."""
+    return _format_financials_table(data, "Financials Cashflow Statement")
+
+
+def format_financials_balance_sheet(data: Any) -> str:
+    """Format financials balance sheet response."""
+    return _format_financials_table(data, "Financials Balance Sheet")
+
+
+def format_financials_alert(data: Any) -> str:
+    """Format financials alert response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        lines: list[str] = ["=== Financials Alert ==="]
+        lines.append(f"  Fiscal Year:     {_get(data, 'fiscal_year')}")
+        lines.append(f"  Fiscal Period:   {_get(data, 'fiscal_period')}")
+        lines.append(f"  Start Date:      {_get(data, 'start_date')}")
+        lines.append(f"  End Date:        {_get(data, 'end_date')}")
+        lines.append(f"  Currency:        {_get(data, 'currency')}")
+        lines.append(f"  EPS Estimate:    {_get(data, 'eps_est')}")
+        lines.append(f"  EPS Last Year:   {_get(data, 'eps_ly')}")
+        lines.append(f"  Revenue Estimate:{_get(data, 'rev_est')}")
+        lines.append(f"  Revenue Last Year:{_get(data, 'rev_ly')}")
+        return "\n".join(lines)
+    if isinstance(data, list):
+        lines = ["=== Financials Alert ==="]
+        for i, item in enumerate(data, 1):
+            if not isinstance(item, dict):
+                continue
+            lines.append(f"\n[{i}]")
+            for k, v in item.items():
+                if v is not None:
+                    lines.append(f"  {k}: {v}")
+        return "\n".join(lines)
+    return _NO_DATA
+
+
+def format_forecast_eps(data: Any) -> str:
+    """Format forecast EPS response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        items = data.get("data") or data.get("result") or data.get("items")
+        if items and isinstance(items, list):
+            data = items
+        else:
+            data = [data]
+    if not isinstance(data, list):
+        return _NO_DATA
+    lines: list[str] = ["=== Forecast EPS ==="]
+    for i, item in enumerate(data, 1):
+        if not isinstance(item, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        lines.append(f"  Fiscal Year:     {_get(item, 'fiscal_year')}")
+        lines.append(f"  Fiscal Period:   {_get(item, 'fiscal_period')}")
+        lines.append(f"  EPS Actual:      {_get(item, 'actual')}")
+        lines.append(f"  EPS Estimate:    {_get(item, 'est')}")
+        lines.append(f"  Reported:        {_get(item, 'reported')}")
+    return "\n".join(lines)
+
+
+def format_fund_brief(data: Any) -> str:
+    """Format fund brief response."""
+    if not data:
+        return _NO_DATA
+    if not isinstance(data, dict):
+        return _NO_DATA
+    lines: list[str] = [f"=== Fund Brief: {_get(data, 'symbol')} ==="]
+    for k, v in data.items():
+        if v is not None:
+            lines.append(f"  {k}: {v}")
+    return "\n".join(lines)
+
+
+def format_fund_allocation(data: Any) -> str:
+    """Format fund allocation response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        items = data.get("data") or data.get("result") or data.get("items") or data.get("allocations")
+        if items and isinstance(items, list):
+            data_list = items
+        else:
+            lines = [f"=== Fund Allocation: {_get(data, 'symbol')} ==="]
+            for k, v in data.items():
+                if v is not None:
+                    lines.append(f"  {k}: {v}")
+            return "\n".join(lines)
+    else:
+        data_list = data if isinstance(data, list) else []
+    lines = ["=== Fund Allocation ==="]
+    for i, item in enumerate(data_list, 1):
+        if not isinstance(item, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        for k, v in item.items():
+            if v is not None:
+                lines.append(f"  {k}: {v}")
+    return "\n".join(lines)
+
+
+def format_fund_holdings(data: Any) -> str:
+    """Format fund top holdings response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        items = data.get("data") or data.get("result") or data.get("items") or data.get("holdings")
+        if items and isinstance(items, list):
+            data = items
+        else:
+            data = [data]
+    if not isinstance(data, list):
+        return _NO_DATA
+    lines: list[str] = ["=== Fund Holdings ==="]
+    for i, item in enumerate(data, 1):
+        if not isinstance(item, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        lines.append(f"  Symbol:          {_get(item, 'target_symbol')}")
+        lines.append(f"  Name:            {_get(item, 'stock_name')}")
+        lines.append(f"  Weight (%):      {_get(item, 'share_held_pct')}")
+        lines.append(f"  Change (%):      {_get(item, 'share_held_chg_pct')}")
+        lines.append(f"  Update Time:     {_get(item, 'update_time')}")
+    return "\n".join(lines)
+
+
+def format_fund_performance(data: Any) -> str:
+    """Format fund performance response."""
+    if not data:
+        return _NO_DATA
+    if not isinstance(data, dict):
+        return _NO_DATA
+    lines: list[str] = [f"=== Fund Performance: {_get(data, 'symbol')} ==="]
+    for k, v in data.items():
+        if v is not None:
+            lines.append(f"  {k}: {v}")
+    return "\n".join(lines)
+
+
+def format_fund_rating(data: Any) -> str:
+    """Format fund rating response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        data = [data]
+    if not isinstance(data, list):
+        return _NO_DATA
+    lines: list[str] = ["=== Fund Rating ==="]
+    for i, item in enumerate(data, 1):
+        if not isinstance(item, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        lines.append(f"  Rating Agency:   {_get(item, 'rating_agency')}")
+        lines.append(f"  Rating Date:     {_get(item, 'rating_date')}")
+        lines.append(f"  Rating Cycle:    {_get(item, 'rating_cycle')}")
+        lines.append(f"  Rating Results:  {_get(item, 'rating_results')}")
+    return "\n".join(lines)
+
+
+def format_fund_net_value(data: Any) -> str:
+    """Format fund net value response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        items = data.get("data") or data.get("result") or data.get("items")
+        if items and isinstance(items, list):
+            data = items
+        else:
+            data = [data]
+    if not isinstance(data, list):
+        return _NO_DATA
+    lines: list[str] = ["=== Fund Net Value ==="]
+    for i, item in enumerate(data, 1):
+        if not isinstance(item, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        lines.append(f"  Date:            {_get(item, 'date')}")
+        lines.append(f"  Currency:        {_get(item, 'currency')}")
+        lines.append(f"  Net Value:       {_get(item, 'net_value')}")
+    return "\n".join(lines)
+
+
+def format_fund_dividends(data: Any) -> str:
+    """Format fund dividends response."""
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        items = data.get("data") or data.get("result") or data.get("items")
+        if items and isinstance(items, list):
+            data = items
+        else:
+            data = [data]
+    if not isinstance(data, list):
+        return _NO_DATA
+    lines: list[str] = ["=== Fund Dividends ==="]
+    for i, item in enumerate(data, 1):
+        if not isinstance(item, dict):
+            continue
+        lines.append(f"\n[{i}]")
+        lines.append(f"  Share Date:      {_get(item, 'share_date')}")
+        lines.append(f"  Record Date:     {_get(item, 'record_date')}")
+        lines.append(f"  Pay Date:        {_get(item, 'pay_date')}")
+        lines.append(f"  DPS:             {_get(item, 'dps')}")
+    return "\n".join(lines)
+
+
+def format_fund_splits(data: Any) -> str:
+    """Format fund splits response."""
+    return _format_generic_list(data, "Fund Splits")
+
+
+def format_fund_files(data: Any) -> str:
+    """Format fund files response."""
+    return _format_generic_list(data, "Fund Files")
+
+
+# ---------------------------------------------------------------------------
+# Screener: market sectors, high dividend, 52-week high/low
+# ---------------------------------------------------------------------------
+
+def format_market_sectors(data: Any) -> str:
+    """Format market sectors overview response."""
+    return _format_generic_list(data, "Market Sectors", key_candidates=("sectors",))
+
+
+def format_market_sectors_detail(data: Any) -> str:
+    """Format market sectors detail response."""
+    return _format_generic_list(data, "Market Sectors Detail", key_candidates=("stocks",))
+
+
+def format_high_dividend(data: Any) -> str:
+    """Format high dividend rank list response."""
+    return _format_generic_list(data, "High Dividend")
+
+
+def format_52whl(data: Any) -> str:
+    """Format 52-week high/low rank list response."""
+    return _format_generic_list(data, "52-Week High/Low")
