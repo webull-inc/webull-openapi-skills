@@ -91,3 +91,69 @@ def test_uk_region_config():
     assert config.supports_combo_orders is False
     assert config.supports_option_strategies is False
     assert config.supports_algo_orders is False
+
+
+def test_eu_region_is_supported():
+    assert "eu" in SUPPORTED_REGIONS
+    assert get_region_config("EU").region_id == "eu"
+    assert get_region_config("eu").region_id == "eu"
+
+
+def test_eu_region_config():
+    config = get_region_config("eu")
+
+    assert config.valid_order_markets == frozenset({"US"})
+    assert config.valid_market_categories == frozenset({"US_STOCK", "US_ETF"})
+    assert config.valid_order_types == frozenset({"LIMIT", "MARKET", "STOP_LOSS", "STOP_LOSS_LIMIT"})
+    assert config.valid_time_in_force == frozenset({"DAY", "GTC"})
+    assert config.valid_trading_sessions == frozenset({"ALL", "ALL_DAY", "CORE", "NIGHT"})
+    assert config.supports_futures is False
+    assert config.supports_crypto is False
+    assert config.supports_event_contracts is False
+    assert config.supports_combo_orders is False
+    assert config.supports_option_strategies is False
+    assert config.supports_algo_orders is False
+
+
+def test_za_region_is_supported():
+    assert "za" in SUPPORTED_REGIONS
+    assert get_region_config("ZA").region_id == "za"
+    assert get_region_config("za").region_id == "za"
+
+
+def test_za_region_config():
+    config = get_region_config("za")
+
+    assert config.valid_order_markets == frozenset({"US"})
+    assert config.valid_market_categories == frozenset({"US_STOCK", "US_ETF"})
+    assert config.valid_order_types == frozenset({"LIMIT", "MARKET", "STOP_LOSS", "STOP_LOSS_LIMIT"})
+    assert config.valid_time_in_force == frozenset({"DAY", "GTC"})
+    assert config.valid_trading_sessions == frozenset({"ALL", "ALL_DAY", "CORE", "NIGHT"})
+    assert config.supports_futures is False
+    assert config.supports_crypto is False
+    assert config.supports_event_contracts is False
+    assert config.supports_combo_orders is False
+    assert config.supports_option_strategies is False
+    assert config.supports_algo_orders is False
+
+
+def test_au_region_is_supported():
+    assert "au" in SUPPORTED_REGIONS
+    assert get_region_config("AU").region_id == "au"
+    assert get_region_config("au").region_id == "au"
+
+
+def test_au_region_config():
+    config = get_region_config("au")
+
+    assert config.valid_order_markets == frozenset({"US"})
+    assert config.valid_market_categories == frozenset({"US_STOCK", "US_ETF"})
+    assert config.valid_order_types == frozenset({"LIMIT", "MARKET", "STOP_LOSS", "STOP_LOSS_LIMIT"})
+    assert config.valid_time_in_force == frozenset({"DAY", "GTC"})
+    assert config.valid_trading_sessions == frozenset({"ALL", "ALL_DAY", "CORE", "NIGHT"})
+    assert config.supports_futures is False
+    assert config.supports_crypto is False
+    assert config.supports_event_contracts is False
+    assert config.supports_combo_orders is False
+    assert config.supports_option_strategies is False
+    assert config.supports_algo_orders is False

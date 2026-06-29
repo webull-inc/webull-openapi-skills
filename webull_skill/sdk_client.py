@@ -31,7 +31,9 @@ _API_TYPE_MAP = {
 
 # Region-specific 2FA documentation links
 _2FA_GUIDE_LINKS: dict[str, str] = {
+    "au": "https://developer.webull.com.au/apis/docs/authentication/token",
     "br": "https://developer.webull.com.br/apis/docs/authentication/token",
+    "eu": "https://developer.webull.eu/apis/docs/authentication/token",
     "hk": "https://developer.webull.hk/apis/docs/authentication/token",
     "jp": "https://developer.webull.co.jp/api-doc/authentication/token/",
     "mx": "https://developer.webull.com.mx/apis/docs/authentication/token",
@@ -40,6 +42,7 @@ _2FA_GUIDE_LINKS: dict[str, str] = {
     "th": "https://developer.webull.co.th/apis/docs/authentication/token",
     "uk": "https://developer.webull-uk.com/apis/docs/authentication/token",
     "us": "https://developer.webull.com/apis/docs/authentication/token",
+    "za": "https://developer.webull.co.za/apis/docs/authentication/token",
 }
 
 

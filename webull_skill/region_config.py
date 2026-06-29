@@ -267,6 +267,75 @@ BR_REGION_CONFIG = RegionConfig(
 
 
 # =============================================================================
+# EU Region Configuration
+# =============================================================================
+EU_REGION_CONFIG = RegionConfig(
+    region_id="eu",
+    supports_futures=False,
+    supports_crypto=False,
+    supports_event_contracts=False,
+    supports_combo_orders=False,
+    supports_option_strategies=False,
+    supports_algo_orders=False,
+    valid_order_types=frozenset({
+        "LIMIT", "MARKET", "STOP_LOSS", "STOP_LOSS_LIMIT"
+    }),
+    valid_time_in_force=frozenset({"DAY", "GTC"}),
+    valid_trading_sessions=frozenset({"ALL", "ALL_DAY", "CORE", "NIGHT"}),
+    valid_combo_types=frozenset({"NORMAL"}),
+    valid_option_strategies=frozenset({"SINGLE"}),
+    valid_order_markets=frozenset({"US"}),
+    valid_market_categories=frozenset({"US_STOCK", "US_ETF"}),
+)
+
+
+# =============================================================================
+# ZA Region Configuration
+# =============================================================================
+ZA_REGION_CONFIG = RegionConfig(
+    region_id="za",
+    supports_futures=False,
+    supports_crypto=False,
+    supports_event_contracts=False,
+    supports_combo_orders=False,
+    supports_option_strategies=False,
+    supports_algo_orders=False,
+    valid_order_types=frozenset({
+        "LIMIT", "MARKET", "STOP_LOSS", "STOP_LOSS_LIMIT"
+    }),
+    valid_time_in_force=frozenset({"DAY", "GTC"}),
+    valid_trading_sessions=frozenset({"ALL", "ALL_DAY", "CORE", "NIGHT"}),
+    valid_combo_types=frozenset({"NORMAL"}),
+    valid_option_strategies=frozenset({"SINGLE"}),
+    valid_order_markets=frozenset({"US"}),
+    valid_market_categories=frozenset({"US_STOCK", "US_ETF"}),
+)
+
+
+# =============================================================================
+# AU Region Configuration
+# =============================================================================
+AU_REGION_CONFIG = RegionConfig(
+    region_id="au",
+    supports_futures=False,
+    supports_crypto=False,
+    supports_event_contracts=False,
+    supports_combo_orders=False,
+    supports_option_strategies=False,
+    supports_algo_orders=False,
+    valid_order_types=frozenset({
+        "LIMIT", "MARKET", "STOP_LOSS", "STOP_LOSS_LIMIT"
+    }),
+    valid_time_in_force=frozenset({"DAY", "GTC"}),
+    valid_trading_sessions=frozenset({"ALL", "ALL_DAY", "CORE", "NIGHT"}),
+    valid_combo_types=frozenset({"NORMAL"}),
+    valid_option_strategies=frozenset({"SINGLE"}),
+    valid_order_markets=frozenset({"US"}),
+    valid_market_categories=frozenset({"US_STOCK", "US_ETF"}),
+)
+
+
+# =============================================================================
 # Region Configuration Registry
 # =============================================================================
 REGION_CONFIGS: dict[str, RegionConfig] = {
@@ -279,6 +348,9 @@ REGION_CONFIGS: dict[str, RegionConfig] = {
     "uk": UK_REGION_CONFIG,
     "mx": MX_REGION_CONFIG,
     "br": BR_REGION_CONFIG,
+    "eu": EU_REGION_CONFIG,
+    "za": ZA_REGION_CONFIG,
+    "au": AU_REGION_CONFIG,
 }
 
 SUPPORTED_REGIONS: frozenset[str] = frozenset(REGION_CONFIGS.keys())

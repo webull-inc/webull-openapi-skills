@@ -1,6 +1,6 @@
 ---
 name: webull-openapi
-description: Trade stocks, options, futures, crypto, and event contracts on Webull. Query real-time and historical market data. Manage accounts and positions. Supports US, HK, JP, SG, TH, MY, UK, MX, and BR regions with configurable risk controls.
+description: Trade stocks, options, futures, crypto, and event contracts on Webull. Query real-time and historical market data. Manage accounts and positions. Supports US, HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, and AU regions with configurable risk controls.
 ---
 
 # Webull OpenAPI Skill
@@ -110,7 +110,7 @@ All operations output formatted text directly to stdout, with a region-aware dis
 
 - Success: disclaimer + formatted data to stdout, exit code 0
 - Error: error message to stderr, exit code 1
-- US/JP/SG/TH/MY/UK/MX/BR region: English disclaimer only
+- US/JP/SG/TH/MY/UK/MX/BR/EU/ZA/AU region: English disclaimer only
 - HK region: English + Simplified Chinese + Traditional Chinese disclaimer
 
 ---
@@ -137,6 +137,9 @@ WEBULL_REGION_ID=us
 # WEBULL_REGION_ID=uk
 # WEBULL_REGION_ID=mx
 # WEBULL_REGION_ID=br
+# WEBULL_REGION_ID=eu
+# WEBULL_REGION_ID=za
+# WEBULL_REGION_ID=au
 
 # Sandbox by default; set prod only for live trading.
 WEBULL_ENVIRONMENT=uat
@@ -154,7 +157,7 @@ Optional:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `WEBULL_ENVIRONMENT` | `uat` | `uat` (sandbox) or `prod` (live) |
-| `WEBULL_REGION_ID` | `us` | `us`, `hk`, `jp`, `sg`, `th`, `my`, `uk`, `mx`, or `br` |
+| `WEBULL_REGION_ID` | `us` | `us`, `hk`, `jp`, `sg`, `th`, `my`, `uk`, `mx`, `br`, `eu`, `za`, or `au` |
 | `WEBULL_MAX_ORDER_NOTIONAL_USD` | `10000` | Max order value (USD) |
 | `WEBULL_MAX_ORDER_NOTIONAL_HKD` | `80000` | Max order value for HK market (HKD) |
 | `WEBULL_MAX_ORDER_NOTIONAL_CNH` | `70000` | Max order value for CN market (CNH) |
@@ -170,24 +173,24 @@ Optional:
 
 ## Region Support
 
-| Feature | US | HK | JP | SG | TH | MY | UK | MX | BR |
-|---------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| Stock trading | ✓ | ✓ (US/HK/CN) | ✓ (US/JP) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) |
-| Options | ✓ | ✓ (US only) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Futures | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Crypto | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Event contracts | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Combo orders | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Algo orders | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Trailing stop loss | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Fractional shares | ✓ (US market) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Company profile | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ |
-| Analyst rating / target price | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ |
-| NOII bars / snapshot | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ |
-| Screener (gainers/losers/active) | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ |
-| Screener (stock-market-sectors/stock-market-sectors-detail/stock-high-dividend/stock-52-week-high-low) | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Watchlist | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ |
-| Fundamentals | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Feature | US | HK | JP | SG | TH | MY | UK | MX | BR | EU | ZA | AU |
+|---------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| Stock trading | ✓ | ✓ (US/HK/CN) | ✓ (US/JP) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) |
+| Options | ✓ | ✓ (US only) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Futures | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Crypto | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Event contracts | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Combo orders | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Algo orders | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Trailing stop loss | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Fractional shares | ✓ (US market) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Company profile | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Analyst rating / target price | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| NOII bars / snapshot | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Screener (gainers/losers/active) | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Screener (stock-market-sectors/stock-market-sectors-detail/stock-high-dividend/stock-52-week-high-low) | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Watchlist | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Fundamentals | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 
 
 ### HK-Specific Notes
@@ -272,6 +275,36 @@ Optional:
 - BR order market is `US` only.
 - No futures, crypto, options, event contracts, combo orders, or algo orders in BR region.
 
+### EU-Specific Notes
+
+- Configure EU with `WEBULL_REGION_ID=eu`; sandbox uses `WEBULL_ENVIRONMENT=uat`.
+- EU supports US stock/ETF trading for EU-based clients.
+- Supported order types: `MARKET`, `LIMIT`, `STOP_LOSS`, `STOP_LOSS_LIMIT`.
+- Time in force: `DAY`, `GTC`.
+- Trading sessions: `CORE`, `ALL`, `NIGHT`, `ALL_DAY`.
+- EU order market is `US` only.
+- No futures, crypto, options, event contracts, combo orders, or algo orders in EU region.
+
+### ZA-Specific Notes
+
+- Configure ZA with `WEBULL_REGION_ID=za`; sandbox uses `WEBULL_ENVIRONMENT=uat`.
+- ZA supports US stock/ETF trading for South Africa-based clients.
+- Supported order types: `MARKET`, `LIMIT`, `STOP_LOSS`, `STOP_LOSS_LIMIT`.
+- Time in force: `DAY`, `GTC`.
+- Trading sessions: `CORE`, `ALL`, `NIGHT`, `ALL_DAY`.
+- ZA order market is `US` only.
+- No futures, crypto, options, event contracts, combo orders, or algo orders in ZA region.
+
+### AU-Specific Notes
+
+- Configure AU with `WEBULL_REGION_ID=au`; sandbox uses `WEBULL_ENVIRONMENT=uat`.
+- AU supports US stock/ETF trading for Australia-based clients.
+- Supported order types: `MARKET`, `LIMIT`, `STOP_LOSS`, `STOP_LOSS_LIMIT`.
+- Time in force: `DAY`, `GTC`.
+- Trading sessions: `CORE`, `ALL`, `NIGHT`, `ALL_DAY`.
+- AU order market is `US` only.
+- No futures, crypto, options, event contracts, combo orders, or algo orders in AU region.
+
 ---
 
 ## Rate Limits
@@ -328,6 +361,24 @@ Optional:
 - Order query: 2 req/2s
 - Auth: 10 req/30s
 
+### EU Region
+- Market data: 60 req/60s
+- Order place/replace/cancel: 60 req/60s
+- Order query: 2 req/2s
+- Auth: 10 req/30s
+
+### ZA Region
+- Market data: 60 req/60s
+- Order place/replace/cancel: 60 req/60s
+- Order query: 2 req/2s
+- Auth: 10 req/30s
+
+### AU Region
+- Market data: 60 req/60s
+- Order place/replace/cancel: 60 req/60s
+- Order query: 2 req/2s
+- Auth: 10 req/30s
+
 ---
 
 ## Detailed Module Documentation
@@ -346,6 +397,9 @@ Optional:
 - UK: https://developer.webull-uk.com/apis/docs/
 - MX: https://developer.webull.com.mx/apis/docs/
 - BR: https://developer.webull.com.br/apis/docs/
+- EU: https://developer.webull.eu/apis/docs/
+- ZA: https://developer.webull.co.za/apis/docs/
+- AU: https://developer.webull.com.au/apis/docs/
 
 ---
 
