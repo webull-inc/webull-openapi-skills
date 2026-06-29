@@ -64,6 +64,18 @@ MARKET_DATA_ACTIONS = [
     "event-snapshot", "event-depth", "event-bars", "event-tick",
     # Screener
     "stock-gainers-losers", "stock-most-active",
+    "stock-market-sectors", "stock-market-sectors-detail",
+    "stock-high-dividend", "stock-52-week-high-low",
+    # Fundamentals
+    "fundamentals-capital-flow", "fundamentals-industry-comparison", "fundamentals-sec-filings",
+    "fundamentals-earnings-calendar", "fundamentals-dividend-calendar",
+    "fundamentals-financials-indicators", "fundamentals-financials-income",
+    "fundamentals-financials-cashflow", "fundamentals-financials-balance-sheet",
+    "fundamentals-financials-alert",
+    "fundamentals-forecast-eps",
+    "fundamentals-fund-brief", "fundamentals-fund-allocation", "fundamentals-fund-holdings",
+    "fundamentals-fund-performance", "fundamentals-fund-rating", "fundamentals-fund-net-value",
+    "fundamentals-fund-dividends", "fundamentals-fund-splits", "fundamentals-fund-files",
     # Watchlist
     "watchlist-list", "watchlist-create", "watchlist-delete", "watchlist-update",
     "watchlist-instruments-list", "watchlist-instruments-add",
@@ -141,7 +153,7 @@ def _region_market_data_error(config: SkillConfig, action: str) -> str:
 
     if region_id != "jp":
         return ""
-    if not action.startswith("stock-") and not action.startswith("watchlist-"):
+    if not action.startswith("stock-") and not action.startswith("watchlist-") and not action.startswith("fundamentals-"):
         return f"Market data action '{action}' is not supported in region 'jp'"
     return ""
 
@@ -212,6 +224,21 @@ def build_parser() -> argparse.ArgumentParser:
     mp.add_argument("--instruments-json", default="",
                     help="JSON array of instruments for watchlist operations, "
                          "e.g. '[{\"symbol\":\"AAPL\",\"category\":\"US_STOCK\"}]'")
+
+    # Fundamentals
+    mp.add_argument("--financial-type", default="",
+                    help="Financial type: ANNUAL or QUARTERLY")
+    mp.add_argument("--fundamental-count", type=int, default=None,
+                    help="Number of records for fundamentals/fund queries (default: API default, max 20)")
+    # Screener extended
+    mp.add_argument("--sector-id", default="",
+                    help="Sector ID for market-sectors-detail")
+    mp.add_argument("--agg-type", default="",
+                    help="Statistics type: MARKET_VALUE or VOLUME")
+    mp.add_argument("--period", default="",
+                    help="Statistics period: D1, D5, M01, M03")
+    mp.add_argument("--last-date", default="",
+                    help="Last query date for fund net value, e.g. 2026-04-01")
 
     # auth subcommand
     subparsers.add_parser("auth", help="Authenticate and obtain access token (interactive 2FA)")
@@ -606,7 +633,36 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         get_futures_depth,
         get_futures_footprint,
     )
-    from webull_skill.market_data.screener import get_gainers_losers, get_most_active
+    from webull_skill.market_data.screener import (
+        get_gainers_losers,
+        get_most_active,
+        get_market_sectors,
+        get_market_sectors_detail,
+        get_high_dividend,
+        get_52whl,
+    )
+    from webull_skill.market_data.fundamentals import (
+        get_capital_flow,
+        get_industry_comparison,
+        get_sec_filings,
+        get_earnings_calendar,
+        get_dividend_calendar,
+        get_financials_indicators,
+        get_financials_income,
+        get_financials_cashflow,
+        get_financials_balance_sheet,
+        get_financials_alert,
+        get_forecast_eps,
+        get_fund_brief,
+        get_fund_allocation,
+        get_fund_holdings,
+        get_fund_performance,
+        get_fund_rating,
+        get_fund_net_value,
+        get_fund_dividends,
+        get_fund_splits,
+        get_fund_files,
+    )
     from webull_skill.market_data.stock import (
         get_stock_snapshot,
         get_stock_bars,
@@ -794,6 +850,216 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
             action,
         )
 
+    # Screener extended
+    if action == "stock-market-sectors":
+        return _wrap_tool_result(
+            get_market_sectors(
+                sdk, config,
+                category=cat or "US_STOCK",
+                agg_type=args.agg_type or None,
+                period=args.period or None,
+                page_index=args.page_index,
+                page_size=args.page_size,
+                direction=args.direction or None,
+            ),
+            action,
+        )
+    if action == "stock-market-sectors-detail":
+        if not args.sector_id:
+            return failure(detail=f"--sector-id is required for {action}")
+        return _wrap_tool_result(
+            get_market_sectors_detail(
+                sdk, config,
+                sector_id=args.sector_id,
+                category=cat or "US_STOCK",
+                period=args.period or None,
+                page_index=args.page_index,
+                page_size=args.page_size,
+                sort_by=args.sort_by or None,
+                direction=args.direction or None,
+            ),
+            action,
+        )
+    if action == "stock-high-dividend":
+        return _wrap_tool_result(
+            get_high_dividend(
+                sdk, config,
+                category=cat or "US_STOCK",
+                sort_by=args.sort_by or None,
+                page_index=args.page_index,
+                page_size=args.page_size,
+                direction=args.direction or None,
+            ),
+            action,
+        )
+    if action == "stock-52-week-high-low":
+        return _wrap_tool_result(
+            get_52whl(
+                sdk, config,
+                category=cat or "US_STOCK",
+                rank_type=args.rank_type or None,
+                sort_by=args.sort_by or None,
+                page_index=args.page_index,
+                page_size=args.page_size,
+                direction=args.direction or None,
+            ),
+            action,
+        )
+    # Fundamentals
+    if action == "fundamentals-capital-flow":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_capital_flow(sdk, config, symbol, category=cat or "US_STOCK",
+                            count=args.fundamental_count),
+            action,
+        )
+    if action == "fundamentals-industry-comparison":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_industry_comparison(sdk, config, symbol, category=cat or "US_STOCK",
+                                   sort_by=args.sort_by or None),
+            action,
+        )
+    if action == "fundamentals-sec-filings":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_sec_filings(sdk, config, symbol, category=cat or "US_STOCK"),
+            action,
+        )
+    if action == "fundamentals-earnings-calendar":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_earnings_calendar(sdk, config, symbol, category=cat or "US_STOCK"),
+            action,
+        )
+    if action == "fundamentals-dividend-calendar":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_dividend_calendar(sdk, config, symbol, category=cat or "US_STOCK"),
+            action,
+        )
+    if action == "fundamentals-financials-indicators":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_financials_indicators(sdk, config, symbol, category=cat or "US_STOCK",
+                                      financial_type=args.financial_type or None,
+                                      count=args.fundamental_count),
+            action,
+        )
+    if action == "fundamentals-financials-income":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_financials_income(sdk, config, symbol, category=cat or "US_STOCK",
+                                  financial_type=args.financial_type or None,
+                                  count=args.fundamental_count),
+            action,
+        )
+    if action == "fundamentals-financials-cashflow":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_financials_cashflow(sdk, config, symbol, category=cat or "US_STOCK",
+                                    financial_type=args.financial_type or None,
+                                    count=args.fundamental_count),
+            action,
+        )
+    if action == "fundamentals-financials-balance-sheet":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_financials_balance_sheet(sdk, config, symbol, category=cat or "US_STOCK",
+                                         financial_type=args.financial_type or None,
+                                         count=args.fundamental_count),
+            action,
+        )
+    if action == "fundamentals-financials-alert":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_financials_alert(sdk, config, symbol, category=cat or "US_STOCK"),
+            action,
+        )
+    if action == "fundamentals-forecast-eps":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_forecast_eps(sdk, config, symbol, category=cat or "US_STOCK"),
+            action,
+        )
+    if action == "fundamentals-fund-brief":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_fund_brief(sdk, config, symbol, category=cat or "US_STOCK"),
+            action,
+        )
+    if action == "fundamentals-fund-allocation":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_fund_allocation(sdk, config, symbol, category=cat or "US_STOCK"),
+            action,
+        )
+    if action == "fundamentals-fund-holdings":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_fund_holdings(sdk, config, symbol, category=cat or "US_STOCK"),
+            action,
+        )
+    if action == "fundamentals-fund-performance":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_fund_performance(sdk, config, symbol, category=cat or "US_STOCK"),
+            action,
+        )
+    if action == "fundamentals-fund-rating":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_fund_rating(sdk, config, symbol, category=cat or "US_STOCK"),
+            action,
+        )
+    if action == "fundamentals-fund-net-value":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_fund_net_value(sdk, config, symbol, category=cat or "US_STOCK",
+                               last_date=args.last_date or None,
+                               count=args.fundamental_count),
+            action,
+        )
+    if action == "fundamentals-fund-dividends":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_fund_dividends(sdk, config, symbol, category=cat or "US_STOCK",
+                              page_index=args.page_index,
+                              page_size=args.page_size),
+            action,
+        )
+    if action == "fundamentals-fund-splits":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_fund_splits(sdk, config, symbol, category=cat or "US_STOCK"),
+            action,
+        )
+    if action == "fundamentals-fund-files":
+        if not symbol:
+            return failure(detail=f"--symbol is required for {action}")
+        return _wrap_tool_result(
+            get_fund_files(sdk, config, symbol, category=cat or "US_STOCK"),
+            action,
+        )
     # Watchlist
     if action == "watchlist-list":
         return _wrap_tool_result(get_watchlist(sdk, config), action)

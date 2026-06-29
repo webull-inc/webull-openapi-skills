@@ -72,10 +72,14 @@ webull-skill market-data --action stock-noii-snapshot --symbol AAPL --imbalance-
 
 ## Screener (US, HK, JP)
 
-| Action | Description | Key Options |
-|--------|-------------|-------------|
-| `stock-gainers-losers` | Top gainers or losers by price change | `--rank-type DAY_1 --direction DESC` |
-| `stock-most-active` | Most actively traded stocks | `--rank-type VOLUME` |
+| Action                  | Description                           | Key Options                                               |
+|-------------------------|---------------------------------------|-----------------------------------------------------------|
+| `stock-gainers-losers`       | Top gainers or losers by price change | `--rank-type DAY_1 --direction DESC`                      |
+| `stock-most-active`          | Most actively traded stocks           | `--rank-type VOLUME`                                      |
+| `stock-market-sectors`       | All sector overview with statistics   | `--category US_STOCK --agg-type MARKET_VALUE --period D1` |
+| `stock-market-sectors-detail`| Stock list for a specific sector      | `--sector-id <id> --category US_STOCK`                    |
+| `stock-high-dividend`        | High dividend yield ranking           | `--category US_STOCK --sort-by YIELD`                     |
+| `stock-52-week-high-low`     | 52-week high/low ranking              | `--category US_STOCK --rank-type NEW_HIGH`                |
 
 ### `stock-gainers-losers` Options
 
@@ -99,6 +103,50 @@ webull-skill market-data --action stock-noii-snapshot --symbol AAPL --imbalance-
 | `--page-index` | No | Page number starting from 1 |
 | `--page-size` | No | Records per page |
 
+### `stock-market-sectors` Options
+
+| Option         | Required | Description                                                       |
+|----------------|----------|-------------------------------------------------------------------|
+| `--category`   | Yes      | Default `US_STOCK`                                                |
+| `--agg-type`   | No       | Statistics type: `MARKET_VALUE`, `VOLUME`. Default `MARKET_VALUE` |
+| `--period`     | No       | Statistics period: `D1`, `D5`, `M01`, `M03`. Default `D1`         |
+| `--page-index` | No       | Page number starting from 1                                       |
+| `--page-size`  | No       | Records per page                                                  |
+| `--direction`  | No       | Sort direction: `ASC` or `DESC`                                   |
+
+### `stock-market-sectors-detail` Options
+
+| Option         | Required | Description                                               |
+|----------------|----------|-----------------------------------------------------------|
+| `--sector-id`  | Yes      | Sector ID (obtained from `stock-market-sectors` response) |
+| `--category`   | Yes      | Default `US_STOCK`                                        |
+| `--period`     | No       | Statistics period: `D1`, `D5`, `M01`, `M03`. Default `D1` |
+| `--page-index` | No       | Page number starting from 1                               |
+| `--page-size`  | No       | Records per page                                          |
+| `--sort-by`    | No       | Sort field. Default `CHANGE_RATIO`                        |
+| `--direction`  | No       | Sort direction: `ASC` or `DESC`                           |
+
+### `stock-high-dividend` Options
+
+| Option         | Required | Description                     |
+|----------------|----------|---------------------------------|
+| `--category`   | Yes      | Default `US_STOCK`              |
+| `--sort-by`    | No       | Sort field. Default `YIELD`     |
+| `--page-index` | No       | Page number starting from 1     |
+| `--page-size`  | No       | Records per page                |
+| `--direction`  | No       | Sort direction: `ASC` or `DESC` |
+
+### `stock-52-week-high-low` Options
+
+| Option         | Required | Description                                                |
+|----------------|----------|------------------------------------------------------------|
+| `--category`   | Yes      | Default `US_STOCK`                                         |
+| `--rank-type`  | No       | Index code: `NEW_HIGH`, `NEAR_HIGH`, `NEW_LOW`, `NEAR_LOW` |
+| `--sort-by`    | No       | Sort field. Default `CHANGE_RATIO_52W`                     |
+| `--page-index` | No       | Page number starting from 1                                |
+| `--page-size`  | No       | Records per page                                           |
+| `--direction`  | No       | Sort direction: `ASC` or `DESC`                            |
+
 ```bash
 # Top 20 gainers today
 webull-skill market-data --action stock-gainers-losers \
@@ -113,6 +161,111 @@ webull-skill market-data --action stock-most-active --rank-type VOLUME
 
 # Most active by relative volume (10-day)
 webull-skill market-data --action stock-most-active --rank-type RELATIVE_VOLUME_10D
+```
+
+```bash
+# Get all market sectors overview
+webull-skill market-data --action stock-market-sectors --category US_STOCK --period D1
+
+# Get stocks in a specific sector
+webull-skill market-data --action stock-market-sectors-detail --sector-id 10001 --page-size 20
+
+# High dividend stocks
+webull-skill market-data --action stock-high-dividend --category US_STOCK --page-size 20
+
+# 52-week new highs
+webull-skill market-data --action stock-52-week-high-low --rank-type NEW_HIGH --direction DESC
+```
+
+## Fundamentals (US, HK, JP)
+
+Fundamental data including financials, capital flow, industry comparison, SEC filings, earnings/dividend calendars, and ETF/fund data.
+
+### Stock Fundamentals
+
+| Action | Description | Key Options |
+|--------|-------------|-------------|
+| `fundamentals-capital-flow` | Capital flow distribution | `--symbol AAPL --fundamental-count 5` |
+| `fundamentals-industry-comparison` | Industry peer comparison (up to 20 stocks) | `--symbol AAPL --sort-by EPS_TTM` |
+| `fundamentals-sec-filings` | SEC filings (US only, last 3 years) | `--symbol AAPL` |
+| `fundamentals-earnings-calendar` | Earnings calendar (±6 months) | `--symbol AAPL` |
+| `fundamentals-dividend-calendar` | Dividend calendar (±6 months) | `--symbol AAPL` |
+| `fundamentals-forecast-eps` | Forecast EPS (last 4 actual + consensus estimate) | `--symbol AAPL` |
+
+### Financial Statements
+
+| Action | Description | Key Options |
+|--------|-------------|-------------|
+| `fundamentals-financials-indicators` | Key financial indicators | `--symbol TSLA --financial-type QUARTERLY --fundamental-count 5` |
+| `fundamentals-financials-income` | Income statement | `--symbol TSLA --financial-type ANNUAL --fundamental-count 5` |
+| `fundamentals-financials-cashflow` | Cashflow statement | `--symbol TSLA --financial-type QUARTERLY` |
+| `fundamentals-financials-balance-sheet` | Balance sheet | `--symbol TSLA --financial-type ANNUAL` |
+| `fundamentals-financials-alert` | Upcoming earnings alert | `--symbol TSLA` |
+
+### Fund / ETF Data
+
+| Action | Description | Key Options |
+|--------|-------------|-------------|
+| `fundamentals-fund-brief` | Fund brief information | `--symbol QQQ` |
+| `fundamentals-fund-allocation` | Fund asset allocation | `--symbol QQQ` |
+| `fundamentals-fund-holdings` | Fund top 10 holdings | `--symbol QQQ` |
+| `fundamentals-fund-performance` | Fund performance | `--symbol QQQ` |
+| `fundamentals-fund-rating` | Fund rating | `--symbol QQQ` |
+| `fundamentals-fund-net-value` | Fund net value history | `--symbol QQQ --last-date 2026-04-01 --fundamental-count 10` |
+| `fundamentals-fund-dividends` | Fund dividend history | `--symbol QQQ --page-index 1 --page-size 10` |
+| `fundamentals-fund-splits` | Fund split history | `--symbol QQQ` |
+| `fundamentals-fund-files` | Fund documents/files | `--symbol QQQ` |
+
+### Fundamentals Common Options
+
+| Option | Required | Description |
+|--------|----------|-------------|
+| `--symbol` | Yes | Security symbol, e.g. AAPL, QQQ |
+| `--category` | No | Default `US_STOCK`. Supported varies by action (see below) |
+| `--fundamental-count` | No | Number of records (default: API default of 5, max 20) |
+| `--financial-type` | No | `ANNUAL` or `QUARTERLY` (default `QUARTERLY`). For financial statement actions only |
+| `--last-date` | No | Last query date for fund-net-value, e.g. `2026-04-01` |
+| `--sort-by` | No | Sort field for industry-comparison. Values: `EPS_TTM`, `NAPS`, `DPS_TTM`, `ROE`, `DEBT_TO_ASSETS`, `NET_MARGIN`, `DIV_YIELD_TTM`, `PE_TTM`, `PB_RATIO` |
+
+```bash
+# Capital flow for AAPL (last 3 records)
+webull-skill market-data --action fundamentals-capital-flow --symbol AAPL --fundamental-count 3
+
+# Industry comparison sorted by PE ratio
+webull-skill market-data --action fundamentals-industry-comparison --symbol AAPL --sort-by PE_TTM
+
+# SEC filings
+webull-skill market-data --action fundamentals-sec-filings --symbol AAPL
+
+# Earnings calendar
+webull-skill market-data --action fundamentals-earnings-calendar --symbol TSLA
+
+# Dividend calendar
+webull-skill market-data --action fundamentals-dividend-calendar --symbol AAPL
+
+# Forecast EPS (last 4 quarters actual + next quarter estimate)
+webull-skill market-data --action fundamentals-forecast-eps --symbol AAPL
+
+# Quarterly income statement (last 4 quarters)
+webull-skill market-data --action fundamentals-financials-income --symbol TSLA \
+  --financial-type QUARTERLY --fundamental-count 4
+
+# Annual balance sheet
+webull-skill market-data --action fundamentals-financials-balance-sheet --symbol AAPL \
+  --financial-type ANNUAL --fundamental-count 5
+
+# Fund brief
+webull-skill market-data --action fundamentals-fund-brief --symbol QQQ
+
+# Fund top holdings
+webull-skill market-data --action fundamentals-fund-holdings --symbol SPY
+
+# Fund net value (paginated by date)
+webull-skill market-data --action fundamentals-fund-net-value --symbol QQQ \
+  --last-date 2026-04-01 --fundamental-count 10
+
+# Fund dividends
+webull-skill market-data --action fundamentals-fund-dividends --symbol QQQ --page-size 10
 ```
 
 ## Watchlist (US, HK, JP)
