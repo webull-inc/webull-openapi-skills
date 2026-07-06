@@ -10,7 +10,7 @@
 
 ### US Region
 
-| Type | Production | UAT/Test |
+| Type | Production | UAT |
 |------|-----------|----------|
 | HTTP API | `api.webull.com` | `us-openapi-alb.uat.webullbroker.com` |
 | Trading Events (gRPC) | `events-api.webull.com` | `us-openapi-events.uat.webullbroker.com` |
@@ -18,7 +18,7 @@
 
 ### HK Region
 
-| Type | Production | Sandbox |
+| Type | Production | UAT |
 |------|-----------|---------|
 | HTTP API | `api.webull.hk` | `api.sandbox.webull.hk` |
 | Trading Events (gRPC) | `events-api.webull.hk` | `events-api.sandbox.webull.hk` |
@@ -26,25 +26,97 @@
 
 ### JP Region
 
-| Type | Production | UAT/Test |
+| Type | Production | UAT |
 |------|-----------|----------|
 | HTTP API | `api.webull.co.jp` | `jp-openapi-alb.uat.webullbroker.com` |
 | Trading Events (gRPC) | `events-api.webull.co.jp` | `jp-openapi-events.uat.webullbroker.com` |
 | Market Data (MQTT) | `data-api.webull.co.jp` | `data-api.uat.webullbroker.com` |
 
+### SG Region
+
+| Type | Production | UAT |
+|------|-----------|----------|
+| HTTP API | `api.webull.com.sg` | `sg-api.uat.webullbroker.com` |
+| Trading Events (gRPC) | `events-api.webull.com.sg` | `sg-events-api.uat.webullbroker.com` |
+| Market Data (MQTT) | `data-api.webull.com.sg` | `data-api.uat.webullbroker.com` |
+
+### TH Region
+
+| Type | Production | UAT |
+|------|-----------|----------|
+| HTTP API | `api.webull.co.th` | `th-api.uat.webullbroker.com` |
+| Trading Events (gRPC) | `events-api.webull.co.th` | `th-events-api.uat.webullbroker.com` |
+| Market Data (MQTT) | `data-api.webull.co.th` | `th-api.uat.webullbroker.com` |
+
+### MY Region
+
+| Type | Production | UAT |
+|------|-----------|----------|
+| HTTP API | `api.webull.com.my` | `my-api.uat.webullbroker.com` |
+| Trading Events (gRPC) | `events-api.webull.com.my` | `my-events-api.uat.webullbroker.com` |
+| Market Data (MQTT) | `data-api.webull.com.my` | `my-api.uat.webullbroker.com` |
+
+### UK Region
+
+| Type | Production | UAT |
+|------|-----------|----------|
+| HTTP API | `api.webull-uk.com` | `uk-api.uat.webullbroker.com` |
+| Trading Events (gRPC) | `events-api.webull-uk.com` | `uk-events-api.uat.webullbroker.com` |
+| Market Data (MQTT) | `data-api.webull-uk.com` | `uk-api.uat.webullbroker.com` |
+
+### MX Region
+
+| Type | Production | UAT |
+|------|-----------|----------|
+| HTTP API | `api.webull.com.mx` | `us-openapi-alb.uat.webullbroker.com` |
+| Trading Events (gRPC) | `events-api.webull.com.mx` | `us-openapi-events.uat.webullbroker.com` |
+| Market Data (MQTT) | `data-api.webull.com.mx` | `us-openapi-quotes-api.uat.webullbroker.com` |
+
+### BR Region
+
+| Type | Production | UAT |
+|------|-----------|----------|
+| HTTP API | `api.webull.com.br` | `us-openapi-alb.uat.webullbroker.com` |
+| Trading Events (gRPC) | `events-api.webull.com.br` | `us-openapi-events.uat.webullbroker.com` |
+| Market Data (MQTT) | `data-api.webull.com.br` | `us-openapi-quotes-api.uat.webullbroker.com` |
+
+### EU Region
+
+| Type | Production | UAT |
+|------|-----------|----------|
+| HTTP API | `api.webull.eu` | `eu-api.uat.webullbroker.com` |
+| Trading Events (gRPC) | `events-api.webull.eu` | `eu-events-api.uat.webullbroker.com` |
+| Market Data (MQTT) | `api.webull.eu` | `eu-api.uat.webullbroker.com` |
+
+### ZA Region
+
+| Type | Production | UAT |
+|------|-----------|----------|
+| HTTP API | `api.webull.com.au` | `au-api.uat.webullbroker.com` |
+| Trading Events (gRPC) | `events-api.webull.com.au` | `au-events-api.uat.webullbroker.com` |
+| Market Data (MQTT) | `api.webull.com.au` | `au-api.uat.webullbroker.com` |
+
+### AU Region
+
+| Type | Production | UAT |
+|------|-----------|----------|
+| HTTP API | `api.webull.com.au` | `au-api.uat.webullbroker.com` |
+| Trading Events (gRPC) | `events-api.webull.com.au` | `au-events-api.uat.webullbroker.com` |
+| Market Data (MQTT) | `api.webull.com.au` | `au-api.uat.webullbroker.com` |
+
 ## Feature Matrix by Region
 
-| Feature | US | HK | JP |
-|---------|----|----|-----|
-| Stock trading | Yes | Yes (US/HK/CN markets) | Yes (US/JP markets) |
-| Options trading | Yes | Yes (US market only) | No |
-| Futures trading | Yes | No | No |
-| Crypto trading | Yes | No | No |
-| Event contracts | Yes | No | No |
-| Combo orders (OTO/OCO/OTOCO) | Yes | No | No |
-| Algo orders (TWAP/VWAP/POV) | Yes | No | No |
-| Trailing stop loss | Yes | No | No |
-| Fractional shares | Yes (US market) | No | No |
+| Feature | US | HK | JP | SG | TH | MY | UK | MX | BR | EU | ZA | AU |
+|---------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| Stock trading | Yes | Yes (US/HK/CN) | Yes (US/JP) | Yes (US) | Yes (US) | Yes (US) | Yes (US) | Yes (US) | Yes (US) | Yes (US) | Yes (US) | Yes (US) |
+| Options trading | Yes | Yes (US only) | No | No | No | No | No | No | No | No | No | No |
+| Futures trading | Yes | Yes | No | No | No | No | No | No | No | No | No | No |
+| Crypto trading | Yes | No | No | No | No | No | No | No | No | No | No | No |
+| Event contracts | Yes | No | No | No | No | No | No | No | No | No | No | No |
+| Combo orders (OTO/OCO/OTOCO) | Yes | No | No | No | No | No | No | No | No | No | No | No |
+| Algo orders (TWAP/VWAP/POV) | Yes | No | No | No | No | No | No | No | No | No | No | No |
+| Trailing stop loss | Yes | No | No | No | No | No | No | No | No | No | No | No |
+| Fractional shares | Yes (US market) | No | No | No | No | No | No | No | No | No | No | No |
 
 ## Order Types by Market
 
@@ -68,20 +140,21 @@
 
 ## Time in Force
 
-| Value | US | HK | JP |
-|-------|----|----|-----|
-| `DAY` | Yes | Yes | Yes (JP & US markets) |
-| `GTC` | Yes | Yes | Yes (US market only) |
-| `GTD` | Yes | No | No |
-| `IOC` | Yes | No | No |
+| Value | US | HK | JP | SG/TH/MY/UK/MX/BR/EU/ZA/AU |
+|-------|:--:|:--:|:--:|:--:|
+| `DAY` | Yes | Yes | Yes (JP & US markets) | Yes |
+| `GTC` | Yes | Yes | Yes (US market only) | Yes |
+| `GTD` | Yes | No | No | No |
+| `IOC` | Yes | No | No | No |
 
-## Trading Sessions (US only)
+## Trading Sessions
 
-| Value | Description |
-|-------|-------------|
-| `CORE` | Regular hours (9:30 AM - 4:00 PM ET) |
-| `ALL` | Extended hours (pre-market + after-hours) |
-| `NIGHT` | Night session only |
+| Value | Description | Regions |
+|-------|-------------|---------|
+| `CORE` | Regular hours (9:30 AM - 4:00 PM ET) | All |
+| `ALL` | Extended hours (pre-market + after-hours) | All |
+| `NIGHT` | Night session only | All |
+| `ALL_DAY` | Included overnight hours, 8:00 p.m. ET - 8:00 p.m. ET the next day | All except US |
 
 ## Rate Limits
 
@@ -100,11 +173,41 @@
 ### JP Region
 - Instrument lookup: 60 req/min per AppId
 
+### SG / TH / MY / UK / MX / BR Region
+- Market data: 300 req/60s
+- Order place/replace/cancel: 600 req/60s
+- Order query: 2 req/2s
+- Auth: 10 req/30s
+
+### EU / ZA / AU Region
+- Market data: 60 req/60s
+- Order place/replace/cancel: 60 req/60s
+- Order query: 2 req/2s
+- Auth: 10 req/30s
+
 ## Official Documentation
 
 - US: https://developer.webull.com/apis/docs/webull-open-api-reference
 - HK: https://developer.webull.hk/apis/docs/webull-open-api-reference
 - JP: https://developer.webull.co.jp/apis/docs/webull-open-api-reference
+- SG: https://developer.webull.com.sg/apis/docs/
+- TH: https://developer.webull.co.th/apis/docs/
+- MY: https://developer.webull.com.my/apis/docs/
+- UK: https://developer.webull-uk.com/apis/docs/
+- MX: https://developer.webull.com.mx/apis/docs/
+- BR: https://developer.webull.com.br/apis/docs/
+- EU: https://developer.webull.eu/apis/docs/
+- ZA: https://developer.webull.co.za/apis/docs/
+- AU: https://developer.webull.com.au/apis/docs/
 - US LLM: https://developer.webull.com/apis/llms.txt
 - HK LLM: https://developer.webull.hk/apis/llms.txt
 - JP LLM: https://developer.webull.co.jp/apis/llms.txt
+- SG LLM: https://developer.webull.com.sg/apis/llms.txt
+- TH LLM: https://developer.webull.co.th/apis/llms.txt
+- MY LLM: https://developer.webull.com.my/apis/llms.txt
+- UK LLM: https://developer.webull-uk.com/apis/llms.txt
+- MX LLM: https://developer.webull.com.mx/apis/llms.txt
+- BR LLM: https://developer.webull.com.br/apis/llms.txt
+- EU LLM: https://developer.webull.eu/apis/llms.txt
+- ZA LLM: https://developer.webull.co.za/apis/llms.txt
+- AU LLM: https://developer.webull.com.au/apis/llms.txt

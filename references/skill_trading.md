@@ -578,10 +578,10 @@ Natural language "trading session" maps to the order JSON field `support_trading
 
 | Value | Description | Supported Regions |
 |-------|-------------|-------------------|
-| `CORE` | Regular hours (9:30 AM - 4:00 PM ET) | US, HK, JP, SG |
-| `ALL` | Extended hours (pre-market + after-hours) | US, HK, JP, SG |
-| `NIGHT` | Night session only | US, HK, JP, SG |
-| `ALL_DAY` | Included overnight hours, 8:00 p.m. ET - 8:00 p.m. ET the next day | HK, JP, SG |
+| `CORE` | Regular hours (9:30 AM - 4:00 PM ET) | US, HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, AU |
+| `ALL` | Extended hours (pre-market + after-hours) | US, HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, AU |
+| `NIGHT` | Night session only | US, HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, AU |
+| `ALL_DAY` | Included overnight hours, 8:00 p.m. ET - 8:00 p.m. ET the next day | HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, AU |
 
 ## Combo Types (US stocks only)
 
