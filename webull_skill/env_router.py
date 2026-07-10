@@ -32,9 +32,9 @@ _DEFAULT_ROUTES_PATH = Path(__file__).resolve().parent.parent / "conf" / "env_ro
 # ---------------------------------------------------------------------------
 UAT_ENDPOINTS: dict[str, dict[str, str]] = {
     "us": {
-        "api": "us-openapi-alb.uat.webullbroker.com",
-        "quotes-api": "us-openapi-quotes-api.uat.webullbroker.com",
-        "events-api": "us-openapi-events.uat.webullbroker.com",
+        "api": "api.sandbox.webull.com",
+        "quotes-api": "api.sandbox.webull.com",
+        "events-api": "events-api.sandbox.webull.com",
     },
     "hk": {
         "api": "api.sandbox.webull.hk",
@@ -99,7 +99,7 @@ UAT_ENDPOINTS: dict[str, dict[str, str]] = {
 # ---------------------------------------------------------------------------
 DEFAULT_HOSTS: dict[tuple[str, str], str] = {
     ("prod", "us"): "api.webull.com",
-    ("uat", "us"): "us-openapi-alb.uat.webullbroker.com",
+    ("uat", "us"): "api.sandbox.webull.com",
     ("prod", "hk"): "api.webull.hk",
     ("uat", "hk"): "api.sandbox.webull.hk",
     ("uat", "jp"): "jp-openapi-alb.uat.webullbroker.com",
@@ -200,7 +200,7 @@ class EnvRouter:
 
             {
                 "prod/us": "api.webull.com",
-                "uat/us": "us-openapi-alb.uat.webullbroker.com"
+                "uat/us": "api.sandbox.webull.com"
             }
 
         Returns ``None`` when the file does not exist (not an error).

@@ -9,8 +9,8 @@
 - Market data message push: data-api.webull.com
 
 ### Test Environment
-- HTTP API: us-openapi-alb.uat.webullbroker.com
-- Trading message push: us-openapi-events.uat.webullbroker.com
+- HTTP API: api.sandbox.webull.com
+- Trading message push: events-api.sandbox.webull.com
 
 ## Key API Endpoints
 

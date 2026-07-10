@@ -12,9 +12,9 @@
 
 | Type | Production | UAT |
 |------|-----------|----------|
-| HTTP API | `api.webull.com` | `us-openapi-alb.uat.webullbroker.com` |
-| Trading Events (gRPC) | `events-api.webull.com` | `us-openapi-events.uat.webullbroker.com` |
-| Market Data (MQTT) | `data-api.webull.com` | `us-openapi-quotes-api.uat.webullbroker.com` |
+| HTTP API | `api.webull.com` | `api.sandbox.webull.com` |
+| Trading Events (gRPC) | `events-api.webull.com` | `events-api.sandbox.webull.com` |
+| Market Data (MQTT) | `data-api.webull.com` | `api.sandbox.webull.com` |
 
 ### HK Region
 
