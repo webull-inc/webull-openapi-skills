@@ -15,9 +15,11 @@ This skill lets you interact with Webull's trading platform through natural lang
   - Futures → `futures-place`, `futures-replace`
   - Crypto → `crypto-place`
   - Event → `event-place`, `event-replace`
-- **Market Data**: Get real-time snapshots, historical bars, tick data, quotes, and order flow for all asset classes
+- **Market Data**: Get real-time snapshots, historical bars, tick data, quotes, and order flow for all asset classes (stocks, options, futures, crypto, event contracts)
+  - Option market data actions: `option-snapshot`, `option-bars`, `option-tick` (category: US_OPTION, supports US/HK/JP)
 - **Accounts**: List accounts, check balances, view positions
-- **Instruments**: Look up stock, crypto, futures, and event contract instruments; get company profile, analyst ratings, and target prices
+- **Instruments**: Look up stock, crypto, futures, option, and event contract instruments; get company profile, analyst ratings, and target prices
+  - Option contracts: `instrument-option-contracts` (query by underlying symbol, expiry, strike, etc.)
 - **Screener**: Top gainers/losers, most active stocks, market sectors, high dividend, and 52-week high/low
 - **Fundamentals**: Financial statements, capital flow, industry comparison, earnings/dividend calendar, forecast EPS, and fund/ETF data
 - **Watchlist**: Create, manage, and query watchlists and their instruments
@@ -84,7 +86,7 @@ For full action list, order JSON formats, replace rules, and order type referenc
 
 ### market-data
 
-Real-time and historical market data for all asset classes (stock, futures, crypto, event contracts), plus screener, fundamentals, and watchlist.
+Real-time and historical market data for all asset classes (stock, option, futures, crypto, event contracts), plus screener, fundamentals, and watchlist.
 
 For full action list, options, category values, and examples, see [Market Data Guide](references/skill_market_data.md).
 

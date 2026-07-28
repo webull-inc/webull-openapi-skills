@@ -1806,3 +1806,91 @@ def format_high_dividend(data: Any) -> str:
 def format_52whl(data: Any) -> str:
     """Format 52-week high/low rank list response."""
     return _format_generic_list(data, "52-Week High/Low")
+
+
+# ---------------------------------------------------------------------------
+# Option market data formatters
+# ---------------------------------------------------------------------------
+
+def format_option_tick(data: Any) -> str:
+    """Format option tick-by-tick data.
+
+    Expected response: {symbol, instrument_id, result: [{time, price, volume, side}]}
+    """
+    if not data:
+        return _NO_DATA
+
+    if isinstance(data, dict):
+        symbol = _get(data, "symbol")
+        ticks = data.get("result", [])
+        lines: list[str] = [f"=== Option Ticks: {symbol} ==="]
+        lines.append(f"  Instrument ID:   {_get(data, 'instrument_id')}")
+        lines.append(_TICK_HEADER_SIDE)
+        for tick in ticks:
+            lines.append(_format_tick_row_side(tick))
+        return "\n".join(lines)
+
+    lines = ["=== Option Ticks ==="]
+    lines.append(_TICK_HEADER_SHORT)
+    for tick in data:
+        lines.append(_format_tick_row_short(tick))
+    return "\n".join(lines)
+
+
+def format_option_snapshot(data: Any) -> str:
+    """Format option snapshot response.
+
+    Expected response: [{instrument_id, symbol, price, open, high, low, pre_close, volume,
+    change, change_ratio, last_trade_time, close, strike_price, gamma, delta, rho, theta,
+    vega, imp_vol, open_interest, quote_time, bid, ask, ask_size, bid_size, deal_amount}]
+    """
+    if not data:
+        return _NO_DATA
+    if isinstance(data, dict):
+        data = [data]
+    if not isinstance(data, list):
+        return _NO_DATA
+    lines: list[str] = []
+    for snap in data:
+        symbol = _get(snap, 'symbol')
+        lines.append(f"=== Option Snapshot: {symbol} ===")
+        lines.append(f"  Symbol:          {symbol}")
+        lines.append(f"  Instrument ID:   {_get(snap, 'instrument_id')}")
+        lines.append(f"  Strike Price:    {_get(snap, 'strike_price')}")
+        lines.append(f"  Price:           {_get(snap, 'price')}")
+        lines.append(f"  Pre Close:       {_get(snap, 'pre_close')}")
+        lines.append(f"  Change:          {_get(snap, 'change')}")
+        lines.append(f"  Change %:        {_get(snap, 'change_ratio')}")
+        lines.append(f"  Open:            {_get(snap, 'open')}")
+        lines.append(f"  High:            {_get(snap, 'high')}")
+        lines.append(f"  Low:             {_get(snap, 'low')}")
+        lines.append(f"  Close:           {_get(snap, 'close')}")
+        lines.append(f"  Volume:          {_get(snap, 'volume')}")
+        lines.append(f"  Open Interest:   {_get(snap, 'open_interest')}")
+        lines.append(f"  Deal Amount:     {_get(snap, 'deal_amount')}")
+        lines.append(f"  Bid:             {_get(snap, 'bid')} x {_get(snap, 'bid_size')}")
+        lines.append(f"  Ask:             {_get(snap, 'ask')} x {_get(snap, 'ask_size')}")
+        lines.append(f"  Last Trade Time: {_get(snap, 'last_trade_time')}")
+        lines.append(f"  Quote Time:      {_get(snap, 'quote_time')}")
+        # Greeks
+        lines.append("")
+        lines.append("  [Greeks]")
+        lines.append(f"  IV:              {_get(snap, 'imp_vol')}")
+        lines.append(f"  Delta:           {_get(snap, 'delta')}")
+        lines.append(f"  Gamma:           {_get(snap, 'gamma')}")
+        lines.append(f"  Theta:           {_get(snap, 'theta')}")
+        lines.append(f"  Vega:            {_get(snap, 'vega')}")
+        lines.append(f"  Rho:             {_get(snap, 'rho')}")
+        lines.append("")
+    return "\n".join(lines).rstrip()
+
+
+def format_option_bars(data: Any) -> str:
+    """Format option OHLCV bar data.
+
+    Expected response: {result: [{symbol, instrument_id, result: [{time, open, close, high, low, volume}]}]}
+    """
+    # Unwrap outer {result: [...]} envelope
+    if isinstance(data, dict) and "result" in data:
+        data = data["result"]
+    return _format_bars_data(data, "Option Bars (OHLCV)")

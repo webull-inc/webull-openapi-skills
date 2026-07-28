@@ -298,3 +298,64 @@ def get_analyst_target_price(
         return prepend_disclaimer(format_analyst_target_price(data))
     except Exception as e:
         return handle_sdk_exception(e, "get_analyst_target_price")
+
+
+def get_option_contracts(
+    sdk: "SDKClient",
+    underlying_symbols: Optional[str] = None,
+    category: str = "US_OPTION",
+    status: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    root_symbol: Optional[str] = None,
+    option_symbol: Optional[str] = None,
+    option_type: Optional[str] = None,
+    style: Optional[str] = None,
+    strike_price_gte: Optional[float] = None,
+    strike_price_lte: Optional[float] = None,
+    ppind: Optional[str] = None,
+    show_deliverables: Optional[str] = None,
+    page_size: int = 10,
+    last_instrument_id: Optional[str] = None,
+) -> str:
+    """Query option contract list by underlying symbols, status, and other attributes.
+
+    :param underlying_symbols: Underlying symbol(s), comma-separated. e.g. AAPL,MSFT.
+    :param category: Market category. Value: US_OPTION.
+    :param status: Contract status: LISTING (default), DELISTING.
+    :param start_date: Expiration date exact match, format YYYY-MM-DD.
+    :param end_date: Expiration date lower bound (inclusive), format YYYY-MM-DD.
+    :param root_symbol: Root symbol filter (series symbol, e.g. SPXW).
+    :param option_symbol: Option symbol, e.g. AAPL250620C00150000.
+    :param option_type: Contract type: CALL / PUT.
+    :param style: Exercise style: AMERICAN / EUROPEAN.
+    :param strike_price_gte: Strike price lower bound (inclusive).
+    :param strike_price_lte: Strike price upper bound (inclusive).
+    :param ppind: Penny Program Indicator: true / false.
+    :param show_deliverables: Return deliverables array: true / false.
+    :param page_size: Page size, default 10, max 1000.
+    :param last_instrument_id: Last instrument_id from previous page for pagination.
+    Returns: option contract static information.
+    """
+    try:
+        kwargs = _build_kwargs(
+            {"category": category},
+            underlying_symbols=underlying_symbols,
+            status=status,
+            start_date=start_date,
+            end_date=end_date,
+            root_symbol=root_symbol,
+            option_symbol=option_symbol,
+            option_type=option_type,
+            style=style,
+            strike_price_gte=strike_price_gte,
+            strike_price_lte=strike_price_lte,
+            ppind=ppind,
+            show_deliverables=show_deliverables,
+            page_size=page_size if page_size != 10 else None,
+            last_instrument_id=last_instrument_id,
+        )
+        data = extract_response_data(sdk.data.instrument.get_option_contracts(**kwargs))
+        return prepend_disclaimer(format_instruments(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "get_option_contracts")

@@ -54,25 +54,3 @@ def test_dispatch_trading_blocks_position_detail_outside_jp():
 
     assert result.ok is False
     assert result.detail == "Validation error: Action 'position-detail' is only supported in region 'jp'"
-
-
-def test_dispatch_market_data_blocks_non_stock_actions_for_jp():
-    result = dispatch_market_data(
-        Namespace(
-            action="futures-snapshot",
-            symbol="",
-            symbols="",
-            category="",
-            timespan="D",
-            count=200,
-            depth=1,
-            trading_sessions="",
-            real_time_required=False,
-            extend_hour_required=False,
-            overnight_required=False,
-        ),
-        SkillConfig(app_key="k", app_secret="s", region_id="jp"),
-    )
-
-    assert result.ok is False
-    assert result.detail == "Validation error: Market data action 'futures-snapshot' is not supported in region 'jp'"

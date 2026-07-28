@@ -16,6 +16,7 @@ Instrument queries, account/asset operations, and all order operations.
 | `instrument-event-list` | Event instruments by series | `--series-symbol <sym>` |
 | `instrument-event-categories` | Event contract categories | |
 | `instrument-event-events` | Events within a series | `--series-symbol <sym>` |
+| `instrument-option-contracts` | Option contract list by underlying symbols | `--symbols AAPL --category US_OPTION` |
 
 ## Instrument Fundamentals (US, HK, JP)
 
@@ -80,6 +81,7 @@ webull-skill trading --action instrument-analyst-target-price --symbol NVDA
 | Action | Description |
 |--------|-------------|
 | `futures-place` | Place futures order |
+| `futures-preview` | Preview futures order without submitting |
 | `futures-replace` | Modify futures order |
 | `crypto-place` | Place crypto order (no replace supported) |
 | `event-place` | Place event contract order |
