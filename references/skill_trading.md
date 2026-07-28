@@ -47,15 +47,26 @@ webull-skill trading --action instrument-analyst-target-price --symbol NVDA
 
 ## Stock Orders
 
+> **⚠️ Action routing by asset type:**
+> - **Stock/ETF** → use `place`, `preview`, `replace`
+> - **Option** → use `option-place`, `option-preview`, `option-replace`, `option-strategy-place`
+> - **Futures** → use `futures-place`, `futures-replace`
+> - **Crypto** → use `crypto-place`
+> - **Event Contract** → use `event-place`, `event-replace`
+>
+> Do NOT use `place` for option/futures/crypto/event orders. Each asset type has its own dedicated action.
+
 | Action | Description |
 |--------|-------------|
-| `place` | Place stock order (single, non-combo) |
-| `preview` | Preview order without submitting |
-| `replace` | Modify existing stock order |
+| `place` | Place stock/ETF order (single, non-combo) |
+| `preview` | Preview stock/ETF order without submitting |
+| `replace` | Modify existing stock/ETF order |
 | `batch-place` | Combo orders (OTO/OCO/OTOCO) — US only |
 | `algo-place` | Algorithmic order (TWAP/VWAP/POV) — US only |
 
 ## Option Orders
+
+> **Use these actions for ALL option trading.** Do NOT use the stock `place` action for options.
 
 | Action | Description |
 |--------|-------------|
@@ -98,6 +109,8 @@ Orders are passed via `--order-json` (inline string) or `--order-file` (path to 
 
 ### Place Order JSON (for `place`, `preview`)
 
+> **Action scope:** The `place` action is for **stock/equity orders only**. For option orders use `option-place`, for futures use `futures-place`, for crypto use `crypto-place`, for event contracts use `event-place`.
+
 > **Type note:** Stock place CLI does `float()` conversion internally, so strings technically work — but for consistency and to avoid issues, always use **number** types for numeric fields.
 
 | Field | Required | JSON Type | Values / Description |
@@ -121,7 +134,7 @@ Orders are passed via `--order-json` (inline string) or `--order-file` (path to 
 | `no_party_ids` | No (HK broker) | array | BCAN party identifiers for HK stock orders (institutional only). See below |
 | `account_tax_type` | JP stock orders | string | JP-only. Required for JP stock `place` / `preview`. Values: `GENERAL`, `SPECIFIC` |
 | `margin_type` | JP margin account only | string | JP-only. `US_MARGIN` accounts only. Values: `ONE_DAY`, `INDEFINITE` |
-| `position_intent` | JP margin account only | string | JP-only. `US_MARGIN` accounts only. Values: `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE` |
+| `position_intent` | JP margin account only | string | For stock orders: JP-only, `US_MARGIN` accounts only. For option orders, use `option-place` instead (US only). Values: `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE` |
 | `close_contracts` | No (JP only) | array | JP-only close payload. Max 10 `{ "contract_id": "...", "quantity": ... }` items |
 
 > **`quantity` vs `total_cash_amount`:** These two fields are mutually exclusive.
@@ -235,7 +248,7 @@ JP margin-account example:
 | `quantity` | Yes | number (int) | Number of contracts, e.g. `1` — NOT `"1"` |
 | `limit_price` | Conditional | number (float) | Required for `LIMIT` orders, e.g. `11.25` — NOT `"11.25"` |
 | `stop_price` | Conditional | number (float) | Required for `STOP_LOSS` orders |
-| `position_intent` | No | string | Position strategy (US only). `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE`. Must match `side` |
+| `position_intent` | No | string | Position strategy (US only). `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE`. Must match `side`. For combo orders, only set on the MASTER order |
 | `sender_sub_id` | No (HK broker) | string | Broker user UUID (HK region, institutional only). No BCAN needed for options |
 
 Option single-leg example:

@@ -12,7 +12,7 @@ import uuid
 from typing import TYPE_CHECKING, Optional
 
 from webull_skill.errors import ValidationError, handle_sdk_exception
-from webull_skill.formatters import prepend_disclaimer, extract_response_data
+from webull_skill.formatters import prepend_disclaimer, extract_response_data, format_decimal
 from webull_skill.guards import validate_client_order_id, validate_stock_order
 from webull_skill.trading.account import resolve_account_id
 
@@ -64,13 +64,13 @@ def _build_crypto_order(
         "client_order_id": coid,
     }
     if entrust_type == "AMOUNT" and total_cash_amount is not None:
-        order["total_cash_amount"] = str(total_cash_amount)
+        order["total_cash_amount"] = format_decimal(total_cash_amount)
     elif quantity is not None:
-        order["quantity"] = str(quantity)
+        order["quantity"] = format_decimal(quantity)
     if limit_price is not None:
-        order["limit_price"] = str(limit_price)
+        order["limit_price"] = format_decimal(limit_price)
     if stop_price is not None:
-        order["stop_price"] = str(stop_price)
+        order["stop_price"] = format_decimal(stop_price)
     return order
 
 
@@ -123,6 +123,8 @@ def place_crypto_order(
         }
         if limit_price is not None:
             params["limit_price"] = limit_price
+        if stop_price is not None:
+            params["stop_price"] = stop_price
         try:
             validate_stock_order(params, config)
         except ValidationError as e:

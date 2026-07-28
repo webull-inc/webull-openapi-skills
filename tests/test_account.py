@@ -22,12 +22,12 @@ def test_resolve_jp_stock_account_uses_account_type_not_label():
             {
                 "account_id": "jp-margin",
                 "account_type": "US_MARGIN",
-                "account_label": "Unexpected Label",
+                "account_class": "INDIVIDUAL_MARGIN",
             },
             {
                 "account_id": "other",
                 "account_type": "FX",
-                "account_label": "Individual Cash",
+                "account_class": "INDIVIDUAL_CASH",
             },
         ],
     )
@@ -42,12 +42,12 @@ def test_resolve_jp_stock_account_rejects_invalid_account_type():
             {
                 "account_id": "bad-account",
                 "account_type": "FX",
-                "account_label": "Individual Cash",
+                "account_class": "INDIVIDUAL_CASH",
             },
             {
                 "account_id": "jp-cash",
                 "account_type": "CASH",
-                "account_label": "Anything",
+                "account_class": "INDIVIDUAL_CASH",
             },
         ],
     )
@@ -63,12 +63,12 @@ def test_resolve_account_id_accepts_int_explicit_account_id():
             {
                 "account_id": "123",
                 "account_type": "CASH",
-                "account_label": "Individual Cash",
+                "account_class": "INDIVIDUAL_CASH",
             },
             {
                 "account_id": "456",
                 "account_type": "CASH",
-                "account_label": "Roth IRA",
+                "account_class": "ROTH_IRA",
             },
         ],
     )
@@ -83,12 +83,12 @@ def test_resolve_account_id_rejects_unknown_explicit_account_id():
             {
                 "account_id": "123",
                 "account_type": "CASH",
-                "account_label": "Individual Cash",
+                "account_class": "INDIVIDUAL_CASH",
             },
             {
                 "account_id": "456",
                 "account_type": "CASH",
-                "account_label": "Roth IRA",
+                "account_class": "ROTH_IRA",
             },
         ],
     )
