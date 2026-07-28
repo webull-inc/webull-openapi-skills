@@ -9,7 +9,12 @@ This skill lets you interact with Webull's trading platform through natural lang
 
 ## What You Can Do
 
-- **Trade**: Place, preview, modify, and cancel orders for stocks, options, futures, crypto, and event contracts
+- **Trade**: Place, preview, modify, and cancel orders for stocks, options, futures, crypto, and event contracts. Each asset type has dedicated actions:
+  - Stock/ETF → `place`, `preview`, `replace`
+  - Option → `option-place`, `option-preview`, `option-replace`, `option-strategy-place`
+  - Futures → `futures-place`, `futures-replace`
+  - Crypto → `crypto-place`
+  - Event → `event-place`, `event-replace`
 - **Market Data**: Get real-time snapshots, historical bars, tick data, quotes, and order flow for all asset classes
 - **Accounts**: List accounts, check balances, view positions
 - **Instruments**: Look up stock, crypto, futures, and event contract instruments; get company profile, analyst ratings, and target prices
@@ -212,7 +217,7 @@ Optional:
 - US market orders in JP support `LIMIT`, `MARKET`, `STOP_LOSS`, `STOP_LOSS_LIMIT` with `DAY` or `GTC`.
 - JP stock accounts are identified by `account_type`: `CASH` or `US_MARGIN`.
 - `account_tax_type` is required for JP stock `place` and `preview`; valid values are `GENERAL` and `SPECIFIC`.
-- `margin_type` and `position_intent` are valid only for JP `US_MARGIN` accounts.
+- `margin_type` and `position_intent` are valid only for JP `US_MARGIN` accounts (for stock orders). For US option orders, `position_intent` is supported via `option-place`.
 - `close_contracts` is JP-only and accepts up to 10 objects with `contract_id` and positive `quantity`.
 
 ### SG-Specific Notes

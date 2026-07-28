@@ -45,7 +45,7 @@ def _fake_sdk(
     account_type: str,
     *,
     account_id: str = "acct-1",
-    account_label: str = "Anything",
+    account_class: str = "",
     region_id: str = "jp",
 ) -> tuple[object, _FakeOrderV3]:
     order_v3 = _FakeOrderV3()
@@ -54,7 +54,7 @@ def _fake_sdk(
             {
                 "account_id": account_id,
                 "account_type": account_type,
-                "account_label": account_label,
+                "account_class": account_class,
             }
         ]
     )
@@ -157,7 +157,7 @@ def test_place_stock_order_accepts_int_account_id():
     sdk, order_v3 = _fake_sdk(
         "CASH",
         account_id="1",
-        account_label="Individual Cash",
+        account_class="INDIVIDUAL_CASH",
         region_id="us",
     )
     result = place_stock_order(
@@ -180,7 +180,7 @@ def test_place_stock_order_accepts_int_account_id():
 def test_place_stock_order_uses_support_trading_session_payload_field():
     sdk, order_v3 = _fake_sdk(
         "CASH",
-        account_label="Individual Cash",
+        account_class="INDIVIDUAL_CASH",
         region_id="us",
     )
     result = place_stock_order(

@@ -59,6 +59,28 @@ def set_disclaimer_region(region_id: str) -> None:
 _NO_DATA = "No data available."
 
 
+def format_decimal(value: float | int | None) -> str:
+    """Convert a numeric value to a plain decimal string without scientific notation.
+
+    Uses Decimal to ensure values like 0.00005 are output as '0.00005' instead of '5e-05'.
+    Returns empty string for None.
+    """
+    if value is None:
+        return ""
+    from decimal import Decimal, InvalidOperation
+    try:
+        d = Decimal(str(value))
+        # normalize() removes trailing zeros but may produce scientific notation for integers
+        # Use fixed-point format to avoid that
+        normalized = d.normalize()
+        # If exponent is positive (e.g. 1E+1), use to_integral_value or format with 'f'
+        if normalized.as_tuple().exponent > 0:
+            return format(normalized, 'f')
+        return str(normalized)
+    except (InvalidOperation, ValueError):
+        return str(value)
+
+
 def prepend_disclaimer(content: str) -> str:
     """Prepend the region-appropriate disclaimer to *content*."""
     return DISCLAIMER + content

@@ -11,7 +11,7 @@ import uuid
 from typing import TYPE_CHECKING, Optional
 
 from webull_skill.errors import ValidationError, handle_sdk_exception
-from webull_skill.formatters import prepend_disclaimer, extract_response_data
+from webull_skill.formatters import prepend_disclaimer, extract_response_data, format_decimal
 from webull_skill.guards import validate_client_order_id
 from webull_skill.trading.account import normalize_account_id, resolve_account_id
 
@@ -57,8 +57,8 @@ def _build_event_order(
         "side": side,
         "order_type": order_type,
         "time_in_force": time_in_force,
-        "quantity": str(quantity),
-        "limit_price": str(limit_price),
+        "quantity": format_decimal(quantity),
+        "limit_price": format_decimal(limit_price),
         "entrust_type": "QTY",
         "client_order_id": coid,
         "event_outcome": event_outcome,
@@ -136,9 +136,9 @@ def replace_event_order(
     account_id = normalize_account_id(account_id) or ""
     modify_order: dict = {"client_order_id": client_order_id}
     if quantity is not None:
-        modify_order["quantity"] = str(quantity)
+        modify_order["quantity"] = format_decimal(quantity)
     if limit_price is not None:
-        modify_order["limit_price"] = str(limit_price)
+        modify_order["limit_price"] = format_decimal(limit_price)
 
     try:
         response = sdk.trade.order_v3.replace_order(

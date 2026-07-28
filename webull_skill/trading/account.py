@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from webull_skill.constants import ASSET_TYPE_ACCOUNT_LABELS, JP_STOCK_ACCOUNT_TYPES
+from webull_skill.constants import JP_STOCK_ACCOUNT_TYPES
 from webull_skill.errors import handle_sdk_exception
 from webull_skill.formatters import (
     extract_response_data,
@@ -70,11 +70,11 @@ def get_account_by_id(sdk: "SDKClient", account_id: str) -> dict | None:
 def _validate_explicit_account(
     accounts: list[dict],
     account_id: str,
-    valid_labels: set[str],
+    valid_labels: frozenset[str] | None,
     asset_type: str,
     region_id: str = "",
 ) -> None:
-    """Validate an explicitly provided account_id against the required labels."""
+    """Validate an explicitly provided account_id against the required classes."""
     normalized_account_id = normalize_account_id(account_id)
     for acct in accounts:
         if normalize_account_id(acct.get("account_id")) == normalized_account_id:
@@ -88,12 +88,15 @@ def _validate_explicit_account(
                         f"Required account_type values: {expected}."
                     )
                 return
-            label = acct.get("account_label", "")
-            if label and label not in valid_labels:
+            # Skip class validation if no mapping for this asset_type in this region
+            if valid_labels is None:
+                return
+            account_class = acct.get("account_class", "")
+            if account_class and account_class not in valid_labels:
                 expected = ", ".join(sorted(valid_labels))
                 raise ValueError(
-                    f"Account '{account_id}' (label: {label}) does not support {asset_type} trading. "
-                    f"Required account types: {expected}. "
+                    f"Account '{account_id}' (account_class: {account_class}) does not support {asset_type} trading. "
+                    f"Required account classes: {expected}. "
                     f"Please use get_account_list to find the correct account."
                 )
             return
@@ -106,21 +109,27 @@ def _validate_explicit_account(
 
 def _auto_select_account(
     accounts: list[dict],
-    valid_labels: set[str],
+    valid_labels: frozenset[str] | None,
     asset_type: str,
     region_id: str = "",
 ) -> str:
-    """Auto-select an account matching the required labels."""
+    """Auto-select an account matching the required classes."""
     if _is_jp_stock_asset(region_id, asset_type):
         matching = [
             acct for acct in accounts
             if acct.get("account_type", "") in JP_STOCK_ACCOUNT_TYPES
         ]
-    else:
+    elif valid_labels is not None:
         matching = [
             acct for acct in accounts
-            if acct.get("account_label", "") in valid_labels
+            if acct.get("account_class", "") in valid_labels
         ]
+    else:
+        # No class mapping for this asset type in this region — cannot auto-select
+        raise ValueError(
+            f"Cannot auto-select account for {asset_type} trading in this region. "
+            f"Please specify account_id explicitly."
+        )
 
     if len(matching) == 1:
         account_id = normalize_account_id(matching[0].get("account_id"))
@@ -131,7 +140,7 @@ def _auto_select_account(
     if len(matching) > 1:
         acct_list = ", ".join(
             f"{normalize_account_id(a.get('account_id')) or a.get('account_id')} "
-            f"({a.get('account_type') or a.get('account_label', 'N/A')})"
+            f"({a.get('account_type') or a.get('account_class', 'N/A')})"
             for a in matching
         )
         raise ValueError(
@@ -142,11 +151,11 @@ def _auto_select_account(
     expected = (
         ", ".join(sorted(JP_STOCK_ACCOUNT_TYPES))
         if _is_jp_stock_asset(region_id, asset_type)
-        else ", ".join(sorted(valid_labels))
+        else ", ".join(sorted(valid_labels)) if valid_labels else asset_type
     )
     raise ValueError(
         f"No account found for {asset_type} trading. "
-        f"Required account types: {expected}."
+        f"Required account classes: {expected}."
     )
 
 
@@ -161,11 +170,20 @@ def resolve_account_id(
     - If not provided, auto-selects the first matching account.
     - For single-account setups (e.g., HK region), uses that account directly.
     """
-    valid_labels = ASSET_TYPE_ACCOUNT_LABELS.get(asset_type)
-    if valid_labels is None:
-        raise ValueError(f"Unknown asset_type '{asset_type}'")
-    account_id = normalize_account_id(account_id)
+    from webull_skill.region_config import get_region_config
+
     region_id = _sdk_region_id(sdk)
+    try:
+        region_config = get_region_config(region_id)
+    except Exception:
+        region_config = None
+
+    # Get valid account classes from region config
+    valid_labels: frozenset[str] | None = None
+    if region_config and region_config.asset_type_account_classes:
+        valid_labels = region_config.asset_type_account_classes.get(asset_type)
+
+    account_id = normalize_account_id(account_id)
 
     response = sdk.trade.account_v2.get_account_list()
     accounts = extract_response_data(response)

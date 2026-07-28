@@ -24,6 +24,7 @@ from webull_skill.errors import ValidationError, handle_sdk_exception
 from webull_skill.formatters import (
     prepend_disclaimer,
     extract_response_data,
+    format_decimal,
     format_order_preview,
 )
 from webull_skill.guards import validate_stock_order, validate_client_order_id
@@ -57,9 +58,9 @@ def _format_order_result(data: dict) -> str:
 
 
 def _add_optional_str(order: dict, key: str, value: Any) -> None:
-    """Add a value to order dict as string if not None."""
+    """Add a value to order dict as decimal string if not None."""
     if value is not None:
-        order[key] = str(value)
+        order[key] = format_decimal(value)
 
 
 def _is_present(value: Any) -> bool:
@@ -112,7 +113,7 @@ def _normalize_close_contracts(close_contracts: Any) -> list[dict] | None:
             )
         normalized.append({
             "contract_id": str(contract_id),
-            "quantity": str(quantity),
+            "quantity": format_decimal(quantity_value),
         })
 
     return normalized
@@ -216,9 +217,9 @@ def _build_stock_order(params: dict) -> dict:
         "side": params["side"],
     }
     if entrust_type == "AMOUNT" and params.get("total_cash_amount") is not None:
-        order["total_cash_amount"] = str(params["total_cash_amount"])
+        order["total_cash_amount"] = format_decimal(params["total_cash_amount"])
     else:
-        order["quantity"] = str(params["quantity"])
+        order["quantity"] = format_decimal(params["quantity"])
     _add_optional_str(order, "limit_price", params.get("limit_price"))
     _add_optional_str(order, "stop_price", params.get("stop_price"))
     if params.get("extended_hours"):
@@ -247,7 +248,7 @@ def _build_option_order(
         "client_order_id": coid,
         "combo_type": "NORMAL",
         "order_type": order_type,
-        "quantity": str(quantity),
+        "quantity": format_decimal(quantity),
         "option_strategy": "SINGLE",
         "side": side,
         "time_in_force": time_in_force,
@@ -255,9 +256,9 @@ def _build_option_order(
         "legs": [
             {
                 "side": side,
-                "quantity": str(quantity),
+                "quantity": format_decimal(quantity),
                 "symbol": symbol,
-                "strike_price": str(strike_price),
+                "strike_price": format_decimal(strike_price),
                 "option_expire_date": expiration_date,
                 "instrument_type": "OPTION",
                 "option_type": option_type,
@@ -291,7 +292,7 @@ def _build_modify_order(order_args: dict) -> dict:
     modify_order: dict = {"client_order_id": order_args["client_order_id"]}
     for key, (out_key, to_str) in _MODIFY_FIELDS.items():
         if key in order_args:
-            modify_order[out_key] = str(order_args[key]) if to_str else order_args[key]
+            modify_order[out_key] = format_decimal(order_args[key]) if to_str else order_args[key]
     if "close_contracts" in order_args:
         normalized_close_contracts = _normalize_close_contracts(order_args["close_contracts"])
         if normalized_close_contracts is not None:
@@ -491,7 +492,7 @@ def preview_stock_order(
         "support_trading_session": effective_trading_session,
         "time_in_force": time_in_force,
         "side": side,
-        "quantity": str(quantity_value),
+        "quantity": format_decimal(quantity_value),
     }
     _add_optional_str(order, "limit_price", limit_price_value)
     _add_optional_str(order, "stop_price", stop_price_value)
@@ -654,9 +655,9 @@ def preview_option_order(
         "market": market,
         "symbol": symbol,
         "side": side,
-        "quantity": str(quantity),
+        "quantity": format_decimal(quantity),
         "option_type": option_type,
-        "strike_price": str(strike_price),
+        "strike_price": format_decimal(strike_price),
         "option_expire_date": expiration_date,
         "order_type": order_type,
         "time_in_force": time_in_force,
@@ -689,7 +690,7 @@ def _build_combo_leg(order: dict) -> dict:
         "symbol": order["symbol"],
         "side": order["side"],
         "order_type": order["order_type"],
-        "quantity": str(order["quantity"]),
+        "quantity": format_decimal(order["quantity"]),
         "entrust_type": "QTY",
         "time_in_force": order.get("time_in_force", "DAY"),
         "support_trading_session": order.get("support_trading_session", "CORE"),
@@ -782,7 +783,7 @@ def place_algo_order(
         "market": "US",
         "symbol": symbol,
         "side": side,
-        "quantity": str(quantity),
+        "quantity": format_decimal(quantity),
         "algo_type": algo_type,
         "entrust_type": "QTY",
         "client_order_id": coid,

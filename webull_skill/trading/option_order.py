@@ -15,6 +15,7 @@ from webull_skill.errors import ValidationError, handle_sdk_exception
 from webull_skill.formatters import (
     prepend_disclaimer,
     extract_response_data,
+    format_decimal,
     format_order_preview,
 )
 from webull_skill.guards import (
@@ -52,9 +53,9 @@ def _format_order_result(data: dict) -> str:
 
 
 def _add_optional_str(order: dict, key: str, value: Any) -> None:
-    """Add a value to order dict as string if not None."""
+    """Add a value to order dict as decimal string if not None."""
     if value is not None:
-        order[key] = str(value)
+        order[key] = format_decimal(value)
 
 
 def _build_option_order(
@@ -77,7 +78,7 @@ def _build_option_order(
         "client_order_id": coid,
         "combo_type": "NORMAL",
         "order_type": order_type,
-        "quantity": str(quantity),
+        "quantity": format_decimal(quantity),
         "option_strategy": "SINGLE",
         "side": side,
         "time_in_force": time_in_force,
@@ -85,9 +86,9 @@ def _build_option_order(
         "legs": [
             {
                 "side": side,
-                "quantity": str(quantity),
+                "quantity": format_decimal(quantity),
                 "symbol": symbol,
-                "strike_price": str(strike_price),
+                "strike_price": format_decimal(strike_price),
                 "option_expire_date": expiration_date,
                 "instrument_type": "OPTION",
                 "option_type": option_type,
@@ -140,9 +141,9 @@ def _extract_leg_ids(detail: dict | None, quantity: int | None) -> list[dict] | 
                 orig_leg_qty = float(orig_leg_qty_str) if orig_leg_qty_str else None
                 if orig_top_qty and orig_leg_qty and orig_top_qty > 0:
                     ratio = orig_leg_qty / orig_top_qty
-                    entry["quantity"] = str(int(quantity * ratio))
+                    entry["quantity"] = format_decimal(int(quantity * ratio))
                 else:
-                    entry["quantity"] = str(quantity)
+                    entry["quantity"] = format_decimal(quantity)
             result.append(entry)
         return result
     return None
@@ -180,7 +181,7 @@ def _build_strategy_order(
         "symbol": symbol,
     }
     if quantity is not None:
-        order["quantity"] = str(quantity)
+        order["quantity"] = format_decimal(quantity)
     _add_optional_str(order, "limit_price", limit_price)
 
     # Build legs array matching API demo payloads
@@ -189,13 +190,13 @@ def _build_strategy_order(
         inst_type = leg.get("instrument_type", "OPTION")
         leg_dict: dict = {
             "side": leg["side"],
-            "quantity": str(leg["quantity"]),
+            "quantity": format_decimal(leg["quantity"]),
             "symbol": leg["symbol"],
         }
         # Option-specific fields before instrument_type/market
         if inst_type == "OPTION":
             if leg.get("strike_price") is not None:
-                leg_dict["strike_price"] = str(leg["strike_price"])
+                leg_dict["strike_price"] = format_decimal(leg["strike_price"])
             expire = leg.get("option_expire_date") or leg.get("expiration_date")
             if expire:
                 leg_dict["option_expire_date"] = expire
