@@ -35,6 +35,8 @@ TRADING_ACTIONS = [
     "instrument-futures-by-code",
     "instrument-event-series", "instrument-event-list",
     "instrument-event-categories", "instrument-event-events",
+    # Option instrument
+    "instrument-option-contracts",
     # Instrument fundamentals
     "instrument-company-profile", "instrument-analyst-rating",
     "instrument-analyst-target-price",
@@ -45,7 +47,7 @@ TRADING_ACTIONS = [
     "cancel", "open", "history", "detail",
     "option-place", "option-preview", "option-replace",
     "option-strategy-place",
-    "futures-place", "futures-replace",
+    "futures-place", "futures-preview", "futures-replace",
     "crypto-place", "event-place", "event-replace",
     "algo-place", "local-check",
 ]
@@ -55,6 +57,8 @@ MARKET_DATA_ACTIONS = [
     "stock-snapshot", "stock-bars", "stock-batch-bars",
     "stock-tick", "stock-quotes", "stock-footprint",
     "stock-noii-bars", "stock-noii-snapshot",
+    # Option
+    "option-snapshot", "option-bars", "option-tick",
     # Futures
     "futures-snapshot", "futures-bars", "futures-tick",
     "futures-depth", "futures-footprint",
@@ -142,19 +146,6 @@ def _region_trading_error(config: SkillConfig, action: str, category: str) -> st
     if action == "instrument-stock" and category not in _JP_STOCK_INSTRUMENT_CATEGORIES:
         valid = ", ".join(sorted(_JP_STOCK_INSTRUMENT_CATEGORIES))
         return f"Invalid instrument category '{category}' for region 'jp'. Valid values: {valid}"
-    return ""
-
-
-def _region_market_data_error(config: SkillConfig, action: str) -> str:
-    """Return a validation error for unsupported market-data actions."""
-    region_id = config.region_id.lower()
-
-    # Screener and Watchlist are supported across all regions, no restriction needed
-
-    if region_id != "jp":
-        return ""
-    if not action.startswith("stock-") and not action.startswith("watchlist-") and not action.startswith("fundamentals-"):
-        return f"Market data action '{action}' is not supported in region 'jp'"
     return ""
 
 
@@ -307,6 +298,7 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
         get_company_profile,
         get_analyst_rating,
         get_analyst_target_price,
+        get_option_contracts,
     )
     from webull_skill.trading.order import (
         cancel_order,
@@ -327,7 +319,7 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
         replace_option_order,
         place_option_strategy_order,
     )
-    from webull_skill.trading.futures_order import place_futures_order, replace_futures_order
+    from webull_skill.trading.futures_order import place_futures_order, preview_futures_order, replace_futures_order
     from webull_skill.trading.crypto_order import place_crypto_order
     from webull_skill.trading.event_order import place_event_order, replace_event_order
 
@@ -355,6 +347,13 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
         return _wrap_tool_result(get_event_categories(sdk), action)
     if action == "instrument-event-events":
         return _wrap_tool_result(get_event_events(sdk, series_symbol=args.series_symbol), action)
+
+    # -- Option instrument --------------------------------------------------
+    if action == "instrument-option-contracts":
+        return _wrap_tool_result(
+            get_option_contracts(sdk, underlying_symbols=symbols_str or None, category=cat or "US_OPTION"),
+            action,
+        )
 
     # -- Instrument fundamentals --------------------------------------------
     if action == "instrument-company-profile":
@@ -408,7 +407,7 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
         "place", "preview", "replace", "batch-place",
         "option-place", "option-preview", "option-replace",
         "option-strategy-place",
-        "futures-place", "futures-replace",
+        "futures-place", "futures-preview", "futures-replace",
         "crypto-place", "event-place", "event-replace",
         "algo-place", "local-check",
     }
@@ -527,6 +526,15 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
         return _wrap_tool_result(
             place_futures_order(sdk, config, account_id=aid or None, **o), action
         )
+    if action == "futures-preview":
+        if not aid:
+            return failure(detail="--account-id required")
+        if not orders:
+            return failure(detail="No order data provided")
+        o = orders[0]
+        return _wrap_tool_result(
+            preview_futures_order(sdk, aid, config=config, **o), action
+        )
     if action == "futures-replace":
         if not aid:
             return failure(detail="--account-id required")
@@ -615,9 +623,6 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
 def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str | OperationResult:
     """Dispatch a market-data subcommand action. Returns formatted string or OperationResult on error."""
     action = args.action
-    region_error = _region_market_data_error(config, action)
-    if region_error:
-        return failure(detail=f"Validation error: {region_error}")
 
     from webull_skill.market_data.crypto import get_crypto_snapshot, get_crypto_bars
     from webull_skill.market_data.event import (
@@ -672,6 +677,11 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         get_stock_footprint,
         get_stock_noii_bars,
         get_stock_noii_snapshot,
+    )
+    from webull_skill.market_data.option import (
+        get_option_snapshot,
+        get_option_bars,
+        get_option_tick,
     )
     from webull_skill.market_data.watchlist import (
         get_watchlist,
@@ -817,6 +827,25 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         return _wrap_tool_result(
             get_stock_noii_snapshot(sdk, config, symbol=symbol, category=cat or "US_STOCK",
                                     imbalance_action_type=args.imbalance_action_type),
+            action,
+        )
+
+    # Option
+    if action == "option-snapshot":
+        return _wrap_tool_result(
+            get_option_snapshot(sdk, config, symbols_str, category=cat or "US_OPTION"), action,
+        )
+    if action == "option-bars":
+        return _wrap_tool_result(
+            get_option_bars(sdk, config, symbols_str, category=cat or "US_OPTION",
+                            timespan=args.timespan, count=args.count,
+                            real_time_required=args.real_time_required),
+            action,
+        )
+    if action == "option-tick":
+        return _wrap_tool_result(
+            get_option_tick(sdk, config, symbol, category=cat or "US_OPTION",
+                            count=args.count),
             action,
         )
 

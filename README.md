@@ -20,7 +20,7 @@ See [DISCLAIMER.md](DISCLAIMER.md) for the full disclaimer.
 ## Features
 
 - **Multi-Region Support** — US, HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, and AU regions with region-specific order types, trading sessions, and validation
-- **Market Data** — Real-time snapshots, tick data, quotes (depth), footprint, and OHLCV bars for stocks, futures, crypto, and event contracts
+- **Market Data** — Real-time snapshots, tick data, quotes (depth), footprint, and OHLCV bars for stocks, options, futures, crypto, and event contracts
 - **Trading** — Place, modify, cancel orders for stocks, options, futures, crypto, and event contracts
 - **Combo Orders** — OTO, OCO, OTOCO combo orders (US only)
 - **Option Strategies** — Multi-leg option strategies: vertical, straddle, strangle, butterfly, condor, etc. (US only)
@@ -268,6 +268,7 @@ See [.env.example](.env.example) for the full configuration template.
 | Category | Actions | Region |
 |----------|---------|--------|
 | **Stock** | `stock-snapshot`, `stock-bars`, `stock-batch-bars`, `stock-tick`, `stock-quotes`, `stock-footprint` | US, HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, AU |
+| **Option** | `option-snapshot`, `option-bars`, `option-tick` | US, HK, JP (category: US_OPTION) |
 | **Futures** | `futures-snapshot`, `futures-bars`, `futures-tick`, `futures-depth`, `futures-footprint` | US, HK |
 | **Crypto** | `crypto-snapshot`, `crypto-bars` | US |
 | **Event** | `event-snapshot`, `event-depth`, `event-bars`, `event-tick` | US |
@@ -282,12 +283,12 @@ See [.env.example](.env.example) for the full configuration template.
 |----------|---------|--------|
 | **Account** | `account-list` | US, HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, AU |
 | **Assets** | `balance`, `position`, `position-detail` (position details by instrument, JP only) | US, HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, AU |
-| **Instrument** | `instrument-stock`, `instrument-crypto`, `instrument-futures-products`, `instrument-futures-list`, `instrument-futures-by-code`, `instrument-event-series`, `instrument-event-list`, `instrument-event-categories`, `instrument-event-events` | varies |
+| **Instrument** | `instrument-stock`, `instrument-crypto`, `instrument-futures-products`, `instrument-futures-list`, `instrument-futures-by-code`, `instrument-option-contracts`, `instrument-event-series`, `instrument-event-list`, `instrument-event-categories`, `instrument-event-events` | varies |
 | **Stock Order** | `place`, `preview`, `replace` | US, HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, AU |
 | **Combo Order** | `batch-place` (OTO/OCO/OTOCO) | US |
 | **Option Order** | `option-place`, `option-preview`, `option-replace`, `option-strategy-place` | US, HK |
 | **Algo Order** | `algo-place` (TWAP/VWAP/POV) | US |
-| **Futures Order** | `futures-place`, `futures-replace` | US, HK |
+| **Futures Order** | `futures-place`, `futures-preview`, `futures-replace` | US, HK |
 | **Crypto Order** | `crypto-place` | US |
 | **Event Order** | `event-place`, `event-replace` | US |
 | **Order Mgmt** | `cancel`, `open`, `history`, `detail`, `local-check` | US, HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, AU |
@@ -460,7 +461,7 @@ webull-openapi-skills/
 │   ├── result.py               # Structured JSON output
 │   ├── runtime.py              # SDK logging control
 │   ├── trading/                # Account, asset, instrument, order modules
-│   └── market_data/            # Stock, futures, crypto, event modules
+│   └── market_data/            # Stock, option, futures, crypto, event modules
 ├── references/                 # API reference docs
 ├── tests/                      # Unit tests
 └── conf/                       # Token storage (gitignored)
@@ -470,90 +471,83 @@ webull-openapi-skills/
 
 ## Using with AI Coding Tools
 
-This skill works as an MCP server. Below is how to integrate it with popular AI coding tools.
+This repository is an [Agent Skill](https://agentskills.io) — the root [SKILL.md](SKILL.md) is the skill manifest (`name: webull-openapi`). The skill teaches the agent how to drive the `webull-skill` CLI, so any agent that supports the Agent Skills standard can use it.
 
-### Claude Code
+### Prerequisites (all tools)
 
-Add to your MCP config (`~/.claude/claude_code_config.json` or project `.mcp.json`):
+1. **Install the CLI** so the agent can run the commands documented in the skill:
 
-```json
-{
-  "mcpServers": {
-    "webull": {
-      "command": "webull-skill",
-      "args": ["mcp"],
-      "env": {
-        "WEBULL_APP_KEY": "your_app_key",
-        "WEBULL_APP_SECRET": "your_app_secret",
-        "WEBULL_REGION_ID": "us"
-      }
-    }
-  }
-}
+   ```bash
+   pip install -e .
+   webull-skill --help   # verify it's on PATH
+   ```
+
+2. **Configure credentials.** Skills have no `env` block, so credentials come from your `.env` file or exported shell variables:
+
+   ```bash
+   cp .env.example .env
+   # Edit .env — fill in WEBULL_APP_KEY, WEBULL_APP_SECRET, WEBULL_REGION_ID
+   ```
+
+   To keep credentials outside the project, set `WEBULL_CONFIG_DIR` as a system environment variable and place your `.env` there.
+
+3. **Authenticate once:**
+
+   ```bash
+   webull-skill auth
+   ```
+
+### Installing the Skill
+
+Each agent discovers skills in a conventional directory. Install by symlinking this repo (recommended — `git pull` keeps it current) or copying it.
+
+> **Directory name matters:** it must match the `name` field in SKILL.md, so use `webull-openapi`.
+
+| Tool | Personal (all projects) | Project-scoped |
+|------|-------------------------|----------------|
+| **Claude Code** | `~/.claude/skills/webull-openapi/` | `.claude/skills/webull-openapi/` |
+| **Cursor** | `~/.cursor/skills/webull-openapi/` | `.cursor/skills/webull-openapi/` |
+| **OpenAI Codex** | `~/.codex/skills/webull-openapi/` | `.codex/skills/webull-openapi/` |
+| **Kiro** | — | `.kiro/skills/webull-openapi/` |
+
+Symlink example (macOS / Linux) — run from the repo root:
+
+```bash
+# Claude Code (personal)
+mkdir -p ~/.claude/skills
+ln -s "$(pwd)" ~/.claude/skills/webull-openapi
+
+# Cursor (personal)
+mkdir -p ~/.cursor/skills
+ln -s "$(pwd)" ~/.cursor/skills/webull-openapi
+
+# OpenAI Codex (personal)
+mkdir -p ~/.codex/skills
+ln -s "$(pwd)" ~/.codex/skills/webull-openapi
 ```
 
-### OpenAI Codex
+Windows (PowerShell, requires Developer Mode or an elevated shell):
 
-Add to your project's `codex.json`:
-
-```json
-{
-  "mcpServers": {
-    "webull": {
-      "command": "webull-skill",
-      "args": ["mcp"],
-      "env": {
-        "WEBULL_APP_KEY": "your_app_key",
-        "WEBULL_APP_SECRET": "your_app_secret",
-        "WEBULL_REGION_ID": "us"
-      }
-    }
-  }
-}
+```powershell
+New-Item -ItemType Directory -Force "$HOME\.claude\skills"
+New-Item -ItemType SymbolicLink -Path "$HOME\.claude\skills\webull-openapi" -Target (Get-Location)
 ```
 
-### Cursor
-
-Add to `.cursor/mcp.json` in your project root:
-
-```json
-{
-  "mcpServers": {
-    "webull": {
-      "command": "webull-skill",
-      "args": ["mcp"],
-      "env": {
-        "WEBULL_APP_KEY": "your_app_key",
-        "WEBULL_APP_SECRET": "your_app_secret",
-        "WEBULL_REGION_ID": "us"
-      }
-    }
-  }
-}
-```
+Restart the agent, then verify it picked up the skill (Claude Code and Cursor list skills via `/skills`; both also expose it as the `/webull-openapi` command).
 
 ### Kiro
 
-Kiro loads the skill automatically from `.kiro/skills/`. No extra configuration needed — just open this project in Kiro and start chatting.
+Kiro loads the skill from `.kiro/skills/`. Open this project in Kiro and start chatting — no extra configuration needed.
 
-### OpenClaw / Other MCP-Compatible Tools
+### Other Agent Skills-Compatible Tools
 
-Any tool that supports the MCP protocol can use this skill. Point it to:
-
-```bash
-webull-skill mcp
-```
-
-With environment variables `WEBULL_APP_KEY`, `WEBULL_APP_SECRET`, and `WEBULL_REGION_ID` set.
-
-> **Note:** Run `pip install -e .` first to make the `webull-skill` command available. Ensure your `.env` is configured or pass credentials via the `env` block in your MCP config.
+The Agent Skills standard is supported by a growing set of agents (OpenCode, Windsurf, Aider, Gemini CLI, and others). The install pattern is the same: place the skill directory in that tool's skills path — commonly `<tool-config-dir>/skills/webull-openapi/` — with the `webull-skill` CLI installed and `.env` configured.
 
 ---
 
 ## Related Projects
 
 - [webull-openapi-python-sdk](https://github.com/webull-inc/webull-openapi-python-sdk) — Official Python SDK
-- [webull-mcp-server](https://github.com/webull-inc/webull-mcp-server) — MCP server for AI assistants
 
 ## Documentation
 

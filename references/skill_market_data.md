@@ -44,6 +44,18 @@ webull-skill market-data --action stock-noii-bars --symbol AAPL --imbalance-acti
 webull-skill market-data --action stock-noii-snapshot --symbol AAPL --imbalance-action-type PRE_CLOSE
 ```
 
+## Option (US, HK, JP)
+
+| Action | Description | Key Options |
+|--------|-------------|-------------|
+| `option-snapshot` | Option real-time snapshot (max 20 symbols) | `--symbols AAPL260522C00300000` |
+| `option-bars` | Option OHLCV bars (batch) | `--symbols AAPL260522C00300000 --timespan D` |
+| `option-tick` | Option tick-by-tick trades | `--symbol AAPL260522C00300000 --count 30` |
+
+> **Category:** All option market data actions use `--category US_OPTION` (default).
+>
+> **Symbol format:** Option symbols use OCC format, e.g. `AAPL260522C00300000` (underlying + expiry + type + strike).
+
 ## Futures (US only)
 
 | Action | Description | Key Options |

@@ -1,6 +1,6 @@
 """Futures order tools for Webull OpenAPI Skill.
 
-Provides: place_futures_order, replace_futures_order.
+Provides: place_futures_order, preview_futures_order, replace_futures_order.
 
 Note: Uses order_v3 SDK API (OrderOperationV3).
 """
@@ -11,7 +11,7 @@ import uuid
 from typing import TYPE_CHECKING, Optional
 
 from webull_skill.errors import ValidationError, handle_sdk_exception
-from webull_skill.formatters import prepend_disclaimer, extract_response_data, format_decimal
+from webull_skill.formatters import prepend_disclaimer, extract_response_data, format_decimal, format_order_preview
 from webull_skill.guards import validate_client_order_id, validate_stock_order
 from webull_skill.trading.account import normalize_account_id, resolve_account_id
 
@@ -151,6 +151,69 @@ def place_futures_order(
         return prepend_disclaimer(_format_order_result(data if isinstance(data, dict) else {}))
     except Exception as e:
         return handle_sdk_exception(e, "place_futures_order")
+
+
+def preview_futures_order(
+    sdk: "SDKClient",
+    account_id: str,
+    symbol: str,
+    side: str,
+    order_type: str,
+    time_in_force: str,
+    quantity: float,
+    limit_price: Optional[float] = None,
+    stop_price: Optional[float] = None,
+    market: Optional[str] = None,
+    category: Optional[str] = None,
+    config: Optional["SkillConfig"] = None,
+) -> str:
+    """Preview a futures order without submitting. Returns estimated cost and fees.
+
+    Account: Futures account. Call get_account_list first.
+    market: "US" or "HK". If not specified, inferred from category.
+    """
+    account_id = normalize_account_id(account_id) or ""
+    resolved_market = market.upper() if market else _infer_futures_market(category)
+
+    if config is not None:
+        params: dict = {
+            "side": side, "order_type": order_type, "time_in_force": time_in_force,
+            "quantity": quantity, "symbol": symbol, "market": resolved_market,
+        }
+        if limit_price is not None:
+            params["limit_price"] = limit_price
+        if stop_price is not None:
+            params["stop_price"] = stop_price
+        try:
+            validate_stock_order(params, config)
+        except ValidationError as e:
+            return f"Validation error: {e.message}"
+
+    order: dict = {
+        "client_order_id": _generate_client_order_id(),
+        "combo_type": "NORMAL",
+        "instrument_type": "FUTURES",
+        "market": resolved_market,
+        "symbol": symbol,
+        "side": side,
+        "order_type": order_type,
+        "time_in_force": time_in_force,
+        "quantity": format_decimal(quantity),
+        "entrust_type": "QTY",
+    }
+    if limit_price is not None:
+        order["limit_price"] = format_decimal(limit_price)
+    if stop_price is not None:
+        order["stop_price"] = format_decimal(stop_price)
+
+    try:
+        response = sdk.trade.order_v3.preview_order(
+            account_id=account_id, preview_orders=[order],
+        )
+        data = extract_response_data(response)
+        return prepend_disclaimer(format_order_preview(data if isinstance(data, dict) else {}))
+    except Exception as e:
+        return handle_sdk_exception(e, "preview_futures_order")
 
 
 def replace_futures_order(
