@@ -48,15 +48,17 @@ def get_instruments(
     symbols: str,
     category: str = "US_STOCK",
     status: Optional[str] = None,
+    sub_category: Optional[str] = None,
 ) -> str:
     """Get stock/ETF instrument info.
 
-    Returns: symbol, name, instrument_type, exchange.
+    Returns: symbol, name, instrument_type, exchange, sub_category.
     """
     try:
         kwargs = _build_kwargs(
             {"symbols": _split_symbols(symbols), "category": category},
             status=status,
+            sub_category=sub_category,
         )
         data = extract_response_data(sdk.data.instrument.get_instrument(**kwargs))
         return prepend_disclaimer(format_instruments(data))

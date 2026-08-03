@@ -82,7 +82,7 @@ webull-skill market-data --action stock-noii-snapshot --symbol AAPL --imbalance-
 | `event-bars` | Event OHLCV | `--symbols <sym> --timespan D` |
 | `event-tick` | Event ticks | `--symbol <sym> --count 30` |
 
-## Screener (US, HK, JP)
+## Screener (All Regions)
 
 | Action                  | Description                           | Key Options                                               |
 |-------------------------|---------------------------------------|-----------------------------------------------------------|
@@ -189,9 +189,7 @@ webull-skill market-data --action stock-high-dividend --category US_STOCK --page
 webull-skill market-data --action stock-52-week-high-low --rank-type NEW_HIGH --direction DESC
 ```
 
-## Fundamentals (US, HK, JP)
-
-Fundamental data including financials, capital flow, industry comparison, SEC filings, earnings/dividend calendars, and ETF/fund data.
+## Fundamentals (All Regions)
 
 ### Stock Fundamentals
 

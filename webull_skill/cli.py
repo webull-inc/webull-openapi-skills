@@ -172,6 +172,7 @@ def build_parser() -> argparse.ArgumentParser:
     tp.add_argument("--symbol", default="")
     tp.add_argument("--symbols", default="")
     tp.add_argument("--category", default="")
+    tp.add_argument("--sub-category", default="")
     tp.add_argument("--account-id", default="")
     tp.add_argument("--instrument-id", default="")
     tp.add_argument("--last-id", default="")
@@ -328,7 +329,7 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
 
     # -- Instrument queries -------------------------------------------------
     if action == "instrument-stock":
-        return _wrap_tool_result(get_instruments(sdk, symbols_str, category=cat), action)
+        return _wrap_tool_result(get_instruments(sdk, symbols_str, category=cat, sub_category=args.sub_category or None), action)
     if action == "instrument-crypto":
         return _wrap_tool_result(get_crypto_instruments(sdk, symbols_str, category=cat), action)
     if action == "instrument-futures-products":
