@@ -1,0 +1,8 @@
+{
+  "name": "webull-openapi-skills",
+  "version": "1.0.0",
+  "description": "Trade stocks, options, futures, crypto, and event contracts on Webull. Query real-time and historical market data. Manage accounts and positions.",
+  "author": {
+    "name": "Webull"
+  }
+}
