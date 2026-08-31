@@ -41,6 +41,10 @@ class RegionConfig:
     # None means skip account_class validation for that asset type
     asset_type_account_classes: dict[str, frozenset[str]] | None = None
 
+    # Whether single-leg option orders support legging in/out of an existing
+    # multi-leg position (leg_in_or_out / position_id / leg_in_strategy). US only.
+    supports_option_leg_in_out: bool = False
+
 
 # =============================================================================
 # US Region Configuration
@@ -84,6 +88,7 @@ US_REGION_CONFIG = RegionConfig(
         "crypto": frozenset({"CRYPTO"}),
         "event": frozenset({"EVENTS_CASH"}),
     },
+    supports_option_leg_in_out=True,
 )
 
 

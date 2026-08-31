@@ -448,6 +448,9 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
             "margin_type": o.get("margin_type"),
             "position_intent": o.get("position_intent"),
             "close_contracts": o.get("close_contracts"),
+            "leg_in_or_out": o.get("leg_in_or_out"),
+            "position_id": o.get("position_id"),
+            "leg_in_strategy": o.get("leg_in_strategy"),
         }
         # Remove None values so defaults in function signature apply
         mapped = {k: v for k, v in mapped.items() if v is not None}

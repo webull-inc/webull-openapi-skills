@@ -11,7 +11,7 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING, Any, Optional
 
-from webull_skill.errors import ValidationError, handle_sdk_exception
+from webull_skill.errors import FeatureNotSupportedError, ValidationError, handle_sdk_exception
 from webull_skill.formatters import (
     prepend_disclaimer,
     extract_response_data,
@@ -72,8 +72,16 @@ def _build_option_order(
     stop_price: float | None,
     position_intent: str | None = None,
     sender_sub_id: str | None = None,
+    leg_in_or_out: str | None = None,
+    position_id: str | None = None,
+    leg_in_strategy: str | None = None,
 ) -> dict:
-    """Build a single-leg option order dict for the SDK."""
+    """Build a single-leg option order dict for the SDK.
+
+    leg_in_or_out / position_id / leg_in_strategy sit at the order (new_orders)
+    level, alongside option_strategy. US-only legging in/out of an existing
+    multi-leg position.
+    """
     order: dict = {
         "client_order_id": coid,
         "combo_type": "NORMAL",
@@ -102,6 +110,12 @@ def _build_option_order(
         order["position_intent"] = position_intent
     if sender_sub_id is not None:
         order["sender_sub_id"] = sender_sub_id
+    if leg_in_or_out is not None:
+        order["leg_in_or_out"] = leg_in_or_out
+    if position_id is not None:
+        order["position_id"] = position_id
+    if leg_in_strategy is not None:
+        order["leg_in_strategy"] = leg_in_strategy
     return order
 
 
@@ -231,6 +245,9 @@ def place_option_single_order(
     stop_price: Optional[float] = None,
     position_intent: Optional[str] = None,
     sender_sub_id: Optional[str] = None,
+    leg_in_or_out: Optional[str] = None,
+    position_id: Optional[str] = None,
+    leg_in_strategy: Optional[str] = None,
 ) -> str:
     """Place a single-leg option order. For multi-leg use place_option_strategy_order.
 
@@ -240,6 +257,9 @@ def place_option_single_order(
     time_in_force: DAY, GTC. trading_session: CORE only.
     position_intent: BUY_TO_OPEN, BUY_TO_CLOSE, SELL_TO_OPEN, SELL_TO_CLOSE (optional, US only).
     sender_sub_id: Broker user UUID (optional, HK region institutional only).
+    leg_in_or_out: LEG_IN or LEG_OUT — leg into/out of an existing multi-leg position (US only).
+    position_id: Required when leg_in_or_out is specified. Obtained from Account Positions API.
+    leg_in_strategy: Target strategy after legging in (only when leg_in_or_out=LEG_IN).
     Returns: {client_order_id, order_id}
     """
     try:
@@ -252,10 +272,18 @@ def place_option_single_order(
         params["limit_price"] = limit_price
     if stop_price is not None:
         params["stop_price"] = stop_price
+    if leg_in_or_out is not None:
+        params["leg_in_or_out"] = leg_in_or_out
+    if position_id is not None:
+        params["position_id"] = position_id
+    if leg_in_strategy is not None:
+        params["leg_in_strategy"] = leg_in_strategy
     try:
         validate_option_order(params, config)
     except ValidationError as e:
         return f"Validation error: {e.message}"
+    except FeatureNotSupportedError as e:
+        return f"Validation error: {e}"
 
     try:
         validate_client_order_id(client_order_id)
@@ -272,6 +300,9 @@ def place_option_single_order(
         limit_price=limit_price, stop_price=stop_price,
         position_intent=position_intent,
         sender_sub_id=sender_sub_id,
+        leg_in_or_out=leg_in_or_out,
+        position_id=position_id,
+        leg_in_strategy=leg_in_strategy,
     )
 
     try:

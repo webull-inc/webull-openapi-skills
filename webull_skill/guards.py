@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from webull_skill.constants import (
     STRATEGY_LEG_COUNT,
     VALID_ENTRUST_TYPES,
+    VALID_LEG_IN_OR_OUT,
     VALID_OPTION_ORDER_TYPES,
     VALID_OPTION_TIF,
     VALID_SIDES,
@@ -99,6 +100,11 @@ class OrderValidator:
         )
         self._validate_symbol_whitelist(params.get("symbol"))
         self._validate_entrust_type(params.get("entrust_type"))
+        self._validate_leg_in_out(
+            params.get("leg_in_or_out"),
+            params.get("position_id"),
+            params.get("leg_in_strategy"),
+        )
 
         # HK-specific: BCAN validation
         if self.region_config.region_id == "hk":
@@ -125,6 +131,11 @@ class OrderValidator:
             params.get("order_type"),
             params.get("limit_price"),
             params.get("stop_price"),
+        )
+        self._validate_leg_in_out(
+            params.get("leg_in_or_out"),
+            params.get("position_id"),
+            params.get("leg_in_strategy"),
         )
 
     def validate_option_strategy_order(self, params: dict) -> None:
@@ -427,6 +438,54 @@ class OrderValidator:
 
         if order_type in ("STOP_LOSS", "STOP_LOSS_LIMIT") and stop_price is None:
             raise ValidationError(f"{order_type} option order requires 'stop_price' field", field="stop_price")
+
+    def _validate_leg_in_out(
+        self,
+        leg_in_or_out: str | None,
+        position_id: str | None,
+        leg_in_strategy: str | None,
+    ) -> None:
+        """Validate option leg-in / leg-out fields (US only).
+
+        - leg_in_or_out must be LEG_IN or LEG_OUT.
+        - position_id is required when leg_in_or_out is specified.
+        - leg_in_strategy is only applicable when leg_in_or_out is LEG_IN.
+        """
+        # Nothing to validate if none of the leg-in/out fields are supplied.
+        if leg_in_or_out is None and leg_in_strategy is None:
+            return
+
+        if not self.region_config.supports_option_leg_in_out:
+            raise FeatureNotSupportedError(
+                feature="option_leg_in_out",
+                region_id=self.region_config.region_id,
+            )
+
+        # leg_in_strategy provided without leg_in_or_out is invalid.
+        if leg_in_or_out is None:
+            raise ValidationError(
+                "leg_in_strategy requires leg_in_or_out=LEG_IN",
+                field="leg_in_strategy",
+            )
+
+        if leg_in_or_out not in VALID_LEG_IN_OR_OUT:
+            raise ValidationError(
+                f"Invalid leg_in_or_out '{leg_in_or_out}', must be one of {sorted(VALID_LEG_IN_OR_OUT)}",
+                field="leg_in_or_out",
+            )
+
+        if not position_id:
+            raise ValidationError(
+                "position_id is required when leg_in_or_out is specified",
+                field="position_id",
+            )
+
+        # leg_in_strategy value is validated by the backend, not here.
+        if leg_in_strategy is not None and leg_in_or_out != "LEG_IN":
+            raise ValidationError(
+                "leg_in_strategy is only applicable when leg_in_or_out is LEG_IN",
+                field="leg_in_strategy",
+            )
 
     def _validate_option_strategy(self, strategy: str | None) -> None:
         """Validate option strategy (US only for multi-leg)."""

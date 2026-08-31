@@ -83,9 +83,20 @@ def test_account_position_details_calls_sdk_and_formats_response():
     }]
     assert "=== Position Details ===" in result
     assert "[Position Detail 1]" in result
-    assert "AAPL  Qty:      100  Hold:   LONG  Market Value:      10000  Currency: USD" in result
-    assert "Name: Apple Inc.  Exchange: NASDAQ" in result
-    assert "Average Price:        100  Unrealized P&L:        550" in result
-    assert "Account Tax Type: GENERAL  Margin Type: ONE_DAY" in result
-    assert "Instrument ID: 481004076  Contract ID: contract-1  Position ID: 037A1DU2HO6DT0KHK0C8000000" in result
-    assert "Base Currency: JPY  FX Rate: 146.48  Base Currency Market Value: 1628.85" in result
+    assert "Position ID: 037A1DU2HO6DT0KHK0C8000000" in result
+    assert "Symbol: AAPL" in result
+    assert "Name: Apple Inc." in result
+    assert "Exchange: NASDAQ" in result
+    assert "Instrument ID: 481004076" in result
+    assert "Contract ID: contract-1" in result
+    assert "Qty: 100" in result
+    assert "Hold Type: LONG" in result
+    assert "Margin Type: ONE_DAY" in result
+    assert "Average Price: 100" in result
+    assert "Market Value: 10000" in result
+    assert "Unrealized P&L: 550" in result
+    assert "Currency: USD" in result
+    assert "Account Tax Type: GENERAL" in result
+    assert "Base Currency: JPY" in result
+    assert "FX Rate: 146.48" in result
+    assert "Base Currency Market Value: 1628.85" in result
