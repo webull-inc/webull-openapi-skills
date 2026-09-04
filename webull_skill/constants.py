@@ -51,6 +51,10 @@ VALID_OPTION_STRATEGIES: frozenset[str] = frozenset({
     "IRON_BUTTERFLY", "IRON_CONDOR", "DIAGONAL",
 })
 
+# Option leg-in / leg-out (US only). Whether a single-leg order legs into or
+# out of an existing multi-leg position.
+VALID_LEG_IN_OR_OUT: frozenset[str] = frozenset({"LEG_IN", "LEG_OUT"})
+
 # Min/max leg count per option strategy
 STRATEGY_LEG_COUNT: dict[str, tuple[int, int]] = {
     "SINGLE": (1, 1),

@@ -227,3 +227,85 @@ def test_replace_stock_order_accepts_int_account_id():
 
     assert "client_order_id: c1" in result
     assert order_v3.replace_calls[0]["account_id"] == "123"
+
+
+def test_place_stock_order_forwards_leg_in_fields():
+    sdk, order_v3 = _fake_sdk(
+        "CASH",
+        account_class="INDIVIDUAL_CASH",
+        region_id="us",
+    )
+    result = place_stock_order(
+        sdk,
+        SkillConfig(app_key="k", app_secret="s", region_id="us"),
+        symbol="AAPL",
+        side="BUY",
+        order_type="LIMIT",
+        time_in_force="DAY",
+        quantity=10,
+        market="US",
+        limit_price=250,
+        account_id="acct-1",
+        leg_in_or_out="LEG_IN",
+        position_id="N4I4SIM8TJF38KN2TAA0QVVNE9",
+        leg_in_strategy="COVERED_STOCK",
+    )
+
+    assert "client_order_id: c1" in result
+    order = order_v3.place_calls[0]["new_orders"][0]
+    assert order["leg_in_or_out"] == "LEG_IN"
+    assert order["position_id"] == "N4I4SIM8TJF38KN2TAA0QVVNE9"
+    assert order["leg_in_strategy"] == "COVERED_STOCK"
+
+
+def test_place_stock_order_leg_out_without_strategy():
+    sdk, order_v3 = _fake_sdk(
+        "CASH",
+        account_class="INDIVIDUAL_CASH",
+        region_id="us",
+    )
+    result = place_stock_order(
+        sdk,
+        SkillConfig(app_key="k", app_secret="s", region_id="us"),
+        symbol="AAPL",
+        side="SELL",
+        order_type="LIMIT",
+        time_in_force="DAY",
+        quantity=10,
+        market="US",
+        limit_price=250,
+        account_id="acct-1",
+        leg_in_or_out="LEG_OUT",
+        position_id="N4I4SIM8TJF38KN2TAA0QVVNE9",
+    )
+
+    assert "client_order_id: c1" in result
+    order = order_v3.place_calls[0]["new_orders"][0]
+    assert order["leg_in_or_out"] == "LEG_OUT"
+    assert order["position_id"] == "N4I4SIM8TJF38KN2TAA0QVVNE9"
+    assert "leg_in_strategy" not in order
+
+
+def test_place_stock_order_leg_in_requires_position_id():
+    sdk, order_v3 = _fake_sdk(
+        "CASH",
+        account_class="INDIVIDUAL_CASH",
+        region_id="us",
+    )
+    result = place_stock_order(
+        sdk,
+        SkillConfig(app_key="k", app_secret="s", region_id="us"),
+        symbol="AAPL",
+        side="BUY",
+        order_type="LIMIT",
+        time_in_force="DAY",
+        quantity=10,
+        market="US",
+        limit_price=250,
+        account_id="acct-1",
+        leg_in_or_out="LEG_IN",
+        leg_in_strategy="COVERED_STOCK",
+    )
+
+    assert result == "Validation error: position_id is required when leg_in_or_out is specified"
+    assert order_v3.place_calls == []

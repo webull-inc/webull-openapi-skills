@@ -138,6 +138,9 @@ Orders are passed via `--order-json` (inline string) or `--order-file` (path to 
 | `margin_type` | JP margin account only | string | JP-only. `US_MARGIN` accounts only. Values: `ONE_DAY`, `INDEFINITE` |
 | `position_intent` | JP margin account only | string | For stock orders: JP-only, `US_MARGIN` accounts only. For option orders, use `option-place` instead (US only). Values: `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE` |
 | `close_contracts` | No (JP only) | array | JP-only close payload. Max 10 `{ "contract_id": "...", "quantity": ... }` items |
+| `leg_in_or_out` | No | string | **US only.** `LEG_IN` / `LEG_OUT` — leg into/out of an existing multi-leg position when this order's stock leg is part of a strategy (e.g. COVERED_STOCK) |
+| `position_id` | Conditional | string | **Required when `leg_in_or_out` is set.** Target position identifier from the Account Positions API (`position` action) |
+| `leg_in_strategy` | No | string | **Only when `leg_in_or_out` is `LEG_IN`.** Target strategy after legging in, e.g. `COVERED_STOCK`, `VERTICAL`, `STRADDLE`, `STRANGLE`, `CALENDAR`, `DIAGONAL` (value validated by backend) |
 
 > **`quantity` vs `total_cash_amount`:** These two fields are mutually exclusive.
 > - When `entrust_type=QTY`: provide `quantity` (number of shares/contracts)
@@ -252,6 +255,9 @@ JP margin-account example:
 | `stop_price` | Conditional | number (float) | Required for `STOP_LOSS` orders |
 | `position_intent` | No | string | Position strategy (US only). `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE`. Must match `side`. For combo orders, only set on the MASTER order |
 | `sender_sub_id` | No (HK broker) | string | Broker user UUID (HK region, institutional only). No BCAN needed for options |
+| `leg_in_or_out` | No | string | **`option-place` only, US only.** `LEG_IN` (add this leg to an existing position) or `LEG_OUT` (close this leg from an existing multi-leg position) |
+| `position_id` | Conditional | string | **Required when `leg_in_or_out` is set.** Target position identifier, obtained from the Account Positions API (`position` action) |
+| `leg_in_strategy` | No | string | **Only when `leg_in_or_out` is `LEG_IN`.** Target strategy after legging in, e.g. `COVERED_STOCK`, `VERTICAL`, `STRADDLE`, `STRANGLE`, `CALENDAR`, `DIAGONAL` (value validated by backend) |
 
 Option single-leg example:
 ```json
@@ -267,6 +273,43 @@ Option single-leg example:
   "quantity": 1,
   "time_in_force": "DAY",
   "position_intent": "BUY_TO_OPEN"
+}
+```
+
+Option leg-in example (US only) — add a leg to an existing position to form a vertical:
+```json
+{
+  "symbol": "AAPL",
+  "instrument_type": "OPTION",
+  "option_type": "CALL",
+  "strike_price": 230.00,
+  "expiration_date": "2026-06-19",
+  "side": "SELL",
+  "order_type": "LIMIT",
+  "limit_price": 6.50,
+  "quantity": 1,
+  "time_in_force": "DAY",
+  "leg_in_or_out": "LEG_IN",
+  "position_id": "FVIESMTK2IRC3FKKJSEE2U56SB",
+  "leg_in_strategy": "VERTICAL"
+}
+```
+
+Option leg-out example (US only) — close one leg from an existing multi-leg position:
+```json
+{
+  "symbol": "AAPL",
+  "instrument_type": "OPTION",
+  "option_type": "CALL",
+  "strike_price": 230.00,
+  "expiration_date": "2026-06-19",
+  "side": "BUY",
+  "order_type": "LIMIT",
+  "limit_price": 6.50,
+  "quantity": 1,
+  "time_in_force": "DAY",
+  "leg_in_or_out": "LEG_OUT",
+  "position_id": "FVIESMTK2IRC3FKKJSEE2U56SB"
 }
 ```
 

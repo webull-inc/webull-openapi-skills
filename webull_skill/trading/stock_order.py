@@ -20,7 +20,7 @@ from webull_skill.constants import (
     JP_MAX_CLOSE_CONTRACTS,
     JP_POSITION_INTENTS,
 )
-from webull_skill.errors import ValidationError, handle_sdk_exception
+from webull_skill.errors import FeatureNotSupportedError, ValidationError, handle_sdk_exception
 from webull_skill.formatters import (
     prepend_disclaimer,
     extract_response_data,
@@ -231,7 +231,10 @@ def _build_stock_order(params: dict) -> dict:
         order["sender_sub_id"] = params["sender_sub_id"]
     if params.get("no_party_ids"):
         order["no_party_ids"] = params["no_party_ids"]
-    for key in ("account_tax_type", "margin_type", "position_intent", "close_contracts"):
+    for key in (
+        "account_tax_type", "margin_type", "position_intent", "close_contracts",
+        "leg_in_or_out", "position_id", "leg_in_strategy",
+    ):
         if key in params:
             order[key] = params[key]
     return order
@@ -334,11 +337,17 @@ def place_stock_order(
     margin_type: Optional[str] = None,
     position_intent: Optional[str] = None,
     close_contracts: Optional[list[dict]] = None,
+    leg_in_or_out: Optional[str] = None,
+    position_id: Optional[str] = None,
+    leg_in_strategy: Optional[str] = None,
 ) -> str:
     """Place a stock order (single, non-combo). For combo orders use place_stock_combo_order.
 
     Account: stock/option account (Individual Cash, Individual Margin, IRA).
     Call get_account_list first.
+    leg_in_or_out: LEG_IN or LEG_OUT — leg into/out of an existing multi-leg position (US only).
+    position_id: Required when leg_in_or_out is specified. Obtained from Account Positions API.
+    leg_in_strategy: Target strategy after legging in (only when leg_in_or_out=LEG_IN).
     Returns: {client_order_id, order_id}
     """
     # Auto-resolve account_id
@@ -367,11 +376,19 @@ def place_stock_order(
         params["limit_price"] = limit_price
     if stop_price is not None:
         params["stop_price"] = stop_price
+    if leg_in_or_out is not None:
+        params["leg_in_or_out"] = leg_in_or_out
+    if position_id is not None:
+        params["position_id"] = position_id
+    if leg_in_strategy is not None:
+        params["leg_in_strategy"] = leg_in_strategy
 
     try:
         validate_stock_order(params, config)
     except ValidationError as e:
         return f"Validation error: {e.message}"
+    except FeatureNotSupportedError as e:
+        return f"Validation error: {e}"
 
     try:
         jp_extensions = _validate_jp_stock_order_extensions(
@@ -394,7 +411,7 @@ def place_stock_order(
 
     coid = client_order_id or _generate_client_order_id()
 
-    order = _build_stock_order({
+    build_params: dict = {
         "coid": coid, "market": market, "symbol": symbol, "side": side,
         "order_type": order_type, "time_in_force": time_in_force,
         "entrust_type": entrust_type,
@@ -405,7 +422,14 @@ def place_stock_order(
         "trailing_stop_step": trailing_stop_step,
         "sender_sub_id": sender_sub_id, "no_party_ids": no_party_ids,
         **jp_extensions,
-    })
+    }
+    if leg_in_or_out is not None:
+        build_params["leg_in_or_out"] = leg_in_or_out
+    if position_id is not None:
+        build_params["position_id"] = position_id
+    if leg_in_strategy is not None:
+        build_params["leg_in_strategy"] = leg_in_strategy
+    order = _build_stock_order(build_params)
 
     try:
         response = sdk.trade.order_v3.place_order(

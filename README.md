@@ -24,6 +24,7 @@ See [DISCLAIMER.md](DISCLAIMER.md) for the full disclaimer.
 - **Trading** — Place, modify, cancel orders for stocks, options, futures, crypto, and event contracts
 - **Combo Orders** — OTO, OCO, OTOCO combo orders (US only)
 - **Option Strategies** — Multi-leg option strategies: vertical, straddle, strangle, butterfly, condor, etc. (US only)
+- **Option Leg In/Out** — Leg into or out of an existing multi-leg position on single-leg orders — both option (`option-place`) and equity (`place`, e.g. the stock leg of a covered-stock strategy) (US only)
 - **Algo Orders** — TWAP, VWAP, POV algorithmic orders (US only)
 - **Risk Controls** — Market-specific notional limits (USD/HKD/CNH), quantity limits, symbol whitelist
 - **Auto Account Resolution** — Automatically selects the correct account based on asset type
@@ -303,6 +304,7 @@ See [.env.example](.env.example) for the full configuration template.
 | Event Contracts | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Combo Orders | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Option Strategies | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Option Leg In/Out | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Algo Orders | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Order Markets | US | US, HK, CN | US, JP | US | US | US | US | US | US | US | US | US |
 | Instrument Categories | US_STOCK, US_ETF | US/HK/CN stock categories | US_STOCK, US_ETF | US_STOCK, US_ETF | US_STOCK, US_ETF | US_STOCK, US_ETF | US_STOCK, US_ETF | US_STOCK, US_ETF | US_STOCK, US_ETF | US_STOCK, US_ETF | US_STOCK, US_ETF | US_STOCK, US_ETF |
