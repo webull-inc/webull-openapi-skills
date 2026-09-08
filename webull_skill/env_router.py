@@ -51,11 +51,6 @@ UAT_ENDPOINTS: dict[str, dict[str, str]] = {
         "quotes-api": "data-api.uat.webullbroker.com",
         "events-api": "sg-events-api.uat.webullbroker.com",
     },
-    "th": {
-        "api": "th-api.uat.webullbroker.com",
-        "quotes-api": "th-api.uat.webullbroker.com",
-        "events-api": "th-events-api.uat.webullbroker.com",
-    },
     "my": {
         "api": "my-api.uat.webullbroker.com",
         "quotes-api": "my-api.uat.webullbroker.com",
@@ -76,17 +71,7 @@ UAT_ENDPOINTS: dict[str, dict[str, str]] = {
         "quotes-api": "us-openapi-quotes-api.uat.webullbroker.com",
         "events-api": "us-openapi-events.uat.webullbroker.com",
     },
-    "eu": {
-        "api": "eu-api.uat.webullbroker.com",
-        "quotes-api": "eu-api.uat.webullbroker.com",
-        "events-api": "eu-events-api.uat.webullbroker.com",
-    },
     "za": {
-        "api": "au-api.uat.webullbroker.com",
-        "quotes-api": "au-api.uat.webullbroker.com",
-        "events-api": "au-events-api.uat.webullbroker.com",
-    },
-    "au": {
         "api": "au-api.uat.webullbroker.com",
         "quotes-api": "au-api.uat.webullbroker.com",
         "events-api": "au-events-api.uat.webullbroker.com",
@@ -105,8 +90,6 @@ DEFAULT_HOSTS: dict[tuple[str, str], str] = {
     ("uat", "jp"): "jp-openapi-alb.uat.webullbroker.com",
     ("prod", "sg"): "api.webull.com.sg",
     ("uat", "sg"): "sg-api.uat.webullbroker.com",
-    ("prod", "th"): "api.webull.co.th",
-    ("uat", "th"): "th-api.uat.webullbroker.com",
     ("prod", "my"): "api.webull.com.my",
     ("uat", "my"): "my-api.uat.webullbroker.com",
     ("prod", "uk"): "api.webull-uk.com",
@@ -115,12 +98,8 @@ DEFAULT_HOSTS: dict[tuple[str, str], str] = {
     ("uat", "mx"): "us-openapi-alb.uat.webullbroker.com",
     ("prod", "br"): "api.webull.com.br",
     ("uat", "br"): "us-openapi-alb.uat.webullbroker.com",
-    ("prod", "eu"): "api.webull.eu",
-    ("uat", "eu"): "eu-api.uat.webullbroker.com",
     ("prod", "za"): "api.webull.com.au",
     ("uat", "za"): "au-api.uat.webullbroker.com",
-    ("prod", "au"): "api.webull.com.au",
-    ("uat", "au"): "au-api.uat.webullbroker.com",
 }
 
 

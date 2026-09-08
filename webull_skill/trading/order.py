@@ -17,6 +17,7 @@ from webull_skill.formatters import (
     extract_response_data,
     format_open_orders,
     format_order_detail,
+    format_order_executions,
     format_order_history,
 )
 from webull_skill.guards import validate_client_order_id
@@ -143,3 +144,41 @@ def get_order_detail(
         return prepend_disclaimer(format_order_detail(data))
     except Exception as e:
         return handle_sdk_exception(e, "get_order_detail")
+
+
+def list_order_executions(
+    sdk: "SDKClient",
+    account_id: str,
+    client_order_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    pagination_key: Optional[str] = None,
+) -> str:
+    """List order execution records within a specified date range.
+
+    Returns per execution: execution_id, order_id, client_order_id, symbol,
+    execution_time, status, execution_type, side, order_type, total_quantity,
+    limit_price, filled_quantity, filled_price, total_filled_qty, leaves_qty.
+    """
+    if client_order_id is not None:
+        try:
+            validate_client_order_id(client_order_id)
+        except Exception as e:
+            return f"Validation error: {e}"
+
+    account_id = normalize_account_id(account_id) or ""
+    try:
+        kwargs: dict = {}
+        if client_order_id:
+            kwargs["client_order_id"] = client_order_id
+        if start_date:
+            kwargs["start_date"] = start_date
+        if end_date:
+            kwargs["end_date"] = end_date
+        if pagination_key:
+            kwargs["pagination_key"] = pagination_key
+        response = sdk.trade.order_v3.list_order_executions(account_id=account_id, **kwargs)
+        data = extract_response_data(response)
+        return prepend_disclaimer(format_order_executions(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "list_order_executions")
