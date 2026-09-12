@@ -409,14 +409,15 @@ REGION_CONFIGS: dict[str, RegionConfig] = {
     "hk": HK_REGION_CONFIG,
     "jp": JP_REGION_CONFIG,
     "sg": SG_REGION_CONFIG,
-    "th": TH_REGION_CONFIG,
     "my": MY_REGION_CONFIG,
     "uk": UK_REGION_CONFIG,
     "mx": MX_REGION_CONFIG,
     "br": BR_REGION_CONFIG,
-    "eu": EU_REGION_CONFIG,
     "za": ZA_REGION_CONFIG,
-    "au": AU_REGION_CONFIG,
+    # Note: TH, EU, and AU are not supported yet due to compliance
+    # requirements and are intentionally not registered, so selecting these
+    # regions raises UnsupportedRegionError. Their RegionConfig objects are
+    # kept defined above for quick re-enablement once compliance clears.
 }
 
 SUPPORTED_REGIONS: frozenset[str] = frozenset(REGION_CONFIGS.keys())

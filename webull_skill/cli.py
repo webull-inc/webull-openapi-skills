@@ -44,7 +44,7 @@ TRADING_ACTIONS = [
     "account-list", "balance", "position", "position-detail",
     # Order operations
     "place", "preview", "replace", "batch-place",
-    "cancel", "open", "history", "detail",
+    "cancel", "open", "history", "detail", "executions",
     "option-place", "option-preview", "option-replace",
     "option-strategy-place",
     "futures-place", "futures-preview", "futures-replace",
@@ -182,6 +182,9 @@ def build_parser() -> argparse.ArgumentParser:
     tp.add_argument("--order-json", default="")
     tp.add_argument("--order-file", default="")
     tp.add_argument("--client-order-id", default="")
+    tp.add_argument("--start-date", default="", help="Start date yyyy-MM-dd (order executions)")
+    tp.add_argument("--end-date", default="", help="End date yyyy-MM-dd (order executions)")
+    tp.add_argument("--pagination-key", default="", help="Pagination cursor for next page (order executions)")
 
     # market-data subcommand
     mp = subparsers.add_parser("market-data", help="Market data queries")
@@ -306,6 +309,7 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
         get_order_history,
         get_open_orders,
         get_order_detail,
+        list_order_executions,
     )
     from webull_skill.trading.stock_order import (
         place_stock_order,
@@ -608,6 +612,20 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
         if not args.client_order_id:
             return failure(detail="--client-order-id required")
         return _wrap_tool_result(get_order_detail(sdk, aid, args.client_order_id), action)
+    if action == "executions":
+        if not aid:
+            return failure(detail="--account-id required")
+        return _wrap_tool_result(
+            list_order_executions(
+                sdk,
+                aid,
+                client_order_id=args.client_order_id or None,
+                start_date=args.start_date or None,
+                end_date=args.end_date or None,
+                pagination_key=args.pagination_key or None,
+            ),
+            action,
+        )
 
     # -- Local risk check ---------------------------------------------------
     if action == "local-check":

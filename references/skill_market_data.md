@@ -393,13 +393,6 @@ Category determines which market's data you're querying. It varies by region:
 | `US_STOCK` | US stocks (traded via ZA account) |
 | `US_ETF` | US ETFs (traded via ZA account) |
 
-**AU Region (`WEBULL_REGION_ID=au`):**
-
-| Category | Description |
-|----------|-------------|
-| `US_STOCK` | US stocks (traded via AU account) |
-| `US_ETF` | US ETFs (traded via AU account) |
-
 Examples:
 ```bash
 # US stock (default for US region)

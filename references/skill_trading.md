@@ -95,6 +95,7 @@ webull-skill trading --action instrument-analyst-target-price --symbol NVDA
 | `open` | List open/pending orders | `--account-id` |
 | `history` | Order history | `--account-id` |
 | `detail` | Single order detail | `--account-id`, `--client-order-id` |
+| `executions` | List order execution records within a date range | `--account-id`, `--start-date`, `--end-date`, `--client-order-id`, `--pagination-key` |
 | `local-check` | Risk check only (no API call) | `--order-json` |
 
 ---
@@ -636,10 +637,10 @@ Natural language "trading session" maps to the order JSON field `support_trading
 
 | Value | Description | Supported Regions |
 |-------|-------------|-------------------|
-| `CORE` | Regular hours (9:30 AM - 4:00 PM ET) | US, HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, AU |
-| `ALL` | Extended hours (pre-market + after-hours) | US, HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, AU |
-| `NIGHT` | Night session only | US, HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, AU |
-| `ALL_DAY` | Included overnight hours, 8:00 p.m. ET - 8:00 p.m. ET the next day | HK, JP, SG, TH, MY, UK, MX, BR, EU, ZA, AU |
+| `CORE` | Regular hours (9:30 AM - 4:00 PM ET) | US, HK, JP, SG, MY, UK, MX, BR, EU, ZA |
+| `ALL` | Extended hours (pre-market + after-hours) | US, HK, JP, SG, MY, UK, MX, BR, EU, ZA |
+| `NIGHT` | Night session only | US, HK, JP, SG, MY, UK, MX, BR, EU, ZA |
+| `ALL_DAY` | Included overnight hours, 8:00 p.m. ET - 8:00 p.m. ET the next day | HK, JP, SG, MY, UK, MX, BR, EU, ZA |
 
 ## Combo Types (US stocks only)
 
