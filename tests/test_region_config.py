@@ -43,6 +43,17 @@ def test_th_region_config():
     assert config.supports_futures is False
 
 
+def test_th_region_supports_single_leg_options():
+    config = get_region_config("th")
+
+    # Single-leg US options are enabled for TH (API-1413): option account
+    # classes mirror the stock account classes; multi-leg strategies stay off.
+    assert config.asset_type_account_classes is not None
+    assert config.asset_type_account_classes.get("option") == frozenset({"INDIVIDUAL_CASH"})
+    assert config.valid_option_strategies == frozenset({"SINGLE"})
+    assert config.supports_option_strategies is False
+
+
 def test_my_region_is_supported():
     assert "my" in SUPPORTED_REGIONS
     assert get_region_config("MY").region_id == "my"
@@ -111,3 +122,16 @@ def test_za_region_config():
     assert config.supports_algo_orders is False
 
 
+def test_mx_and_br_accept_individual_margin_account_class():
+    # MX/BR margin accounts may report account_class INDIVIDUAL_MARGIN.
+    for region_id in ("mx", "br"):
+        classes = get_region_config(region_id).asset_type_account_classes
+        assert classes is not None
+        assert "INDIVIDUAL_MARGIN" in classes["stock"]
+        assert "INDIVIDUAL_MARGIN" in classes["option"]
+
+
+def test_za_has_no_option_account_classes():
+    classes = get_region_config("za").asset_type_account_classes
+    assert classes is not None
+    assert "option" not in classes

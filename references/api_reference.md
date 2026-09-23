@@ -93,7 +93,8 @@
 | Feature | US | HK | JP | SG | TH | MY | UK | MX | BR | ZA |
 |---------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | Stock trading | Yes | Yes (US/HK/CN) | Yes (US/JP) | Yes (US) | Yes (US) | Yes (US) | Yes (US) | Yes (US) | Yes (US) | Yes (US) |
-| Options trading | Yes | Yes (US only) | No | No | No | No | No | No | No | No |
+| Options trading (single-leg) | Yes | Yes (US only) | Yes (US only) | Yes (US only) | Yes (US only) | Yes (US only) | Yes (US only) | Yes (US only) | Yes (US only) | No |
+| Option strategies (multi-leg) | Yes | No | No | No | No | No | No | No | No | No |
 | Futures trading | Yes | Yes | No | No | No | No | No | No | No | No |
 | Crypto trading | Yes | No | No | No | No | No | No | No | No | No |
 | Event contracts | Yes | No | No | No | No | No | No | No | No | No |
@@ -121,6 +122,9 @@
 - `LIMIT`, `MARKET`
 - US market orders via JP: `LIMIT`, `MARKET`, `STOP_LOSS`, `STOP_LOSS_LIMIT`
 - JP-specific fields: `account_tax_type` (`GENERAL`/`SPECIFIC`), `margin_type`, `position_intent`, `close_contracts`
+- Single-leg US options (`US_OPTION`) are supported in JP; multi-leg option strategies are not
+- `account_tax_type` (`GENERAL`/`SPECIFIC`) is also required for JP US option orders (`option-place` / `option-preview`)
+- `position_intent` on JP option orders is passed to the backend without Skill-side validation
 
 ## Time in Force
 

@@ -76,6 +76,9 @@ STRATEGY_LEG_COUNT: dict[str, tuple[int, int]] = {
 # JP account and order extension values
 # =============================================================================
 JP_STOCK_ACCOUNT_TYPES: frozenset[str] = frozenset({"CASH", "US_MARGIN"})
+# JP option orders use the dedicated US_OPTION account (matched by account_type,
+# since the backend does not populate account_class for JP accounts).
+JP_OPTION_ACCOUNT_TYPES: frozenset[str] = frozenset({"US_OPTION"})
 JP_MARGIN_ACCOUNT_TYPE = "US_MARGIN"
 JP_CASH_ACCOUNT_TYPE = "CASH"
 

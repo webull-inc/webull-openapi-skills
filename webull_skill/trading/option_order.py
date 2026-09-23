@@ -11,6 +11,7 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING, Any, Optional
 
+from webull_skill.constants import JP_ACCOUNT_TAX_TYPES
 from webull_skill.errors import FeatureNotSupportedError, ValidationError, handle_sdk_exception
 from webull_skill.formatters import (
     prepend_disclaimer,
@@ -58,6 +59,20 @@ def _add_optional_str(order: dict, key: str, value: Any) -> None:
         order[key] = format_decimal(value)
 
 
+def _validate_jp_option_tax_type(config: "SkillConfig", account_tax_type: str | None) -> str | None:
+    """JP requires account_tax_type on option orders. Return error string or None."""
+    if config.region_id.lower() != "jp":
+        return None
+    if not account_tax_type:
+        return "Validation error: account_tax_type is required for JP option orders"
+    if account_tax_type not in JP_ACCOUNT_TAX_TYPES:
+        return (
+            f"Validation error: Invalid account_tax_type '{account_tax_type}'. "
+            f"Valid values: {', '.join(sorted(JP_ACCOUNT_TAX_TYPES))}"
+        )
+    return None
+
+
 def _build_option_order(
     coid: str,
     symbol: str,
@@ -71,6 +86,7 @@ def _build_option_order(
     limit_price: float | None,
     stop_price: float | None,
     position_intent: str | None = None,
+    account_tax_type: str | None = None,
     sender_sub_id: str | None = None,
     leg_in_or_out: str | None = None,
     position_id: str | None = None,
@@ -108,6 +124,8 @@ def _build_option_order(
     _add_optional_str(order, "stop_price", stop_price)
     if position_intent is not None:
         order["position_intent"] = position_intent
+    if account_tax_type is not None:
+        order["account_tax_type"] = account_tax_type
     if sender_sub_id is not None:
         order["sender_sub_id"] = sender_sub_id
     if leg_in_or_out is not None:
@@ -244,6 +262,7 @@ def place_option_single_order(
     limit_price: Optional[float] = None,
     stop_price: Optional[float] = None,
     position_intent: Optional[str] = None,
+    account_tax_type: Optional[str] = None,
     sender_sub_id: Optional[str] = None,
     leg_in_or_out: Optional[str] = None,
     position_id: Optional[str] = None,
@@ -255,9 +274,11 @@ def place_option_single_order(
     Call get_account_list first.
     order_type: MARKET, LIMIT, STOP_LOSS, STOP_LOSS_LIMIT.
     time_in_force: DAY, GTC. trading_session: CORE only.
-    position_intent: BUY_TO_OPEN, BUY_TO_CLOSE, SELL_TO_OPEN, SELL_TO_CLOSE (optional, US only).
+    position_intent: BUY_TO_OPEN, BUY_TO_CLOSE, SELL_TO_OPEN, SELL_TO_CLOSE (optional, US and JP).
+        Not validated here; passed to the backend as is.
+    account_tax_type: GENERAL or SPECIFIC (required for JP option orders).
     sender_sub_id: Broker user UUID (optional, HK region institutional only).
-    leg_in_or_out: LEG_IN or LEG_OUT — leg into/out of an existing multi-leg position (US only).
+    leg_in_or_out: LEG_IN or LEG_OUT - leg into/out of an existing multi-leg position (US only).
     position_id: Required when leg_in_or_out is specified. Obtained from Account Positions API.
     leg_in_strategy: Target strategy after legging in (only when leg_in_or_out=LEG_IN).
     Returns: {client_order_id, order_id}
@@ -290,6 +311,10 @@ def place_option_single_order(
     except ValidationError as e:
         return f"Validation error: {e.message}"
 
+    tax_err = _validate_jp_option_tax_type(config, account_tax_type)
+    if tax_err:
+        return tax_err
+
     coid = client_order_id or _generate_client_order_id()
 
     order = _build_option_order(
@@ -299,6 +324,7 @@ def place_option_single_order(
         time_in_force=time_in_force,
         limit_price=limit_price, stop_price=stop_price,
         position_intent=position_intent,
+        account_tax_type=account_tax_type,
         sender_sub_id=sender_sub_id,
         leg_in_or_out=leg_in_or_out,
         position_id=position_id,
@@ -329,9 +355,14 @@ def preview_option_order(
     time_in_force: str,
     limit_price: Optional[float] = None,
     stop_price: Optional[float] = None,
+    position_intent: Optional[str] = None,
+    account_tax_type: Optional[str] = None,
 ) -> str:
     """Preview an option order without submitting. Returns: estimated cost and fees."""
     account_id = normalize_account_id(account_id) or ""
+    tax_err = _validate_jp_option_tax_type(config, account_tax_type)
+    if tax_err:
+        return tax_err
     preview_order = _build_option_order(
         coid=_generate_client_order_id(),
         symbol=symbol, side=side, quantity=quantity,
@@ -339,6 +370,8 @@ def preview_option_order(
         expiration_date=expiration_date, order_type=order_type,
         time_in_force=time_in_force,
         limit_price=limit_price, stop_price=stop_price,
+        position_intent=position_intent,
+        account_tax_type=account_tax_type,
     )
 
     try:

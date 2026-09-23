@@ -245,7 +245,7 @@ See [.env.example](.env.example) for the full configuration template.
 | Category | Actions | Region |
 |----------|---------|--------|
 | **Stock** | `stock-snapshot`, `stock-bars`, `stock-batch-bars`, `stock-tick`, `stock-quotes`, `stock-footprint` | US, HK, JP, SG, MY, UK, MX, BR, ZA |
-| **Option** | `option-snapshot`, `option-bars`, `option-tick` | US, HK, JP (category: US_OPTION) |
+| **Option** | `option-snapshot`, `option-bars`, `option-tick` | US, HK, JP, SG, TH, MY, UK, MX, BR (category: US_OPTION) |
 | **Futures** | `futures-snapshot`, `futures-bars`, `futures-tick`, `futures-depth`, `futures-footprint` | US, HK |
 | **Crypto** | `crypto-snapshot`, `crypto-bars` | US |
 | **Event** | `event-snapshot`, `event-depth`, `event-bars`, `event-tick` | US |
@@ -262,7 +262,7 @@ See [.env.example](.env.example) for the full configuration template.
 | **Instrument** | `instrument-stock`, `instrument-crypto`, `instrument-futures-products`, `instrument-futures-list`, `instrument-futures-by-code`, `instrument-option-contracts`, `instrument-event-series`, `instrument-event-list`, `instrument-event-categories`, `instrument-event-events` | varies |
 | **Stock Order** | `place`, `preview`, `replace` | US, HK, JP, SG, MY, UK, MX, BR, ZA |
 | **Combo Order** | `batch-place` (OTO/OCO/OTOCO) | US |
-| **Option Order** | `option-place`, `option-preview`, `option-replace`, `option-strategy-place` | US, HK |
+| **Option Order** | `option-place`, `option-preview`, `option-replace` (single-leg); `option-strategy-place` (multi-leg, US only) | US, HK, JP, SG, TH, MY, UK, MX, BR |
 | **Algo Order** | `algo-place` (TWAP/VWAP/POV) | US |
 | **Futures Order** | `futures-place`, `futures-preview`, `futures-replace` | US, HK |
 | **Crypto Order** | `crypto-place` | US |
@@ -274,7 +274,7 @@ See [.env.example](.env.example) for the full configuration template.
 | Feature | US | HK | JP | SG | MY | UK | MX | BR | ZA |
 |---------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | Stock Trading | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Option Trading | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Option Trading (single-leg) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | Futures Trading | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Crypto Trading | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Event Contracts | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -293,11 +293,11 @@ WEBULL_REGION_ID=jp
 WEBULL_ENVIRONMENT=uat
 ```
 
-JP support is intentionally stock-focused:
+JP support covers stocks and single-leg US options (`US_OPTION`):
 
 | Area | JP Support |
 |------|------------|
-| Market data | Stock actions only: `stock-snapshot`, `stock-bars`, `stock-batch-bars`, `stock-tick`, `stock-quotes`, `stock-footprint` |
+| Market data | Stock actions: `stock-snapshot`, `stock-bars`, `stock-batch-bars`, `stock-tick`, `stock-quotes`, `stock-footprint`; option actions: `option-snapshot`, `option-bars`, `option-tick` |
 | Instrument categories | `US_STOCK`, `US_ETF` |
 | Order markets | `US`, `JP` |
 | JP market order types | `LIMIT`, `MARKET` |
@@ -306,15 +306,17 @@ JP support is intentionally stock-focused:
 | US market time in force in JP region | `DAY`, `GTC` |
 | Trading sessions | `CORE`, `ALL`, `NIGHT`, `ALL_DAY` |
 | Stock account types | `CASH`, `US_MARGIN` |
+| Option account type | `US_OPTION` |
+| Option orders | Single-leg only: `option-place`, `option-preview`, `option-replace`. Multi-leg strategies are not supported |
 | JP-only asset action | `position-detail` |
 
-JP stock orders require `account_tax_type`. Margin-specific fields are only valid for `US_MARGIN` accounts:
+JP stock orders and JP US option orders (`option-place` / `option-preview`) require `account_tax_type`. For stock orders, margin-specific fields are only valid for `US_MARGIN` accounts:
 
 | Field | Required | Values / Rules |
 |-------|----------|----------------|
-| `account_tax_type` | Yes for JP stock `place` / `preview` | `GENERAL`, `SPECIFIC` |
+| `account_tax_type` | Yes for JP stock `place` / `preview` and JP US option `option-place` / `option-preview` | `GENERAL`, `SPECIFIC` |
 | `margin_type` | Margin account only | `ONE_DAY`, `INDEFINITE` |
-| `position_intent` | Margin account only | `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE` |
+| `position_intent` | Stock orders: margin account only. Option orders: optional, not validated by the Skill and passed to the backend as is | `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE` |
 | `close_contracts` | Optional JP-only close payload | Array of `{ "contract_id": "...", "quantity": ... }`, max 10 items |
 
 JP stock order example:

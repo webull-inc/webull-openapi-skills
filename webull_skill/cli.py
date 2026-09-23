@@ -127,9 +127,8 @@ _JP_UNSUPPORTED_TRADING_ACTIONS = frozenset({
     "instrument-event-events",
     "batch-place",
     "algo-place",
-    "option-place",
-    "option-preview",
-    "option-replace",
+    # Single-leg US-listed option orders are supported in JP (API-1413).
+    # Multi-leg option strategies remain unsupported here.
     "option-strategy-place",
     "futures-place",
     "futures-replace",
@@ -140,12 +139,27 @@ _JP_UNSUPPORTED_TRADING_ACTIONS = frozenset({
 
 _JP_STOCK_INSTRUMENT_CATEGORIES = frozenset({"US_STOCK", "US_ETF"})
 
+# Regions where US-listed option contracts, option orders, and option market
+# data are available. Matches the Local MCP supports_options set. ZA (which is
+# routed to Australia endpoints) and EU are intentionally excluded pending
+# compliance / product enablement.
+_OPTION_SUPPORTED_REGIONS = frozenset({"us", "hk", "jp", "sg", "my", "uk", "mx", "br", "th"})
+
+_OPTION_TRADING_ACTIONS = frozenset({
+    "instrument-option-contracts",
+    "option-place", "option-preview", "option-replace", "option-strategy-place",
+})
+
+_OPTION_MARKET_DATA_ACTIONS = frozenset({"option-snapshot", "option-bars", "option-tick"})
+
 
 def _region_trading_error(config: SkillConfig, action: str, category: str) -> str:
     """Return a validation error for unsupported region/action pairs."""
     region_id = config.region_id.lower()
     if action == "position-detail" and region_id != "jp":
         return "Action 'position-detail' is only supported in region 'jp'"
+    if action in _OPTION_TRADING_ACTIONS and region_id not in _OPTION_SUPPORTED_REGIONS:
+        return f"Action '{action}' is not supported in region '{region_id}'"
     if region_id != "jp":
         # Futures instrument query category validation (US and HK only)
         futures_actions = {
@@ -707,6 +721,9 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
     region_error = _region_market_data_error(config, action)
     if region_error:
         return failure(detail=f"Validation error: {region_error}")
+
+    if action in _OPTION_MARKET_DATA_ACTIONS and config.region_id.lower() not in _OPTION_SUPPORTED_REGIONS:
+        return failure(detail=f"Validation error: Action '{action}' is not supported in region '{config.region_id}'")
 
     from webull_skill.market_data.crypto import get_crypto_snapshot, get_crypto_bars
     from webull_skill.market_data.event import (

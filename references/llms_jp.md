@@ -67,10 +67,16 @@
 - US_MARGIN
 
 ### JP Order Extension Fields
-- account_tax_type: GENERAL, SPECIFIC
+- account_tax_type: GENERAL, SPECIFIC (required for JP stock orders and JP single-leg US option orders)
 - margin_type: ONE_DAY, INDEFINITE
 - position_intent: BUY_TO_OPEN, BUY_TO_CLOSE, SELL_TO_OPEN, SELL_TO_CLOSE
 - close_contracts supported on place / preview / replace
+## JP Option Trading Notes
+- Single-leg US options (US_OPTION) are supported: contracts, market data, positions, and preview / place / replace / cancel
+- Multi-leg option strategies are not supported
+- Option account type: US_OPTION
+- account_tax_type (GENERAL, SPECIFIC) is required for JP US option orders (option-place / option-preview)
+- position_intent is optional for option orders; the Skill passes it to the backend without validation
 
 ## Reference Notes
 
