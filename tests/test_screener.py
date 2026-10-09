@@ -4,8 +4,17 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pytest
+from webull.core.exception.exceptions import ServerException
+
 from webull_skill.config import SkillConfig
-from webull_skill.market_data.screener import get_gainers_losers, get_most_active
+from webull_skill.errors import handle_sdk_exception
+from webull_skill.market_data.screener import (
+    get_gainers_losers,
+    get_market_sentiment,
+    get_most_active,
+    get_stock_unusual_activities,
+)
 
 
 class _FakeResponse:
@@ -139,3 +148,105 @@ def test_get_most_active_formats_response():
     assert "Rel Vol 10D:     1.5" in result
     assert "[Has More: Yes]" in result
     assert screener.active_calls[0]["rank_type"] == "VOLUME"
+
+
+class _FakeScreenerExt:
+    """Records calls to the US-only screener methods."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, tuple, dict]] = []
+
+    def get_fear_and_greed_index(self, *args: object, **kwargs: object) -> _FakeResponse:
+        self.calls.append(("get_fear_and_greed_index", args, kwargs))
+        return _FakeResponse({
+            "current": {"fear_greed_index": 43, "grade": "Neutral"},
+            "previous_day": {"fear_greed_index": 55, "grade": "Neutral"},
+            "time_zone": "America/New_York",
+        })
+
+    def get_stock_unusual_activities(self, *args: object, **kwargs: object) -> _FakeResponse:
+        self.calls.append(("get_stock_unusual_activities", args, kwargs))
+        return _FakeResponse({
+            "data": [{"symbol": "NVDA", "alert_type": "VOLUME_SURGE"}]
+        })
+
+
+def _fake_sdk_ext(screener: _FakeScreenerExt) -> object:
+    data = SimpleNamespace(screener=screener)
+    return SimpleNamespace(data=data, region_id="us")
+
+
+def test_market_sentiment_uses_us_category():
+    screener = _FakeScreenerExt()
+    sdk = _fake_sdk_ext(screener)
+    result = get_market_sentiment(sdk, _config())
+
+    assert "=== Market Sentiment Index ===" in result
+    assert "43" in result
+    name, args, kwargs = screener.calls[0]
+    assert name == "get_fear_and_greed_index"
+    assert args == ()
+    assert kwargs == {"category": "US_STOCK"}
+
+
+def test_stock_unusual_activities_builds_kwargs():
+    screener = _FakeScreenerExt()
+    sdk = _fake_sdk_ext(screener)
+    result = get_stock_unusual_activities(sdk, _config(), symbol="NVDA", count=5,
+                                          extended_hours_required=True)
+
+    assert "=== Stock Unusual Activities ===" in result
+    name, args, kwargs = screener.calls[0]
+    assert name == "get_stock_unusual_activities"
+    assert args == ()
+    assert kwargs == {
+        "category": "US_STOCK", "count": 5, "symbol": "NVDA",
+        "alert_types": None, "extended_hours_required": True,
+    }
+
+
+# ---------------------------------------------------------------------------
+# count range validation (1-30, local before hitting the SDK)
+# ---------------------------------------------------------------------------
+
+def test_stock_unusual_activities_rejects_count_below_range():
+    screener = _FakeScreenerExt()
+    sdk = _fake_sdk_ext(screener)
+    result = get_stock_unusual_activities(sdk, _config(), count=0)
+    assert "count must be between 1 and 30" in result
+    assert screener.calls == []  # SDK not called
+
+
+def test_stock_unusual_activities_rejects_count_above_range():
+    screener = _FakeScreenerExt()
+    sdk = _fake_sdk_ext(screener)
+    result = get_stock_unusual_activities(sdk, _config(), count=31)
+    assert "count must be between 1 and 30" in result
+    assert screener.calls == []  # SDK not called
+
+
+def test_stock_unusual_activities_accepts_count_boundaries():
+    for boundary in (1, 30):
+        screener = _FakeScreenerExt()
+        sdk = _fake_sdk_ext(screener)
+        result = get_stock_unusual_activities(sdk, _config(), count=boundary)
+        assert "=== Stock Unusual Activities ===" in result
+        assert len(screener.calls) == 1
+
+
+@pytest.mark.parametrize(
+    "tool_name,http_status",
+    [
+        ("get_market_sentiment", 401),
+        ("get_stock_unusual_activities", 403),
+    ],
+)
+def test_new_screener_tools_return_subscription_hint(tool_name: str, http_status: int):
+    error = ServerException(
+        "MARKET_DATA_NOT_SUBSCRIBED", "subscription required", http_status=http_status
+    )
+
+    result = handle_sdk_exception(error, tool_name, "us")
+
+    assert "Market data requires quotes subscription." in result
+    assert "https://www.webullapp.com/quote" in result

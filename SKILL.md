@@ -23,6 +23,7 @@ This skill lets you interact with Webull's trading platform through natural lang
 - **Screener**: Top gainers/losers, most active stocks, market sectors, high dividend, and 52-week high/low
 - **Fundamentals**: Financial statements, capital flow, industry comparison, earnings/dividend calendar, forecast EPS, and fund/ETF data
 - **Watchlist**: Create, manage, and query watchlists and their instruments
+- **Community** (US only): Create posts and comments, list hot stocks, browse posts by symbol, view post details, and list your own posts
 
 ## Safety Rules
 
@@ -30,15 +31,17 @@ This skill lets you interact with Webull's trading platform through natural lang
 
 Mutating actions: `place`, `replace`, `cancel`, `batch-place`, `algo-place`, `option-place`, `option-replace`, `option-strategy-place`, `futures-place`, `futures-replace`, `crypto-place`, `event-place`, `event-replace`.
 
+**Community write operations also require user confirmation before execution**, because they publish content under the user's account: `community-create-post`, `community-create-comment`.
+
 Before executing any of these operations, the AI must:
 1. Display a clear summary of the operation to the user, including:
-   - Action type (place / replace / cancel)
-   - Symbol, side, order type, quantity, price
-   - Account being used
+   - Action type (place / replace / cancel; or community post / comment)
+   - For orders: symbol, side, order type, quantity, price, account being used
+   - For community writes: the full text content and any attached symbol/category
 2. Explicitly ask the user to confirm (e.g., "Confirm this order? [Yes/No]")
 3. Only proceed after receiving explicit user approval
 
-Read-only operations (`account-list`, `balance`, `position`, `open`, `history`, `detail`, `executions`, `instrument-*`, all `market-data` actions) do not require confirmation and can be executed immediately.
+Read-only operations (`account-list`, `balance`, `position`, `open`, `history`, `detail`, `executions`, `instrument-*`, and all read-only `market-data` actions including `community-hot-stocks`, `community-posts-by-symbol`, `community-post-detail`, `community-my-posts`) do not require confirmation and can be executed immediately.
 
 ---
 
@@ -86,7 +89,7 @@ For full action list, order JSON formats, replace rules, and order type referenc
 
 ### market-data
 
-Real-time and historical market data for all asset classes (stock, option, futures, crypto, event contracts), plus screener, fundamentals, and watchlist.
+Real-time and historical market data for all asset classes (stock, option, futures, crypto, event contracts), plus screener, fundamentals, watchlist, and community.
 
 For full action list, options, category values, and examples, see [Market Data Guide](references/skill_market_data.md).
 
@@ -195,6 +198,7 @@ Optional:
 | NOII bars / snapshot | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ |
 | Screener | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Watchlist | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ |
+| Community | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Fundamentals | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 
