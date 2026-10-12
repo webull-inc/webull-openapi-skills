@@ -1,6 +1,6 @@
 ---
 name: webull-openapi
-description: Trade stocks, options, futures, crypto, and event contracts on Webull. Query real-time and historical market data. Manage accounts and positions. Supports US, HK, JP, SG, MY, UK, MX, BR, and ZA regions with configurable risk controls.
+description: Trade stocks, options, futures, crypto, and event contracts on Webull. Query real-time and historical market data. Manage accounts and positions. Supports US, HK, JP, SG, TH, MY, UK, MX, BR, and ZA regions with configurable risk controls.
 ---
 
 # Webull OpenAPI Skill
@@ -117,7 +117,7 @@ All operations output formatted text directly to stdout, with a region-aware dis
 
 - Success: disclaimer + formatted data to stdout, exit code 0
 - Error: error message to stderr, exit code 1
-- US/JP/SG/MY/UK/MX/BR/ZA region: English disclaimer only
+- US/JP/SG/TH/MY/UK/MX/BR/ZA region: English disclaimer only
 - HK region: English + Simplified Chinese + Traditional Chinese disclaimer
 
 ---
@@ -139,6 +139,7 @@ WEBULL_REGION_ID=us
 # WEBULL_REGION_ID=hk
 # WEBULL_REGION_ID=jp
 # WEBULL_REGION_ID=sg
+# WEBULL_REGION_ID=th
 # WEBULL_REGION_ID=my
 # WEBULL_REGION_ID=uk
 # WEBULL_REGION_ID=mx
@@ -161,7 +162,7 @@ Optional:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `WEBULL_ENVIRONMENT` | `uat` | `uat` (sandbox) or `prod` (live) |
-| `WEBULL_REGION_ID` | `us` | `us`, `hk`, `jp`, `sg`, `my`, `uk`, `mx`, `br`, or `za` |
+| `WEBULL_REGION_ID` | `us` | `us`, `hk`, `jp`, `sg`, `th`, `my`, `uk`, `mx`, `br`, or `za` |
 | `WEBULL_MAX_ORDER_NOTIONAL_USD` | `10000` | Max order value (USD) |
 | `WEBULL_MAX_ORDER_NOTIONAL_HKD` | `80000` | Max order value for HK market (HKD) |
 | `WEBULL_MAX_ORDER_NOTIONAL_CNH` | `70000` | Max order value for CN market (CNH) |
@@ -177,24 +178,24 @@ Optional:
 
 ## Region Support
 
-| Feature | US | HK | JP | SG | MY | UK | MX | BR | ZA |
-|---------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| Stock trading | ✓ | ✓ (US/HK/CN) | ✓ (US/JP) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) |
-| Options | ✓ | ✓ (US only) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Futures | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Crypto | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Event contracts | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Combo orders | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Option leg in/out | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Algo orders | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Trailing stop loss | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Fractional shares | ✓ (US market) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Company profile | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ |
-| Analyst rating / target price | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ |
-| NOII bars / snapshot | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ |
-| Screener | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Watchlist | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ |
-| Fundamentals | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Feature | US | HK | JP | SG | TH | MY | UK | MX | BR | ZA |
+|---------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| Stock trading | ✓ | ✓ (US/HK/CN) | ✓ (US/JP) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) |
+| Options | ✓ | ✓ (US only) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Futures | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Crypto | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Event contracts | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Combo orders | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Option leg in/out | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Algo orders | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Trailing stop loss | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Fractional shares | ✓ (US market) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Company profile | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ |
+| Analyst rating / target price | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ |
+| NOII bars / snapshot | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ |
+| Screener | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Watchlist | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ |
+| Fundamentals | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 
 ### HK-Specific Notes
@@ -228,6 +229,16 @@ Optional:
 - Trading sessions: `CORE`, `ALL`, `NIGHT`, `ALL_DAY`.
 - SG order market is `US` only.
 - No futures, crypto, options, event contracts, combo orders, or algo orders in SG region.
+
+### TH-Specific Notes
+
+- Configure TH with `WEBULL_REGION_ID=th`; sandbox uses `WEBULL_ENVIRONMENT=uat`.
+- TH supports US stock/ETF trading for Thailand-based clients.
+- Supported order types: `MARKET`, `LIMIT`, `STOP_LOSS`, `STOP_LOSS_LIMIT`.
+- Time in force: `DAY`, `GTC`.
+- Trading sessions: `CORE`, `ALL`, `NIGHT`, `ALL_DAY`.
+- TH order market is `US` only.
+- No futures, crypto, options, event contracts, combo orders, or algo orders in TH region.
 
 ### MY-Specific Notes
 
@@ -305,6 +316,12 @@ Optional:
 - Order query: 2 req/2s
 - Auth: 10 req/30s
 
+### TH Region
+- Market data: 300 req/60s
+- Order place/replace/cancel: 600 req/60s
+- Order query: 2 req/2s
+- Auth: 10 req/30s
+
 ### MY Region
 - Market data: 300 req/60s
 - Order place/replace/cancel: 600 req/60s
@@ -348,6 +365,7 @@ Optional:
 - HK: https://developer.webull.hk/apis/docs/webull-open-api-reference
 - JP: https://developer.webull.co.jp/apis/docs/webull-open-api-reference
 - SG: https://developer.webull.com.sg/apis/docs/index.md
+- TH: https://developer.webull.co.th/apis/docs/
 - MY: https://developer.webull.com.my/apis/docs/
 - UK: https://developer.webull-uk.com/apis/docs/
 - MX: https://developer.webull.com.mx/apis/docs/
