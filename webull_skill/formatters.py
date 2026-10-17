@@ -53,7 +53,7 @@ def set_disclaimer_region(region_id: str) -> None:
     elif _current_region == "jp":
         DISCLAIMER = _DISCLAIMER_JP
     else:
-        # US, SG, MY, UK, MX, BR, EU, ZA — English only
+        # US, SG, TH, MY, UK, MX, BR, ZA — English only
         DISCLAIMER = _DISCLAIMER_US
 
 _NO_DATA = "No data available."

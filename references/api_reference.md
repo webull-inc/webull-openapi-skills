@@ -40,6 +40,14 @@
 | Trading Events (gRPC) | `events-api.webull.com.sg` | `sg-events-api.uat.webullbroker.com` |
 | Market Data (MQTT) | `data-api.webull.com.sg` | `data-api.uat.webullbroker.com` |
 
+### TH Region
+
+| Type | Production | UAT |
+|------|-----------|----------|
+| HTTP API | `api.webull.co.th` | `th-api.uat.webullbroker.com` |
+| Trading Events (gRPC) | `events-api.webull.co.th` | `th-events-api.uat.webullbroker.com` |
+| Market Data (MQTT) | `data-api.webull.co.th` | `th-api.uat.webullbroker.com` |
+
 ### MY Region
 
 | Type | Production | UAT |
@@ -82,17 +90,17 @@
 
 ## Feature Matrix by Region
 
-| Feature | US | HK | JP | SG | MY | UK | MX | BR | ZA |
-|---------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
-| Stock trading | Yes | Yes (US/HK/CN) | Yes (US/JP) | Yes (US) | Yes (US) | Yes (US) | Yes (US) | Yes (US) | Yes (US) |
-| Options trading | Yes | Yes (US only) | No | No | No | No | No | No | No |
-| Futures trading | Yes | Yes | No | No | No | No | No | No | No |
-| Crypto trading | Yes | No | No | No | No | No | No | No | No |
-| Event contracts | Yes | No | No | No | No | No | No | No | No |
-| Combo orders (OTO/OCO/OTOCO) | Yes | No | No | No | No | No | No | No | No |
-| Algo orders (TWAP/VWAP/POV) | Yes | No | No | No | No | No | No | No | No |
-| Trailing stop loss | Yes | No | No | No | No | No | No | No | No |
-| Fractional shares | Yes (US market) | No | No | No | No | No | No | No | No |
+| Feature | US | HK | JP | SG | TH | MY | UK | MX | BR | ZA |
+|---------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| Stock trading | Yes | Yes (US/HK/CN) | Yes (US/JP) | Yes (US) | Yes (US) | Yes (US) | Yes (US) | Yes (US) | Yes (US) | Yes (US) |
+| Options trading | Yes | Yes (US only) | No | No | No | No | No | No | No | No |
+| Futures trading | Yes | Yes | No | No | No | No | No | No | No | No |
+| Crypto trading | Yes | No | No | No | No | No | No | No | No | No |
+| Event contracts | Yes | No | No | No | No | No | No | No | No | No |
+| Combo orders (OTO/OCO/OTOCO) | Yes | No | No | No | No | No | No | No | No | No |
+| Algo orders (TWAP/VWAP/POV) | Yes | No | No | No | No | No | No | No | No | No |
+| Trailing stop loss | Yes | No | No | No | No | No | No | No | No | No |
+| Fractional shares | Yes (US market) | No | No | No | No | No | No | No | No | No |
 
 ## Order Types by Market
 
@@ -116,7 +124,7 @@
 
 ## Time in Force
 
-| Value | US | HK | JP | SG/MY/UK/MX/BR/ZA |
+| Value | US | HK | JP | SG/TH/MY/UK/MX/BR/ZA |
 |-------|:--:|:--:|:--:|:--:|
 | `DAY` | Yes | Yes | Yes (JP & US markets) | Yes |
 | `GTC` | Yes | Yes | Yes (US market only) | Yes |
@@ -149,7 +157,7 @@
 ### JP Region
 - Instrument lookup: 60 req/min per AppId
 
-### SG / MY / UK / MX / BR Region
+### SG / TH / MY / UK / MX / BR Region
 - Market data: 300 req/60s
 - Order place/replace/cancel: 600 req/60s
 - Order query: 2 req/2s
@@ -167,6 +175,7 @@
 - HK: https://developer.webull.hk/apis/docs/webull-open-api-reference
 - JP: https://developer.webull.co.jp/apis/docs/webull-open-api-reference
 - SG: https://developer.webull.com.sg/apis/docs/
+- TH: https://developer.webull.co.th/apis/docs/
 - MY: https://developer.webull.com.my/apis/docs/
 - UK: https://developer.webull-uk.com/apis/docs/
 - MX: https://developer.webull.com.mx/apis/docs/
@@ -176,6 +185,7 @@
 - HK LLM: https://developer.webull.hk/apis/llms.txt
 - JP LLM: https://developer.webull.co.jp/apis/llms.txt
 - SG LLM: https://developer.webull.com.sg/apis/llms.txt
+- TH LLM: https://developer.webull.co.th/apis/llms.txt
 - MY LLM: https://developer.webull.com.my/apis/llms.txt
 - UK LLM: https://developer.webull-uk.com/apis/llms.txt
 - MX LLM: https://developer.webull.com.mx/apis/llms.txt
