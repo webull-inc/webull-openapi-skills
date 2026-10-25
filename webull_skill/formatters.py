@@ -1907,6 +1907,76 @@ def format_52whl(data: Any) -> str:
     """Format 52-week high/low rank list response."""
     return _format_generic_list(data, "52-Week High/Low")
 
+def _format_paginated_list(data: Any, title: str) -> str:
+    """List formatter that also surfaces the next-page cursor.
+
+    Renders items via :func:`_format_generic_list`, then appends the
+    top-level ``pagination_key`` cursor when the response carries one.
+    Pass that value back as ``pagination_key`` to fetch the next page;
+    it is absent on the last page.
+    """
+    text = _format_generic_list(data, title)
+    if isinstance(data, dict):
+        pagination_key = data.get("pagination_key") or data.get("next_pagination_key")
+        if pagination_key:
+            text += f"\n\nNext pagination_key: {pagination_key}"
+    return text
+
+
+def format_market_sentiment(data: Any) -> str:
+    """Format the fear & greed sentiment index response."""
+    return _format_generic_list(data, "Market Sentiment Index")
+
+
+def format_stock_unusual_activities(data: Any) -> str:
+    """Format unusual activity alert response."""
+    return _format_generic_list(data, "Stock Unusual Activities")
+
+
+def format_institution_search(data: Any) -> str:
+    """Format institution keyword-search response."""
+    return _format_paginated_list(data, "Institution Search")
+
+
+def format_institution_holdings(data: Any) -> str:
+    """Format institution 13F holdings response."""
+    return _format_paginated_list(data, "Institution 13F Holdings")
+
+
+def format_institution_holding_changes(data: Any) -> str:
+    """Format institution holding-changes response."""
+    return _format_paginated_list(data, "Institution Holding Changes")
+
+
+def format_insider_transactions(data: Any) -> str:
+    """Format insider transaction response."""
+    return _format_paginated_list(data, "Insider Transactions")
+
+
+def format_insider_holdings_overview(data: Any) -> str:
+    """Format insider holdings overview response."""
+    return _format_generic_list(data, "Insider Holdings Overview")
+
+
+def format_economic_calendar(data: Any) -> str:
+    """Format US economic calendar response."""
+    return _format_paginated_list(data, "US Economic Calendar")
+
+
+def format_news_search(data: Any) -> str:
+    """Format news keyword-search response."""
+    return _format_paginated_list(data, "News Keyword Search")
+
+
+def format_news_detail(data: Any) -> str:
+    """Format news detail response."""
+    return _format_generic_list(data, "News Detail")
+
+
+def format_stock_news(data: Any) -> str:
+    """Format stock news list response."""
+    return _format_paginated_list(data, "Stock News List")
+
 
 # ---------------------------------------------------------------------------
 # Option market data formatters
@@ -1994,3 +2064,115 @@ def format_option_bars(data: Any) -> str:
     if isinstance(data, dict) and "result" in data:
         data = data["result"]
     return _format_bars_data(data, "Option Bars (OHLCV)")
+
+
+# ---------------------------------------------------------------------------
+# Community formatters
+# ---------------------------------------------------------------------------
+
+def format_community_create_result(data: Any) -> str:
+    """Format a create post / create comment response.
+
+    API returns the created identifier(s), e.g. {post_id} or {comment_id}.
+    """
+    if not data or not isinstance(data, dict):
+        return "Operation completed."
+
+    lines: list[str] = ["=== Community ==="]
+    post_id = data.get("post_id")
+    comment_id = data.get("comment_id")
+    if post_id is not None:
+        lines.append(f"  Post ID: {post_id}")
+    if comment_id is not None:
+        lines.append(f"  Comment ID: {comment_id}")
+    if post_id is None and comment_id is None:
+        for key, val in data.items():
+            lines.append(f"  {key}: {val}")
+    return "\n".join(lines)
+
+
+def format_community_hot_stocks(data: Any) -> str:
+    """Format the community hot stocks ranking response.
+
+    API returns a list (or {data: [...]}) of {rank, symbol, category}.
+    """
+    if not data:
+        return _NO_DATA
+
+    items = data.get("data", []) if isinstance(data, dict) else data
+    if not isinstance(items, list) or not items:
+        return _NO_DATA
+
+    lines: list[str] = ["=== Community Hot Stocks ==="]
+    for item in items:
+        if isinstance(item, dict):
+            lines.append(
+                f"  #{_get(item, 'rank')}  {_get(item, 'symbol')}  "
+                f"({_get(item, 'category')})"
+            )
+    return "\n".join(lines)
+
+
+def _format_community_post_item(item: dict) -> str:
+    """Format a single community post list entry."""
+    lines = [
+        f"  Post ID: {_get(item, 'post_id')}",
+        f"    Text: {_get(item, 'text')}",
+        f"    Publish Time: {_get(item, 'publish_time')}",
+        f"    Thumbs: {_get(item, 'thumbs')}  Comments: {_get(item, 'comments')}",
+    ]
+    return "\n".join(lines)
+
+
+def format_community_post_list(data: Any, title: str = "Posts") -> str:
+    """Format a paginated community post list response.
+
+    API returns {data: [{post_id, text, publish_time, thumbs, comments, ...}],
+    pagination_key: str}.
+    """
+    if not data:
+        return _NO_DATA
+
+    items = data.get("data", []) if isinstance(data, dict) else data
+    pagination_key = data.get("pagination_key") if isinstance(data, dict) else None
+    if not isinstance(items, list):
+        return _NO_DATA
+    if not items:
+        if pagination_key:
+            return f"{_NO_DATA}\n\n  (More results available — pass pagination_key={pagination_key})"
+        return _NO_DATA
+
+    lines: list[str] = [f"=== Community {title} ==="]
+    for item in items:
+        if isinstance(item, dict):
+            lines.append(_format_community_post_item(item))
+
+    if pagination_key:
+        lines.append(f"\n  (More results available — pass pagination_key={pagination_key})")
+    return "\n".join(lines)
+
+
+def format_community_post_detail(data: Any) -> str:
+    """Format a community post detail response.
+
+    API returns {post_id, text, publish_time, thumbs, comments,
+    tickers: [{symbol, category}]}.
+    """
+    if not data or not isinstance(data, dict):
+        return _NO_DATA
+
+    lines: list[str] = ["=== Community Post Detail ==="]
+    lines.append(f"  Post ID: {_get(data, 'post_id')}")
+    lines.append(f"  Text: {_get(data, 'text')}")
+    lines.append(f"  Publish Time: {_get(data, 'publish_time')}")
+    lines.append(f"  Thumbs: {_get(data, 'thumbs')}  Comments: {_get(data, 'comments')}")
+
+    tickers = data.get("tickers")
+    if isinstance(tickers, list) and tickers:
+        lines.append("  Tickers:")
+        for ticker in tickers:
+            if isinstance(ticker, dict):
+                lines.append(
+                    f"    {_get(ticker, 'symbol')} ({_get(ticker, 'category')})"
+                )
+    return "\n".join(lines)

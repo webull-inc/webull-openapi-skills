@@ -70,6 +70,7 @@ MARKET_DATA_ACTIONS = [
     "stock-gainers-losers", "stock-most-active",
     "stock-market-sectors", "stock-market-sectors-detail",
     "stock-high-dividend", "stock-52-week-high-low",
+    "market-sentiment", "stock-unusual-activities",
     # Fundamentals
     "fundamentals-capital-flow", "fundamentals-industry-comparison", "fundamentals-sec-filings",
     "fundamentals-earnings-calendar", "fundamentals-dividend-calendar",
@@ -80,11 +81,38 @@ MARKET_DATA_ACTIONS = [
     "fundamentals-fund-brief", "fundamentals-fund-allocation", "fundamentals-fund-holdings",
     "fundamentals-fund-performance", "fundamentals-fund-rating", "fundamentals-fund-net-value",
     "fundamentals-fund-dividends", "fundamentals-fund-splits", "fundamentals-fund-files",
+    "institution-search", "institution-holdings", "institution-holding-changes",
+    "insider-transactions", "insider-holdings-overview", "economic-calendar",
+    # News
+    "news-search", "news-detail", "stock-news",
     # Watchlist
     "watchlist-list", "watchlist-create", "watchlist-delete", "watchlist-update",
     "watchlist-instruments-list", "watchlist-instruments-add",
     "watchlist-instruments-remove", "watchlist-instruments-update",
+    # Community
+    "community-create-post", "community-create-comment", "community-hot-stocks",
+    "community-posts-by-symbol", "community-post-detail", "community-my-posts",
 ]
+
+_US_ONLY_MARKET_DATA_ACTIONS = frozenset({
+    "market-sentiment",
+    "stock-unusual-activities",
+    "institution-search",
+    "institution-holdings",
+    "institution-holding-changes",
+    "insider-transactions",
+    "insider-holdings-overview",
+    "economic-calendar",
+    "news-search",
+    "news-detail",
+    "stock-news",
+    "community-create-post",
+    "community-create-comment",
+    "community-hot-stocks",
+    "community-posts-by-symbol",
+    "community-post-detail",
+    "community-my-posts",
+})
 
 
 _JP_UNSUPPORTED_TRADING_ACTIONS = frozenset({
@@ -149,6 +177,13 @@ def _region_trading_error(config: SkillConfig, action: str, category: str) -> st
     return ""
 
 
+def _region_market_data_error(config: SkillConfig, action: str) -> str:
+    """Return a validation error when a US-only market-data action is unavailable."""
+    if action in _US_ONLY_MARKET_DATA_ACTIONS and config.region_id.lower() != "us":
+        return f"Action '{action}' is only supported in region 'us'"
+    return ""
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI argument parser with subcommands."""
     parser = argparse.ArgumentParser(
@@ -199,6 +234,26 @@ def build_parser() -> argparse.ArgumentParser:
     mp.add_argument("--real-time-required", action="store_true")
     mp.add_argument("--extend-hour-required", action="store_true")
     mp.add_argument("--overnight-required", action="store_true")
+    mp.add_argument("--start-date", default="", help="Start date yyyy-MM-dd (economic calendar / news search)")
+    mp.add_argument("--end-date", default="", help="End date yyyy-MM-dd (economic calendar / news search)")
+    mp.add_argument("--pagination-key", default="", help="Cursor for paginated market data (institution/insider/economic/news/community)")
+    mp.add_argument("--keyword", default="",
+                    help="Search keyword (institution-search: name or CIK; news-search: news keyword; "
+                         "community-posts-by-symbol: optional filter)")
+    mp.add_argument("--news-id", default="", help="News unique identifier (news-detail)")
+    mp.add_argument("--sentiment", default="", type=str.upper,
+                    choices=["POSITIVE", "NEGATIVE", "NEUTRAL"],
+                    help="News sentiment filter: POSITIVE, NEGATIVE, NEUTRAL")
+    mp.add_argument("--cik", default="", help="Institution SEC CIK")
+    mp.add_argument("--position", default="", type=str.upper,
+                    choices=["OPEN", "CLOSE", "CHANGE"],
+                    help="Holding change type: OPEN, CLOSE, CHANGE")
+    mp.add_argument("--side", default="", type=str.upper, choices=["BUY", "SELL"],
+                    help="Insider transaction side: BUY or SELL")
+    mp.add_argument("--compare-months", type=int, default=1, choices=[1, 3])
+    mp.add_argument("--alert-types", default="", help="Comma-separated unusual activity types")
+    mp.add_argument("--unusual-count", type=int, default=10, help="Number of unusual activities (1-30)")
+    mp.add_argument("--extended-hours-required", action="store_true")
     # K-line time range (long millisecond timestamps)
     mp.add_argument("--start-time", type=int, default=None, help="Start timestamp in milliseconds (Long)")
     mp.add_argument("--end-time", type=int, default=None, help="End timestamp in milliseconds (Long)")
@@ -234,6 +289,10 @@ def build_parser() -> argparse.ArgumentParser:
                     help="Statistics period: D1, D5, M01, M03")
     mp.add_argument("--last-date", default="",
                     help="Last query date for fund net value, e.g. 2026-04-01")
+    # Community
+    mp.add_argument("--text", default="", help="Post or comment content (community)")
+    mp.add_argument("--post-id", default="", help="Post identifier (community)")
+    # --keyword and --pagination-key are defined once above (shared across market-data actions).
 
     # auth subcommand
     subparsers.add_parser("auth", help="Authenticate and obtain access token (interactive 2FA)")
@@ -645,6 +704,9 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
 def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str | OperationResult:
     """Dispatch a market-data subcommand action. Returns formatted string or OperationResult on error."""
     action = args.action
+    region_error = _region_market_data_error(config, action)
+    if region_error:
+        return failure(detail=f"Validation error: {region_error}")
 
     from webull_skill.market_data.crypto import get_crypto_snapshot, get_crypto_bars
     from webull_skill.market_data.event import (
@@ -667,6 +729,8 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         get_market_sectors_detail,
         get_high_dividend,
         get_52whl,
+        get_market_sentiment,
+        get_stock_unusual_activities,
     )
     from webull_skill.market_data.fundamentals import (
         get_capital_flow,
@@ -689,6 +753,12 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         get_fund_dividends,
         get_fund_splits,
         get_fund_files,
+        search_institutions,
+        get_institution_holdings,
+        get_institution_holding_changes,
+        get_insider_transactions,
+        get_insider_holdings_overview,
+        get_economic_calendar,
     )
     from webull_skill.market_data.stock import (
         get_stock_snapshot,
@@ -699,6 +769,11 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         get_stock_footprint,
         get_stock_noii_bars,
         get_stock_noii_snapshot,
+    )
+    from webull_skill.market_data.news import (
+        search_news,
+        get_news_detail,
+        get_stock_news,
     )
     from webull_skill.market_data.option import (
         get_option_snapshot,
@@ -714,6 +789,14 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         add_watchlist_instruments,
         remove_watchlist_instruments,
         update_watchlist_instruments,
+    )
+    from webull_skill.market_data.community import (
+        create_post,
+        create_comment,
+        list_hot_stocks,
+        list_posts_by_symbol,
+        get_post,
+        list_my_posts,
     )
     from webull_skill.sdk_client import SDKClient
 
@@ -770,6 +853,7 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
                                 trading_sessions=args.trading_sessions or None),
             action,
         )
+
 
     # Futures
     if action == "futures-snapshot":
@@ -956,6 +1040,17 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
             ),
             action,
         )
+    # Market sentiment & unusual activities
+    if action == "market-sentiment":
+        return _wrap_tool_result(get_market_sentiment(sdk, config), action)
+    if action == "stock-unusual-activities":
+        return _wrap_tool_result(
+            get_stock_unusual_activities(
+                sdk, config, symbol=symbol or None, count=args.unusual_count,
+                alert_types=args.alert_types or None,
+                extended_hours_required=args.extended_hours_required,
+            ), action,
+        )
     # Fundamentals
     if action == "fundamentals-capital-flow":
         if not symbol:
@@ -1111,6 +1206,73 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
             get_fund_files(sdk, config, symbol, category=cat or "US_STOCK"),
             action,
         )
+
+    # Institutions & insiders
+    if action == "institution-search":
+        if not args.keyword:
+            return failure(detail="--keyword is required for institution-search")
+        return _wrap_tool_result(
+            search_institutions(sdk, config, args.keyword, args.pagination_key or None), action,
+        )
+    if action == "institution-holdings":
+        if not args.cik:
+            return failure(detail="--cik is required for institution-holdings")
+        return _wrap_tool_result(
+            get_institution_holdings(sdk, config, args.cik, args.pagination_key or None), action,
+        )
+    if action == "institution-holding-changes":
+        if not args.cik or not args.position:
+            return failure(detail="--cik and --position are required for institution-holding-changes")
+        return _wrap_tool_result(
+            get_institution_holding_changes(
+                sdk, config, args.cik, args.position, args.pagination_key or None,
+            ), action,
+        )
+    if action == "insider-transactions":
+        if not symbol:
+            return failure(detail="--symbol is required for insider-transactions")
+        return _wrap_tool_result(
+            get_insider_transactions(sdk, config, symbol, args.side or None,
+                                     args.pagination_key or None), action,
+        )
+    if action == "insider-holdings-overview":
+        if not symbol:
+            return failure(detail="--symbol is required for insider-holdings-overview")
+        return _wrap_tool_result(
+            get_insider_holdings_overview(sdk, config, symbol, args.compare_months), action,
+        )
+
+    # Macro
+    if action == "economic-calendar":
+        return _wrap_tool_result(
+            get_economic_calendar(
+                sdk, config, args.start_date or None, args.end_date or None,
+                args.pagination_key or None,
+            ), action,
+        )
+
+    # News
+    if action == "news-search":
+        if not args.keyword:
+            return failure(detail="--keyword is required for news-search")
+        return _wrap_tool_result(
+            search_news(sdk, config, args.keyword, args.start_date or None,
+                        args.end_date or None, args.pagination_key or None), action,
+        )
+    if action == "news-detail":
+        if not args.news_id:
+            return failure(detail="--news-id is required for news-detail")
+        return _wrap_tool_result(
+            get_news_detail(sdk, config, args.news_id), action,
+        )
+    if action == "stock-news":
+        if not symbol:
+            return failure(detail="--symbol is required for stock-news")
+        return _wrap_tool_result(
+            get_stock_news(sdk, config, symbol, args.sentiment or None,
+                           args.pagination_key or None), action,
+        )
+
     # Watchlist
     if action == "watchlist-list":
         return _wrap_tool_result(get_watchlist(sdk, config), action)
@@ -1182,6 +1344,57 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
                                              instruments=instruments),
                 action,
             )
+
+    # Community
+    if action == "community-create-post":
+        if not args.text:
+            return failure(detail="--text is required for community-create-post")
+        # symbol / category 为可选关联标的，必须成对提供。基于用户原始输入判断，
+        # 不能用 cat（已被 default_category 填默认 US_STOCK），否则纯文本发帖会被误拒。
+        if bool(args.symbol) != bool(args.category):
+            return failure(detail="--symbol and --category must be provided together for community-create-post")
+        return _wrap_tool_result(
+            create_post(
+                sdk, config,
+                text=args.text,
+                symbol=args.symbol or None,
+                category=args.category or None,
+            ),
+            action,
+        )
+    if action == "community-create-comment":
+        if not args.post_id:
+            return failure(detail="--post-id is required for community-create-comment")
+        if not args.text:
+            return failure(detail="--text is required for community-create-comment")
+        return _wrap_tool_result(
+            create_comment(sdk, config, post_id=args.post_id, text=args.text),
+            action,
+        )
+    if action == "community-hot-stocks":
+        return _wrap_tool_result(list_hot_stocks(sdk, config), action)
+    if action == "community-posts-by-symbol":
+        if not symbol:
+            return failure(detail="--symbol is required for community-posts-by-symbol")
+        return _wrap_tool_result(
+            list_posts_by_symbol(
+                sdk, config,
+                symbol=symbol,
+                category=cat or "US_STOCK",
+                keyword=args.keyword or None,
+                pagination_key=args.pagination_key or None,
+            ),
+            action,
+        )
+    if action == "community-post-detail":
+        if not args.post_id:
+            return failure(detail="--post-id is required for community-post-detail")
+        return _wrap_tool_result(get_post(sdk, config, post_id=args.post_id), action)
+    if action == "community-my-posts":
+        return _wrap_tool_result(
+            list_my_posts(sdk, config, pagination_key=args.pagination_key or None),
+            action,
+        )
 
     return failure(detail=f"Unknown market-data action: {action}")
 

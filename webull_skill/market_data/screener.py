@@ -1,7 +1,8 @@
 """Stock screener tools for Webull OpenAPI Skill.
 
 Provides: get_gainers_losers, get_most_active, get_market_sectors,
-          get_market_sectors_detail, get_high_dividend, get_52whl.
+          get_market_sectors_detail, get_high_dividend, get_52whl,
+          get_market_sentiment, get_stock_unusual_activities.
 """
 
 from __future__ import annotations
@@ -17,6 +18,8 @@ from webull_skill.formatters import (
     format_market_sectors_detail,
     format_high_dividend,
     format_52whl,
+    format_market_sentiment,
+    format_stock_unusual_activities,
     prepend_disclaimer,
 )
 
@@ -253,3 +256,60 @@ def get_52whl(
         return prepend_disclaimer(format_52whl(data))
     except Exception as e:
         return handle_sdk_exception(e, "get_52whl", config.region_id)
+
+
+def get_market_sentiment(
+    sdk: "SDKClient",
+    config: "SkillConfig",
+) -> str:
+    """Query the market fear & greed sentiment index.
+
+    Includes current index with historical comparison points
+    (previous day, one week ago, one month ago).
+
+    Returns: current, previous_day, one_week_ago, one_month_ago, time_zone.
+    """
+    try:
+        data = extract_response_data(
+            sdk.data.screener.get_fear_and_greed_index(category="US_STOCK")
+        )
+        return prepend_disclaimer(format_market_sentiment(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "get_market_sentiment", config.region_id)
+
+
+def get_stock_unusual_activities(
+    sdk: "SDKClient",
+    config: "SkillConfig",
+    symbol: Optional[str] = None,
+    count: int = 10,
+    alert_types: Optional[str] = None,
+    extended_hours_required: bool = False,
+) -> str:
+    """Query recent unusual activity alerts for a stock.
+
+    US market only. Returns up to count most recent events within the last
+    90 calendar days.
+
+    :param symbol: Stock symbol, e.g. NVDA, optional (all symbols if omitted).
+    :param count: Number of most recent events, 1-30, default 10.
+    :param alert_types: Comma-separated alert type filter, None to return all.
+    :param extended_hours_required: Whether to include pre-market and
+        after-hours alerts.
+    Returns: alert events with symbol, time, alert contents.
+    """
+    if count < 1 or count > 30:
+        return "Parameter error: count must be between 1 and 30"
+    try:
+        data = extract_response_data(
+            sdk.data.screener.get_stock_unusual_activities(
+                symbol=symbol or None,
+                category="US_STOCK",
+                count=count,
+                alert_types=alert_types or None,
+                extended_hours_required=extended_hours_required,
+            )
+        )
+        return prepend_disclaimer(format_stock_unusual_activities(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "get_stock_unusual_activities", config.region_id)

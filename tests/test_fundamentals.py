@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pytest
+from webull.core.exception.exceptions import ServerException
+
 from webull_skill.config import SkillConfig
+from webull_skill.errors import handle_sdk_exception
 from webull_skill.formatters import (
     _format_generic_list,
     format_capital_flow,
@@ -35,6 +39,12 @@ from webull_skill.market_data.fundamentals import (
     get_capital_flow,
     get_earnings_calendar,
     get_fund_brief,
+    search_institutions,
+    get_institution_holdings,
+    get_institution_holding_changes,
+    get_insider_transactions,
+    get_insider_holdings_overview,
+    get_economic_calendar,
 )
 from webull_skill.market_data.screener import (
     get_market_sectors,
@@ -411,3 +421,164 @@ class TestScreenerExtIntegration:
         assert "=== High Dividend ===" in result
         assert "symbol: T" in result
         assert screener.calls[0][1]["sort_by"] == "YIELD"
+
+
+# ---------------------------------------------------------------------------
+# Integration tests:  institutions / insiders / economic calendar
+# ---------------------------------------------------------------------------
+
+class _FakeFundamentalsExt:
+    """Records calls to the fundamentals methods."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, tuple, dict]] = []
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, tuple, dict]] = []
+
+    def get_institution_search(self, *args: object, **kwargs: object) -> _FakeResponse:
+        self.calls.append(("get_institution_search", args, kwargs))
+        return _FakeResponse({
+            "data": [{"cik": "0001067983", "name": "Berkshire Hathaway",
+                      "notable_people": "Warren Buffett"}]
+        })
+
+    def get_institution_holdings(self, *args: object, **kwargs: object) -> _FakeResponse:
+        self.calls.append(("get_institution_holdings", args, kwargs))
+        return _FakeResponse({"data": []})
+
+    def get_institution_holding_changes(self, *args: object, **kwargs: object) -> _FakeResponse:
+        self.calls.append(("get_institution_holding_changes", args, kwargs))
+        return _FakeResponse({"data": []})
+
+    def get_insider_transactions(self, *args: object, **kwargs: object) -> _FakeResponse:
+        self.calls.append(("get_insider_transactions", args, kwargs))
+        return _FakeResponse({
+            "data": [{"side": "BUY", "shares": "13866", "price": "0",
+                      "insider_name": "Gawel Scott", "transaction_date": "2026-06-08"}]
+        })
+
+    def get_insider_holdings(self, *args: object, **kwargs: object) -> _FakeResponse:
+        self.calls.append(("get_insider_holdings", args, kwargs))
+        return _FakeResponse({"symbol": "NVDA", "insiders_count": 20,
+                              "ownership_pct": "3.9665", "compare_months": 1})
+
+    def get_economic_calendars(self, *args: object, **kwargs: object) -> _FakeResponse:
+        self.calls.append(("get_economic_calendars", args, kwargs))
+        return _FakeResponse({
+            "data": [{"event_name": "Net L-T Flows,Incl.Swaps", "publish_date": "2026-10-16"}]
+        })
+
+
+def _fake_sdk_fundamentals_ext(fundamentals) -> object:
+    data = SimpleNamespace(fundamentals=fundamentals)
+    return SimpleNamespace(data=data, region_id="us")
+
+
+class TestFundamentalsExtIntegration:
+    def test_search_institutions(self):
+        fund = _FakeFundamentalsExt()
+        sdk = _fake_sdk_fundamentals_ext(fund)
+        result = search_institutions(sdk, _config(), "Berkshire", pagination_key="abc")
+        assert "=== Institution Search ===" in result
+        assert "Berkshire Hathaway" in result
+        assert fund.calls == [("get_institution_search", ("Berkshire", "abc"), {})]
+
+    def test_get_institution_holdings(self):
+        fund = _FakeFundamentalsExt()
+        sdk = _fake_sdk_fundamentals_ext(fund)
+        result = get_institution_holdings(sdk, _config(), "1067983")
+        assert "=== Institution 13F Holdings ===" in result
+        assert fund.calls == [("get_institution_holdings", ("1067983", None), {})]
+
+    def test_get_institution_holding_changes_normalizes_position(self):
+        fund = _FakeFundamentalsExt()
+        sdk = _fake_sdk_fundamentals_ext(fund)
+        result = get_institution_holding_changes(sdk, _config(), "1067983", "open")
+        assert "=== Institution Holding Changes ===" in result
+        assert fund.calls == [("get_institution_holding_changes", ("1067983", "OPEN"),
+                               {"pagination_key": None})]
+
+    def test_get_insider_transactions_normalizes_side(self):
+        fund = _FakeFundamentalsExt()
+        sdk = _fake_sdk_fundamentals_ext(fund)
+        result = get_insider_transactions(sdk, _config(), "NVDA", side="sell")
+        assert "=== Insider Transactions ===" in result
+        assert "Gawel Scott" in result
+        assert fund.calls == [("get_insider_transactions", ("NVDA",),
+                               {"category": "US_STOCK", "side": "SELL", "pagination_key": None})]
+
+    def test_get_insider_holdings_overview(self):
+        fund = _FakeFundamentalsExt()
+        sdk = _fake_sdk_fundamentals_ext(fund)
+        result = get_insider_holdings_overview(sdk, _config(), "NVDA", compare_months=3)
+        assert "=== Insider Holdings Overview ===" in result
+        assert "insiders_count: 20" in result
+        assert fund.calls == [("get_insider_holdings", ("NVDA",),
+                               {"category": "US_STOCK", "compare_months": 3})]
+
+    def test_get_economic_calendar(self):
+        fund = _FakeFundamentalsExt()
+        sdk = _fake_sdk_fundamentals_ext(fund)
+        result = get_economic_calendar(sdk, _config(), start_date="2026-10-09")
+        assert "=== US Economic Calendar ===" in result
+        assert fund.calls == [("get_economic_calendars", (),
+                               {"region": "US", "start_date": "2026-10-09",
+                                "end_date": None, "pagination_key": None})]
+
+
+
+def test_get_insider_holdings_overview_rejects_invalid_compare_months():
+    fund = _FakeFundamentalsExt()
+    sdk = _fake_sdk_fundamentals_ext(fund)
+
+    for compare_months in (0, 2, "3", True):
+        result = get_insider_holdings_overview(
+            sdk, _config(), "NVDA", compare_months=compare_months
+        )
+        assert "compare_months must be 1 or 3" in result
+
+    assert fund.calls == []
+
+
+
+def test_get_institution_holding_changes_rejects_invalid_position():
+    fund = _FakeFundamentalsExt()
+    sdk = _fake_sdk_fundamentals_ext(fund)
+
+    result = get_institution_holding_changes(sdk, _config(), "1067983", "increase")
+
+    assert "position must be one of OPEN, CLOSE, CHANGE" in result
+    assert fund.calls == []
+
+
+def test_get_insider_transactions_rejects_invalid_side():
+    fund = _FakeFundamentalsExt()
+    sdk = _fake_sdk_fundamentals_ext(fund)
+
+    result = get_insider_transactions(sdk, _config(), "NVDA", side="hold")
+
+    assert "side must be BUY or SELL" in result
+    assert fund.calls == []
+
+
+@pytest.mark.parametrize(
+    "tool_name",
+    [
+        "search_institutions",
+        "get_institution_holdings",
+        "get_institution_holding_changes",
+        "get_insider_transactions",
+        "get_insider_holdings_overview",
+        "get_economic_calendar",
+    ],
+)
+def test_new_fundamentals_tools_return_subscription_hint(tool_name: str):
+    error = ServerException(
+        "MARKET_DATA_NOT_SUBSCRIBED", "subscription required", http_status=403
+    )
+
+    result = handle_sdk_exception(error, tool_name, "us")
+
+    assert "Market data requires quotes subscription." in result
+    assert "https://www.webullapp.com/quote" in result

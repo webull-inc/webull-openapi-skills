@@ -94,6 +94,14 @@ MARKET_DATA_TOOLS = frozenset({
     "get_event_snapshot",
     "get_event_depth",
     "get_event_bars",
+    "get_market_sentiment",
+    "get_stock_unusual_activities",
+    "search_institutions",
+    "get_institution_holdings",
+    "get_institution_holding_changes",
+    "get_insider_transactions",
+    "get_insider_holdings_overview",
+    "get_economic_calendar",
 })
 
 # Region-specific subscription guidance

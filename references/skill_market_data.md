@@ -93,6 +93,15 @@ webull-skill market-data --action stock-noii-snapshot --symbol AAPL --imbalance-
 | `stock-high-dividend`        | High dividend yield ranking           | `--category US_STOCK --sort-by YIELD`                     |
 | `stock-52-week-high-low`     | 52-week high/low ranking              | `--category US_STOCK --rank-type NEW_HIGH`                |
 
+### Market Sentiment & Unusual Activities 
+
+These actions are only supported when `WEBULL_REGION_ID=us`.
+
+| Action | Description | Key Options |
+|--------|-------------|-------------|
+| `market-sentiment` | US market fear & greed sentiment index | (no options) |
+| `stock-unusual-activities` | Recent unusual activity alerts | `--symbol NVDA --unusual-count 10 --extended-hours-required` |
+
 ### `stock-gainers-losers` Options
 
 | Option | Required | Description |
@@ -226,6 +235,42 @@ webull-skill market-data --action stock-52-week-high-low --rank-type NEW_HIGH --
 | `fundamentals-fund-splits` | Fund split history | `--symbol QQQ` |
 | `fundamentals-fund-files` | Fund documents/files | `--symbol QQQ` |
 
+### Institutions, Insiders & Macro (US only)
+
+These actions are only supported when `WEBULL_REGION_ID=us`.
+
+| Action | Description | Key Options |
+|--------|-------------|-------------|
+| `institution-search` | Search institutions by name or CIK | `--keyword Bridgewater` |
+| `institution-holdings` | Institution 13F holdings | `--cik 0001350694 --pagination-key <cursor>` |
+| `institution-holding-changes` | Institution holding changes | `--cik 0001350694 --position CHANGE` |
+| `insider-transactions` | Insider transaction records | `--symbol NVDA --side BUY` |
+| `insider-holdings-overview` | Insider ownership overview | `--symbol NVDA --compare-months 3` |
+| `economic-calendar` | US macroeconomic calendar | `--start-date 2026-09-01 --end-date 2026-09-08` |
+
+## News (US only)
+
+These actions are only supported when `WEBULL_REGION_ID=us`.
+
+| Action | Description | Key Options |
+|--------|-------------|-------------|
+| `news-search` | Search news by keyword | `--keyword "Tesla earnings" --start-date 2026-09-01` |
+| `news-detail` | Get full news content by ID | `--news-id 20260904001` |
+| `stock-news` | Stock-related news list | `--symbol TSLA --sentiment POSITIVE` |
+
+### News Examples
+
+```bash
+# Search news by keyword
+webull-skill market-data --action news-search --keyword "Tesla earnings" --start-date 2026-09-01
+
+# Get full news content
+webull-skill market-data --action news-detail --news-id 20260904001
+
+# Stock-related news with sentiment filter
+webull-skill market-data --action stock-news --symbol TSLA --sentiment POSITIVE
+```
+
 ### Fundamentals Common Options
 
 | Option | Required | Description |
@@ -326,6 +371,48 @@ webull-skill market-data --action watchlist-instruments-remove \
 
 # Delete a watchlist
 webull-skill market-data --action watchlist-delete --watchlist-id <id>
+```
+
+## Community (US only)
+
+Community operations let you create and browse community posts and comments.
+Only the US region is supported. `community-create-post`
+and `community-create-comment` are **write operations** that publish content under the user's
+account and require user confirmation before execution (see Safety Rules in SKILL.md).
+
+| Action | Description | Key Options |
+|--------|-------------|-------------|
+| `community-create-post` | Create a plain-text post | `--text <content>` (optional `--symbol <sym> --category <cat>`, provided together) |
+| `community-create-comment` | Comment on a post | `--post-id <id> --text <content>` |
+| `community-hot-stocks` | List stocks ranked by community activity | |
+| `community-posts-by-symbol` | List posts for a symbol | `--symbol <sym> --category <cat>` (optional `--keyword`, `--pagination-key`) |
+| `community-post-detail` | Get post detail | `--post-id <id>` |
+| `community-my-posts` | List the current user's posts | optional `--pagination-key` |
+
+```bash
+# Create a post (plain text)
+webull-skill market-data --action community-create-post --text "Great earnings report!"
+
+# Create a post tagged with a ticker (symbol + category together)
+webull-skill market-data --action community-create-post \
+  --text "Loving the momentum here" --symbol NVDA --category US_STOCK
+
+# Comment on a post
+webull-skill market-data --action community-create-comment \
+  --post-id 995005758239301632 --text "Agreed, strong quarter"
+
+# List hot stocks
+webull-skill market-data --action community-hot-stocks
+
+# List posts for a symbol (with optional keyword / pagination)
+webull-skill market-data --action community-posts-by-symbol \
+  --symbol NVDA --category US_STOCK --keyword earnings
+
+# Get post detail
+webull-skill market-data --action community-post-detail --post-id 995005758239301632
+
+# List my posts (pass --pagination-key to page)
+webull-skill market-data --action community-my-posts
 ```
 
 ## Common Options

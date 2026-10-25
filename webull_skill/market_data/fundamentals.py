@@ -7,7 +7,10 @@ Provides: get_capital_flow, get_industry_comparison, get_sec_filings,
           get_financials_alert, get_forecast_eps,
           get_fund_brief, get_fund_allocation, get_fund_holdings,
           get_fund_performance, get_fund_rating, get_fund_net_value,
-          get_fund_dividends, get_fund_splits, get_fund_files.
+          get_fund_dividends, get_fund_splits, get_fund_files,
+          search_institutions, get_institution_holdings,
+          get_institution_holding_changes, get_insider_transactions,
+          get_insider_holdings_overview, get_economic_calendar (US only).
 """
 
 from __future__ import annotations
@@ -37,12 +40,22 @@ from webull_skill.formatters import (
     format_fund_dividends,
     format_fund_splits,
     format_fund_files,
+    format_institution_search,
+    format_institution_holdings,
+    format_institution_holding_changes,
+    format_insider_transactions,
+    format_insider_holdings_overview,
+    format_economic_calendar,
     prepend_disclaimer,
 )
 
 if TYPE_CHECKING:
     from webull_skill.config import SkillConfig
     from webull_skill.sdk_client import SDKClient
+
+
+VALID_HOLDING_CHANGE_POSITIONS = frozenset({"OPEN", "CLOSE", "CHANGE"})
+VALID_INSIDER_TRANSACTION_SIDES = frozenset({"BUY", "SELL"})
 
 
 def get_capital_flow(
@@ -543,3 +556,180 @@ def get_fund_files(
         return prepend_disclaimer(format_fund_files(data))
     except Exception as e:
         return handle_sdk_exception(e, "get_fund_files", config.region_id)
+
+
+def search_institutions(
+    sdk: "SDKClient",
+    config: "SkillConfig",
+    keyword: str,
+    pagination_key: Optional[str] = None,
+) -> str:
+    """Search US institutional investors by name or SEC CIK number.
+
+    US market only.
+
+    :param keyword: Search keyword (institution name or CIK), required.
+    :param pagination_key: Pagination key from the previous page response;
+        not returned on the last page.
+    Returns: institution list with cik, name, notable_people.
+    """
+    try:
+        data = extract_response_data(
+            sdk.data.fundamentals.get_institution_search(keyword, pagination_key)
+        )
+        return prepend_disclaimer(format_institution_search(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "search_institutions", config.region_id)
+
+
+def get_institution_holdings(
+    sdk: "SDKClient",
+    config: "SkillConfig",
+    cik: str,
+    pagination_key: Optional[str] = None,
+) -> str:
+    """Query a US institution's 13F holdings. US market only.
+
+    :param cik: Institution CIK number, required.
+    :param pagination_key: Pagination key from the previous page response;
+        not returned on the last page.
+    Returns: 13F holdings list.
+    """
+    try:
+        data = extract_response_data(
+            sdk.data.fundamentals.get_institution_holdings(cik, pagination_key)
+        )
+        return prepend_disclaimer(format_institution_holdings(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "get_institution_holdings", config.region_id)
+
+
+def get_institution_holding_changes(
+    sdk: "SDKClient",
+    config: "SkillConfig",
+    cik: str,
+    position: str,
+    pagination_key: Optional[str] = None,
+) -> str:
+    """Query US institutional holding changes filtered by position type.
+
+    US market only.
+
+    :param cik: Fund CIK number, required.
+    :param position: Position type: OPEN, CLOSE, or CHANGE, required.
+    :param pagination_key: Pagination key from the previous page response;
+        not returned on the last page.
+    Returns: holding change records.
+    """
+    if not isinstance(position, str):
+        return "Parameter error: position must be one of OPEN, CLOSE, CHANGE"
+    position = position.strip().upper()
+    if position not in VALID_HOLDING_CHANGE_POSITIONS:
+        return "Parameter error: position must be one of OPEN, CLOSE, CHANGE"
+    try:
+        data = extract_response_data(
+            sdk.data.fundamentals.get_institution_holding_changes(
+                cik, position, pagination_key=pagination_key,
+            )
+        )
+        return prepend_disclaimer(format_institution_holding_changes(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "get_institution_holding_changes", config.region_id)
+
+
+def get_insider_transactions(
+    sdk: "SDKClient",
+    config: "SkillConfig",
+    symbol: str,
+    side: Optional[str] = None,
+    pagination_key: Optional[str] = None,
+) -> str:
+    """Query insider transaction records for a stock.
+
+    US market only.
+
+    :param symbol: Stock symbol, e.g. NVDA, required.
+    :param side: Transaction side filter: BUY or SELL, None to return all.
+    :param pagination_key: Pagination key from the previous page response;
+        not returned on the last page.
+    Returns: insider transactions with side, shares, price, insider_name,
+        transaction_date, shares_after.
+    """
+    if side is not None:
+        if not isinstance(side, str):
+            return "Parameter error: side must be BUY or SELL"
+        side = side.strip().upper() or None
+        if side is not None and side not in VALID_INSIDER_TRANSACTION_SIDES:
+            return "Parameter error: side must be BUY or SELL"
+    try:
+        data = extract_response_data(
+            sdk.data.fundamentals.get_insider_transactions(
+                symbol,
+                category="US_STOCK",
+                side=side,
+                pagination_key=pagination_key,
+            )
+        )
+        return prepend_disclaimer(format_insider_transactions(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "get_insider_transactions", config.region_id)
+
+
+def get_insider_holdings_overview(
+    sdk: "SDKClient",
+    config: "SkillConfig",
+    symbol: str,
+    compare_months: int = 1,
+) -> str:
+    """Query the insider ownership statistics overview for a stock.
+
+    US market only.
+
+    :param symbol: Stock symbol, e.g. NVDA, required.
+    :param compare_months: Comparison period in months: 1 (default) or 3.
+    Returns: insiders_count, total_shares_held, ownership_pct and changes.
+    """
+    if type(compare_months) is not int or compare_months not in (1, 3):
+        return "Parameter error: compare_months must be 1 or 3"
+    try:
+        data = extract_response_data(
+            sdk.data.fundamentals.get_insider_holdings(
+                symbol, category="US_STOCK", compare_months=compare_months,
+            )
+        )
+        return prepend_disclaimer(format_insider_holdings_overview(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "get_insider_holdings_overview", config.region_id)
+
+
+def get_economic_calendar(
+    sdk: "SDKClient",
+    config: "SkillConfig",
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    pagination_key: Optional[str] = None,
+) -> str:
+    """Query the US macroeconomic event calendar.
+
+    US market only. Results are cursor-paginated, up to 30 events per page.
+
+    :param start_date: Start date in yyyy-MM-dd format, None defaults to today.
+    :param end_date: End date in yyyy-MM-dd format, None defaults to
+        start date + 7 days.
+    :param pagination_key: Pagination key from the previous page response;
+        not returned on the last page.
+    Returns: economic events with event_name, publish_date, period,
+        unit, frequency, prior_value, is_fed_related.
+    """
+    try:
+        data = extract_response_data(
+            sdk.data.fundamentals.get_economic_calendars(
+                region="US",
+                start_date=start_date,
+                end_date=end_date,
+                pagination_key=pagination_key,
+            )
+        )
+        return prepend_disclaimer(format_economic_calendar(data))
+    except Exception as e:
+        return handle_sdk_exception(e, "get_economic_calendar", config.region_id)
