@@ -189,6 +189,7 @@ SG_REGION_CONFIG = RegionConfig(
     valid_market_categories=frozenset({"US_STOCK", "US_ETF"}),
     asset_type_account_classes={
         "stock": frozenset({"INDIVIDUAL_CASH", "INDIVIDUAL_US_MARGIN", "INDIVIDUAL_MRGN"}),
+        "option": frozenset({"INDIVIDUAL_CASH", "INDIVIDUAL_US_MARGIN", "INDIVIDUAL_MRGN"}),
     },
 )
 
@@ -215,6 +216,7 @@ TH_REGION_CONFIG = RegionConfig(
     valid_market_categories=frozenset({"US_STOCK", "US_ETF"}),
     asset_type_account_classes={
         "stock": frozenset({"INDIVIDUAL_CASH"}),
+        "option": frozenset({"INDIVIDUAL_CASH"}),
     },
 )
 
@@ -241,6 +243,7 @@ MY_REGION_CONFIG = RegionConfig(
     valid_market_categories=frozenset({"US_STOCK", "US_ETF"}),
     asset_type_account_classes={
         "stock": frozenset({"INDIVIDUAL_CASH", "INDIVIDUAL_US_MARGIN", "INDIVIDUAL_MRGN"}),
+        "option": frozenset({"INDIVIDUAL_CASH", "INDIVIDUAL_US_MARGIN", "INDIVIDUAL_MRGN"}),
     },
 )
 
@@ -267,6 +270,7 @@ UK_REGION_CONFIG = RegionConfig(
     valid_market_categories=frozenset({"US_STOCK", "US_ETF"}),
     asset_type_account_classes={
         "stock": frozenset({"INDIVIDUAL_CASH", "STOCK_ISA_CASH"}),
+        "option": frozenset({"INDIVIDUAL_CASH", "STOCK_ISA_CASH"}),
     },
 )
 
@@ -291,8 +295,10 @@ MX_REGION_CONFIG = RegionConfig(
     valid_option_strategies=frozenset({"SINGLE"}),
     valid_order_markets=frozenset({"US"}),
     valid_market_categories=frozenset({"US_STOCK", "US_ETF"}),
+    # MX margin accounts may report account_class INDIVIDUAL_MARGIN.
     asset_type_account_classes={
-        "stock": frozenset({"INDIVIDUAL_CASH", "INDIVIDUAL_US_MARGIN", "INDIVIDUAL_MRGN"}),
+        "stock": frozenset({"INDIVIDUAL_CASH", "INDIVIDUAL_US_MARGIN", "INDIVIDUAL_MRGN", "INDIVIDUAL_MARGIN"}),
+        "option": frozenset({"INDIVIDUAL_CASH", "INDIVIDUAL_US_MARGIN", "INDIVIDUAL_MRGN", "INDIVIDUAL_MARGIN"}),
     },
 )
 
@@ -317,8 +323,10 @@ BR_REGION_CONFIG = RegionConfig(
     valid_option_strategies=frozenset({"SINGLE"}),
     valid_order_markets=frozenset({"US"}),
     valid_market_categories=frozenset({"US_STOCK", "US_ETF"}),
+    # BR margin accounts may report account_class INDIVIDUAL_MARGIN.
     asset_type_account_classes={
-        "stock": frozenset({"INDIVIDUAL_CASH", "INDIVIDUAL_US_MARGIN", "INDIVIDUAL_MRGN"}),
+        "stock": frozenset({"INDIVIDUAL_CASH", "INDIVIDUAL_US_MARGIN", "INDIVIDUAL_MRGN", "INDIVIDUAL_MARGIN"}),
+        "option": frozenset({"INDIVIDUAL_CASH", "INDIVIDUAL_US_MARGIN", "INDIVIDUAL_MRGN", "INDIVIDUAL_MARGIN"}),
     },
 )
 

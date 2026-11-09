@@ -99,6 +99,8 @@ def _call(fn: Any, *args: Any, **kwargs: Any) -> OperationResult:
 def default_category(action: str) -> str:
     """Infer the default category from an action name prefix."""
     a = action.lower()
+    if a.startswith("option") or a.startswith("instrument-option"):
+        return "US_OPTION"
     if a.startswith("futures") or a.startswith("instrument-futures"):
         return "US_FUTURES"
     if a.startswith("crypto") or a.startswith("instrument-crypto"):

@@ -3,7 +3,7 @@
 import json
 import pytest
 
-from webull_skill.result import OperationResult, success, failure
+from webull_skill.result import OperationResult, default_category, success, failure
 
 
 class TestOperationResult:
@@ -73,3 +73,11 @@ class TestOperationResult:
         assert r.config_label == "hk/prod"
         d = r.to_dict()
         assert d["config_label"] == "hk/prod"
+
+
+@pytest.mark.parametrize(
+    "action",
+    ["option-place", "option-snapshot", "instrument-option-contracts"],
+)
+def test_default_category_for_option_actions(action):
+    assert default_category(action) == "US_OPTION"

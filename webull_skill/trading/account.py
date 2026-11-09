@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from webull_skill.constants import JP_STOCK_ACCOUNT_TYPES
+from webull_skill.constants import JP_OPTION_ACCOUNT_TYPES, JP_STOCK_ACCOUNT_TYPES
 from webull_skill.errors import handle_sdk_exception
 from webull_skill.formatters import (
     extract_response_data,
@@ -44,9 +44,19 @@ def _sdk_region_id(sdk: "SDKClient") -> str:
     return str(getattr(sdk, "region_id", "")).lower()
 
 
-def _is_jp_stock_asset(region_id: str, asset_type: str) -> bool:
-    """JP stock accounts are identified by account_type instead of label."""
-    return region_id == "jp" and asset_type in {"stock", "option"}
+def _jp_account_types(region_id: str, asset_type: str) -> frozenset[str] | None:
+    """JP accounts are matched by account_type (not account_class).
+
+    Returns the set of valid account_type values for the given asset_type in JP,
+    or None when account_type matching does not apply.
+    """
+    if region_id != "jp":
+        return None
+    if asset_type == "stock":
+        return JP_STOCK_ACCOUNT_TYPES
+    if asset_type == "option":
+        return JP_OPTION_ACCOUNT_TYPES
+    return None
 
 
 def get_account_by_id(sdk: "SDKClient", account_id: str) -> dict | None:
@@ -78,10 +88,11 @@ def _validate_explicit_account(
     normalized_account_id = normalize_account_id(account_id)
     for acct in accounts:
         if normalize_account_id(acct.get("account_id")) == normalized_account_id:
-            if _is_jp_stock_asset(region_id, asset_type):
+            jp_types = _jp_account_types(region_id, asset_type)
+            if jp_types is not None:
                 account_type = acct.get("account_type", "")
-                if account_type not in JP_STOCK_ACCOUNT_TYPES:
-                    expected = ", ".join(sorted(JP_STOCK_ACCOUNT_TYPES))
+                if account_type not in jp_types:
+                    expected = ", ".join(sorted(jp_types))
                     raise ValueError(
                         f"Account '{account_id}' (account_type: {account_type or 'N/A'}) "
                         f"does not support {asset_type} trading. "
@@ -114,10 +125,11 @@ def _auto_select_account(
     region_id: str = "",
 ) -> str:
     """Auto-select an account matching the required classes."""
-    if _is_jp_stock_asset(region_id, asset_type):
+    jp_types = _jp_account_types(region_id, asset_type)
+    if jp_types is not None:
         matching = [
             acct for acct in accounts
-            if acct.get("account_type", "") in JP_STOCK_ACCOUNT_TYPES
+            if acct.get("account_type", "") in jp_types
         ]
     elif valid_labels is not None:
         matching = [
@@ -148,9 +160,10 @@ def _auto_select_account(
             f"Please specify account_id explicitly."
         )
 
+    jp_types = _jp_account_types(region_id, asset_type)
     expected = (
-        ", ".join(sorted(JP_STOCK_ACCOUNT_TYPES))
-        if _is_jp_stock_asset(region_id, asset_type)
+        ", ".join(sorted(jp_types))
+        if jp_types is not None
         else ", ".join(sorted(valid_labels)) if valid_labels else asset_type
     )
     raise ValueError(

@@ -137,7 +137,7 @@ Orders are passed via `--order-json` (inline string) or `--order-file` (path to 
 | `no_party_ids` | No (HK broker) | array | BCAN party identifiers for HK stock orders (institutional only). See below |
 | `account_tax_type` | JP stock orders | string | JP-only. Required for JP stock `place` / `preview`. Values: `GENERAL`, `SPECIFIC` |
 | `margin_type` | JP margin account only | string | JP-only. `US_MARGIN` accounts only. Values: `ONE_DAY`, `INDEFINITE` |
-| `position_intent` | JP margin account only | string | For stock orders: JP-only, `US_MARGIN` accounts only. For option orders, use `option-place` instead (US only). Values: `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE` |
+| `position_intent` | JP margin account only | string | For stock orders: JP-only, `US_MARGIN` accounts only. For option orders, use `option-place` / `option-preview` instead (US and JP). Values: `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE` |
 | `close_contracts` | No (JP only) | array | JP-only close payload. Max 10 `{ "contract_id": "...", "quantity": ... }` items |
 | `leg_in_or_out` | No | string | **US only.** `LEG_IN` / `LEG_OUT` — leg into/out of an existing multi-leg position when this order's stock leg is part of a strategy (e.g. COVERED_STOCK) |
 | `position_id` | Conditional | string | **Required when `leg_in_or_out` is set.** Target position identifier from the Account Positions API (`position` action) |
@@ -244,7 +244,6 @@ JP margin-account example:
 | Field | Required | JSON Type | Values / Description |
 |-------|----------|-----------|----------------------|
 | `symbol` | Yes | string | Underlying symbol, e.g. `AAPL` |
-| `instrument_type` | Yes | string | `OPTION` |
 | `option_type` | Yes | string | `CALL` or `PUT` |
 | `strike_price` | Yes | number (float) | Strike price, e.g. `220.00` — NOT `"220.00"` |
 | `expiration_date` | Yes | string | Expiration date, format `yyyy-MM-dd`, e.g. `"2026-06-19"` |
@@ -254,7 +253,8 @@ JP margin-account example:
 | `quantity` | Yes | number (int) | Number of contracts, e.g. `1` — NOT `"1"` |
 | `limit_price` | Conditional | number (float) | Required for `LIMIT` orders, e.g. `11.25` — NOT `"11.25"` |
 | `stop_price` | Conditional | number (float) | Required for `STOP_LOSS` orders |
-| `position_intent` | No | string | Position strategy (US only). `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE`. Must match `side`. For combo orders, only set on the MASTER order |
+| `position_intent` | No | string | Position strategy (US and JP). `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE`. Must match `side`. For combo orders, only set on the MASTER order. The Skill does not validate this field; it is passed to the backend as is |
+| `account_tax_type` | JP US option orders | string | JP-only. Required for JP US option `option-place` / `option-preview`. Values: `GENERAL`, `SPECIFIC` |
 | `sender_sub_id` | No (HK broker) | string | Broker user UUID (HK region, institutional only). No BCAN needed for options |
 | `leg_in_or_out` | No | string | **`option-place` only, US only.** `LEG_IN` (add this leg to an existing position) or `LEG_OUT` (close this leg from an existing multi-leg position) |
 | `position_id` | Conditional | string | **Required when `leg_in_or_out` is set.** Target position identifier, obtained from the Account Positions API (`position` action) |
@@ -264,7 +264,6 @@ Option single-leg example:
 ```json
 {
   "symbol": "AAPL",
-  "instrument_type": "OPTION",
   "option_type": "CALL",
   "strike_price": 220.00,
   "expiration_date": "2026-06-19",
@@ -277,11 +276,27 @@ Option single-leg example:
 }
 ```
 
+JP single-leg option example (`account_tax_type` is required in JP):
+```json
+{
+  "symbol": "AAPL",
+  "option_type": "CALL",
+  "strike_price": 220.00,
+  "expiration_date": "2026-06-19",
+  "side": "BUY",
+  "order_type": "LIMIT",
+  "limit_price": 11.25,
+  "quantity": 1,
+  "time_in_force": "DAY",
+  "position_intent": "BUY_TO_OPEN",
+  "account_tax_type": "GENERAL"
+}
+```
+
 Option leg-in example (US only) — add a leg to an existing position to form a vertical:
 ```json
 {
   "symbol": "AAPL",
-  "instrument_type": "OPTION",
   "option_type": "CALL",
   "strike_price": 230.00,
   "expiration_date": "2026-06-19",
@@ -300,7 +315,6 @@ Option leg-out example (US only) — close one leg from an existing multi-leg po
 ```json
 {
   "symbol": "AAPL",
-  "instrument_type": "OPTION",
   "option_type": "CALL",
   "strike_price": 230.00,
   "expiration_date": "2026-06-19",

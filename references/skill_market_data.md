@@ -44,7 +44,7 @@ webull-skill market-data --action stock-noii-bars --symbol AAPL --imbalance-acti
 webull-skill market-data --action stock-noii-snapshot --symbol AAPL --imbalance-action-type PRE_CLOSE
 ```
 
-## Option (US, HK, JP)
+## Option (US, HK, JP, SG, TH, MY, UK, MX, BR)
 
 | Action | Description | Key Options |
 |--------|-------------|-------------|

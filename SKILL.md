@@ -16,7 +16,7 @@ This skill lets you interact with Webull's trading platform through natural lang
   - Crypto → `crypto-place`
   - Event → `event-place`, `event-replace`
 - **Market Data**: Get real-time snapshots, historical bars, tick data, quotes, and order flow for all asset classes (stocks, options, futures, crypto, event contracts)
-  - Option market data actions: `option-snapshot`, `option-bars`, `option-tick` (category: US_OPTION, supports US/HK/JP)
+  - Option market data actions: `option-snapshot`, `option-bars`, `option-tick` (category: US_OPTION, supported in all regions except ZA)
 - **Accounts**: List accounts, check balances, view positions
 - **Instruments**: Look up stock, crypto, futures, option, and event contract instruments; get company profile, analyst ratings, and target prices
   - Option contracts: `instrument-option-contracts` (query by underlying symbol, expiry, strike, etc.)
@@ -184,7 +184,7 @@ Optional:
 | Feature | US | HK | JP | SG | TH | MY | UK | MX | BR | ZA |
 |---------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | Stock trading | ✓ | ✓ (US/HK/CN) | ✓ (US/JP) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) |
-| Options | ✓ | ✓ (US only) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Options | ✓ | ✓ (US only) | ✓ (US only) | ✓ (US only) | ✓ (US only) | ✓ (US only) | ✓ (US only) | ✓ (US only) | ✓ (US only) | ✗ |
 | Futures | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Crypto | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | Event contracts | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
@@ -214,14 +214,17 @@ Optional:
 ### JP-Specific Notes
 
 - Configure JP with `WEBULL_REGION_ID=jp`; sandbox uses `WEBULL_ENVIRONMENT=uat`.
-- JP supports stock/ETF market data and stock order management. Futures, crypto, event contracts, options, combo orders, and algo orders are not supported in JP.
+- JP supports stock/ETF market data and stock order management. Futures, crypto, event contracts, combo orders, and algo orders are not supported in JP.
+- JP supports single-leg US options (`US_OPTION`): contracts, market data, positions, and the order lifecycle (preview, place, replace, cancel). Multi-leg option strategies are not supported.
 - JP stock instrument categories are `US_STOCK` and `US_ETF`.
 - JP stock order markets are `US` and `JP`.
 - JP market orders support `LIMIT` and `MARKET`; JP market time in force is `DAY`.
 - US market orders in JP support `LIMIT`, `MARKET`, `STOP_LOSS`, `STOP_LOSS_LIMIT` with `DAY` or `GTC`.
 - JP stock accounts are identified by `account_type`: `CASH` or `US_MARGIN`.
 - `account_tax_type` is required for JP stock `place` and `preview`; valid values are `GENERAL` and `SPECIFIC`.
-- `margin_type` and `position_intent` are valid only for JP `US_MARGIN` accounts (for stock orders). For US option orders, `position_intent` is supported via `option-place`.
+- `account_tax_type` is also required for JP US option `option-place` and `option-preview`; valid values are `GENERAL` and `SPECIFIC`.
+- JP option accounts are identified by `account_type`: `US_OPTION`.
+- `margin_type` and `position_intent` are valid only for JP `US_MARGIN` accounts (for stock orders). For US and JP option orders, `position_intent` is supported via `option-place` / `option-preview`; the Skill does not validate it and passes it to the backend as is.
 - `close_contracts` is JP-only and accepts up to 10 objects with `contract_id` and positive `quantity`.
 
 ### SG-Specific Notes
@@ -232,7 +235,8 @@ Optional:
 - Time in force: `DAY`, `GTC`.
 - Trading sessions: `CORE`, `ALL`, `NIGHT`, `ALL_DAY`.
 - SG order market is `US` only.
-- No futures, crypto, options, event contracts, combo orders, or algo orders in SG region.
+- SG supports single-leg US options (`US_OPTION`): contracts, market data, positions, and the order lifecycle (preview, place, replace, cancel). Multi-leg option strategies are not supported.
+- No futures, crypto, event contracts, combo orders, or algo orders in SG region.
 
 ### TH-Specific Notes
 
@@ -242,7 +246,8 @@ Optional:
 - Time in force: `DAY`, `GTC`.
 - Trading sessions: `CORE`, `ALL`, `NIGHT`, `ALL_DAY`.
 - TH order market is `US` only.
-- No futures, crypto, options, event contracts, combo orders, or algo orders in TH region.
+- TH supports single-leg US options (`US_OPTION`): contracts, market data, positions, and the order lifecycle (preview, place, replace, cancel). TH option accounts use account class `INDIVIDUAL_CASH`.
+- No futures, crypto, event contracts, combo orders, algo orders, or multi-leg option strategies in TH region.
 
 ### MY-Specific Notes
 
@@ -252,7 +257,8 @@ Optional:
 - Time in force: `DAY`, `GTC`.
 - Trading sessions: `CORE`, `ALL`, `NIGHT`, `ALL_DAY`.
 - MY order market is `US` only.
-- No futures, crypto, options, event contracts, combo orders, or algo orders in MY region.
+- MY supports single-leg US options (`US_OPTION`): contracts, market data, positions, and the order lifecycle (preview, place, replace, cancel). Multi-leg option strategies are not supported.
+- No futures, crypto, event contracts, combo orders, or algo orders in MY region.
 
 ### UK-Specific Notes
 
@@ -262,7 +268,8 @@ Optional:
 - Time in force: `DAY`, `GTC`.
 - Trading sessions: `CORE`, `ALL`, `NIGHT`, `ALL_DAY`.
 - UK order market is `US` only.
-- No futures, crypto, options, event contracts, combo orders, or algo orders in UK region.
+- UK supports single-leg US options (`US_OPTION`): contracts, market data, positions, and the order lifecycle (preview, place, replace, cancel). Multi-leg option strategies are not supported.
+- No futures, crypto, event contracts, combo orders, or algo orders in UK region.
 
 ### MX-Specific Notes
 
@@ -272,7 +279,8 @@ Optional:
 - Time in force: `DAY`, `GTC`.
 - Trading sessions: `CORE`, `ALL`, `NIGHT`, `ALL_DAY`.
 - MX order market is `US` only.
-- No futures, crypto, options, event contracts, combo orders, or algo orders in MX region.
+- MX supports single-leg US options (`US_OPTION`): contracts, market data, positions, and the order lifecycle (preview, place, replace, cancel). Multi-leg option strategies are not supported.
+- No futures, crypto, event contracts, combo orders, or algo orders in MX region.
 
 ### BR-Specific Notes
 
@@ -282,7 +290,8 @@ Optional:
 - Time in force: `DAY`, `GTC`.
 - Trading sessions: `CORE`, `ALL`, `NIGHT`, `ALL_DAY`.
 - BR order market is `US` only.
-- No futures, crypto, options, event contracts, combo orders, or algo orders in BR region.
+- BR supports single-leg US options (`US_OPTION`): contracts, market data, positions, and the order lifecycle (preview, place, replace, cancel). Multi-leg option strategies are not supported.
+- No futures, crypto, event contracts, combo orders, or algo orders in BR region.
 
 ### ZA-Specific Notes
 
