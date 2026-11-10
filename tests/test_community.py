@@ -142,13 +142,7 @@ def test_empty_hot_stocks_returns_no_data():
     assert "No data available" in result
 
 
-# ---------------------------------------------------------------------------
-# dispatch 层回归：community-create-post 的 symbol/category 成对校验
-# （API-1987：纯文本发帖此前被 default_category 填默认 US_STOCK 导致误拒）
-# ---------------------------------------------------------------------------
-
 def _make_args(**overrides):
-    """构造 dispatch_market_data 所需的最小 argparse.Namespace。"""
     base = dict(
         action="community-create-post",
         category="", symbol="", symbols="", text="",
@@ -159,7 +153,6 @@ def _make_args(**overrides):
 
 
 def _patch_dispatch(monkeypatch):
-    """把 dispatch_market_data 里的 SDKClient 与 create_post 替换成可观测的 fake。"""
     import webull_skill.cli as cli
     import webull_skill.sdk_client as sdk_mod
     import webull_skill.market_data.community as comm
@@ -184,23 +177,23 @@ def _patch_dispatch(monkeypatch):
 
 def test_dispatch_pure_text_post_not_rejected(monkeypatch):
     cli, calls = _patch_dispatch(monkeypatch)
-    args = _make_args(text="hello world")  # 无 symbol / category
+    args = _make_args(text="hello world")  # no symbol / category
 
     result = cli.dispatch_market_data(args, _config())
 
-    # 不应被成对校验拦截；create_post 被调用，且 category 为 None（纯文本）
-    assert calls.get("args") is not None, f"create_post 未被调用，疑似被误拒: {result}"
+    # Should not be blocked by the pair validation; create_post is called and category is None (plain text)
+    assert calls.get("args") is not None, f"create_post was not called, likely rejected by mistake: {result}"
     assert calls["args"]["symbol"] is None
     assert calls["args"]["category"] is None
 
 
 def test_dispatch_symbol_without_category_rejected(monkeypatch):
     cli, calls = _patch_dispatch(monkeypatch)
-    args = _make_args(text="hello", symbol="NVDA")  # 只有 symbol
+    args = _make_args(text="hello", symbol="NVDA")  # symbol only
 
     result = cli.dispatch_market_data(args, _config())
 
-    assert calls.get("args") is None, "只传 symbol 不应调用 create_post"
+    assert calls.get("args") is None, "create_post should not be called when only symbol is given"
     assert getattr(result, "ok", None) is False
     assert "provided together" in result.detail
 
