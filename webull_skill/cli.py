@@ -1366,8 +1366,6 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
     if action == "community-create-post":
         if not args.text:
             return failure(detail="--text is required for community-create-post")
-        # symbol / category 为可选关联标的，必须成对提供。基于用户原始输入判断，
-        # 不能用 cat（已被 default_category 填默认 US_STOCK），否则纯文本发帖会被误拒。
         if bool(args.symbol) != bool(args.category):
             return failure(detail="--symbol and --category must be provided together for community-create-post")
         return _wrap_tool_result(
