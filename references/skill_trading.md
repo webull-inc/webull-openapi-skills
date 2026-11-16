@@ -6,17 +6,16 @@ Instrument queries, account/asset operations, and all order operations.
 
 | Action | Description | Key Options |
 |--------|-------------|-------------|
-| `instrument-stock` | Stock/ETF instrument info | `--symbols AAPL,TSLA` |
-| `instrument-crypto` | Crypto instrument info | `--symbols BTCUSD` |
-| `instrument-futures-products` | Futures product codes | `--category US_FUTURES` |
+| `instrument-stock` | Stock/ETF instrument info; optional `--status` (OC, CO, NT) | `--symbols AAPL,TSLA`, `--status OC`, `--pagination-key` |
+| `instrument-crypto` | Crypto instrument info; optional `--status` (OC, CO, NT) | `--symbols BTCUSD`, `--status OC`, `--pagination-key` |
+| `instrument-futures-products` | Futures product codes; optional `--product-class-id` (ID from `instrument-futures-product-class`) | `--category US_FUTURES`, `--product-class-id <id>` |
 | `instrument-futures-product-class` | Futures product classification groups | `--category US_FUTURES` |
-| `instrument-futures-list` | Futures instruments by symbol | `--symbols ESM6` |
-| `instrument-futures-by-code` | Futures by product code | `--code ES` |
-| `instrument-event-series` | Event contract series | `--page-size 50` |
-| `instrument-event-list` | Event instruments by series | `--series-symbol <sym>` |
+| `instrument-futures-list` | Futures instruments by contract symbol or by product code; optional `--status` (OC, CO, NT; default OC) | `--symbols ESM6` or `--code ES --status OC` |
+| `instrument-event-series` | Event contract series; optional `--category` (event category such as `ECONOMICS`, `FINANCIALS`, `POLITICS`; list them with `instrument-event-categories`) and `--symbols` (series symbols). Do not pass a market category such as `US_EVENT` here | `--category ECONOMICS`, `--symbols <sym1,sym2>`, `--pagination-key` |
+| `instrument-event-list` | Event instruments by series; optional `--event-symbol`, `--symbols` (contract symbols) and `--expiration-date-after` (yyyy-MM-dd) | `--series-symbol <sym>`, `--event-symbol <sym>`, `--symbols <sym1,sym2>`, `--expiration-date-after 2026-12-01`, `--pagination-key` |
 | `instrument-event-categories` | Event contract categories | |
-| `instrument-event-events` | Events within a series | `--series-symbol <sym>` |
-| `instrument-option-contracts` | Option contract list by underlying symbols | `--symbols AAPL --category US_OPTION` |
+| `instrument-event-events` | Events within a series; optional `--symbols` (event symbols) and `--status` (ACTIVE, INACTIVE) | `--series-symbol ECONOMICS --symbols KXFEDDECISION --status ACTIVE` |
+| `instrument-option-contracts` | Option contract list by underlying symbols. Filters: `--option-symbols`, `--status` (LISTING default, DELISTING), `--start-date` (exact expiration date), `--end-date` (expiration date lower bound, inclusive), `--root-symbol`, `--option-type` (CALL, PUT), `--style` (AMERICAN, EUROPEAN), `--strike-price-gte`, `--strike-price-lte`, `--ppind` (true, false), `--show-deliverables` (true, false) | `--symbols AAPL --option-type CALL --strike-price-gte 150 --strike-price-lte 200`, `--pagination-key` |
 
 ## Instrument Fundamentals (US, HK, JP)
 
@@ -44,7 +43,7 @@ webull-skill trading --action instrument-analyst-target-price --symbol NVDA
 | `account-list` | List all linked accounts | |
 | `balance` | Account balance | `--account-id <id>` |
 | `position` | Account positions | `--account-id <id>` |
-| `position-detail` | Position details by instrument (JP only) | `--account-id <id> --instrument-id <id>` |
+| `position-detail` | Position details by instrument (JP only) | `--account-id <id> --instrument-id <id>`, `--pagination-key` |
 
 ## Stock Orders
 
@@ -92,8 +91,8 @@ webull-skill trading --action instrument-analyst-target-price --symbol NVDA
 | Action | Description | Key Options |
 |--------|-------------|-------------|
 | `cancel` | Cancel an order | `--account-id`, `--client-order-id` |
-| `open` | List open/pending orders | `--account-id` |
-| `history` | Order history | `--account-id` |
+| `open` | List open/pending orders | `--account-id`, `--pagination-key` |
+| `history` | Order history (default last 7 days) | `--account-id`, `--start-time`, `--end-time` (ISO 8601 UTC, e.g. `2025-01-05T00:00:00.000Z`), `--pagination-key` |
 | `detail` | Single order detail | `--account-id`, `--client-order-id` |
 | `executions` | List order execution records within a date range | `--account-id`, `--start-date`, `--end-date`, `--client-order-id`, `--pagination-key` |
 | `local-check` | Risk check only (no API call) | `--order-json` |
@@ -120,7 +119,7 @@ Orders are passed via `--order-json` (inline string) or `--order-file` (path to 
 |-------|----------|-----------|----------------------|
 | `combo_type` | Yes | string | `NORMAL` (single order). For combo: `MASTER`, `STOP_PROFIT`, `STOP_LOSS`, `OTO`, `OCO`, `OTOCO` |
 | `symbol` | Yes | string | Ticker symbol, e.g. `AAPL`, `00700`, `BTCUSD`, `ESZ5` |
-| `instrument_type` | Yes | string | `EQUITY`, `OPTION`, `FUTURES`, `CRYPTO`, `EVENT` |
+| `instrument_type` | Yes | string | `EQUITY`. Stock `place` / `preview` only. Do NOT include this field in `option-*`, `futures-*`, `crypto-place` or `event-*` JSON: those actions set it internally and reject it with `unexpected keyword argument 'instrument_type'` |
 | `market` | Yes | string | Region-dependent: US region `US`; HK region `US`, `HK`, `CN`; JP region `US`, `JP`; SG region `US` |
 | `side` | Yes | string | `BUY`, `SELL`, `SHORT` |
 | `order_type` | Yes | string | See [Order Types by Market](#order-types-by-market) below |
@@ -137,7 +136,7 @@ Orders are passed via `--order-json` (inline string) or `--order-file` (path to 
 | `no_party_ids` | No (HK broker) | array | BCAN party identifiers for HK stock orders (institutional only). See below |
 | `account_tax_type` | JP stock orders | string | JP-only. Required for JP stock `place` / `preview`. Values: `GENERAL`, `SPECIFIC` |
 | `margin_type` | JP margin account only | string | JP-only. `US_MARGIN` accounts only. Values: `ONE_DAY`, `INDEFINITE` |
-| `position_intent` | JP margin account only | string | For stock orders: JP-only, `US_MARGIN` accounts only. For option orders, use `option-place` / `option-preview` instead (US and JP). Values: `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE` |
+| `position_intent` | JP margin account only | string | For stock orders: JP-only, `US_MARGIN` accounts only. For option orders, use `option-place` / `option-preview` instead (all regions that support options). Values: `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE` |
 | `close_contracts` | No (JP only) | array | JP-only close payload. Max 10 `{ "contract_id": "...", "quantity": ... }` items |
 | `leg_in_or_out` | No | string | **US only.** `LEG_IN` / `LEG_OUT` — leg into/out of an existing multi-leg position when this order's stock leg is part of a strategy (e.g. COVERED_STOCK) |
 | `position_id` | Conditional | string | **Required when `leg_in_or_out` is set.** Target position identifier from the Account Positions API (`position` action) |
@@ -253,7 +252,7 @@ JP margin-account example:
 | `quantity` | Yes | number (int) | Number of contracts, e.g. `1` — NOT `"1"` |
 | `limit_price` | Conditional | number (float) | Required for `LIMIT` orders, e.g. `11.25` — NOT `"11.25"` |
 | `stop_price` | Conditional | number (float) | Required for `STOP_LOSS` orders |
-| `position_intent` | No | string | Position strategy (US and JP). `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE`. Must match `side`. For combo orders, only set on the MASTER order. The Skill does not validate this field; it is passed to the backend as is |
+| `position_intent` | Recommended | string | Position strategy. Not region-specific: it applies to option orders in every region that supports options (testing showed JP and SG require it for `BUY` orders; the API reference marks it optional). `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE`. Must match `side`. For combo orders, only set on the MASTER order. The Skill does not validate this field; it is passed to the backend as is |
 | `account_tax_type` | JP US option orders | string | JP-only. Required for JP US option `option-place` / `option-preview`. Values: `GENERAL`, `SPECIFIC` |
 | `sender_sub_id` | No (HK broker) | string | Broker user UUID (HK region, institutional only). No BCAN needed for options |
 | `leg_in_or_out` | No | string | **`option-place` only, US only.** `LEG_IN` (add this leg to an existing position) or `LEG_OUT` (close this leg from an existing multi-leg position) |

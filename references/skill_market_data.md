@@ -7,17 +7,17 @@ Real-time and historical market data for all asset classes.
 | Action | Description | Key Options |
 |--------|-------------|-------------|
 | `stock-snapshot` | Real-time snapshot | `--symbols AAPL,TSLA` |
-| `stock-bars` | OHLCV bars (single symbol) | `--symbol AAPL --timespan D --count 200` |
-| `stock-batch-bars` | OHLCV bars (multiple symbols) | `--symbols AAPL,TSLA --timespan D` |
+| `stock-bars` | OHLCV bars (single symbol); `--real-time-required` includes the latest unfinished bar (minute bars only) | `--symbol AAPL --timespan D --count 200` |
+| `stock-batch-bars` | OHLCV bars (multiple symbols); `--real-time-required` as in `stock-bars` | `--symbols AAPL,TSLA --timespan D` |
 | `stock-tick` | Tick-by-tick trades | `--symbol AAPL --count 30` |
 | `stock-quotes` | Bid/ask depth | `--symbol AAPL --depth 5` |
 | `stock-footprint` | Large order flow | `--symbols AAPL --timespan M1` |
 | `stock-noii-bars` | NOII K-line data (auction imbalance) | `--symbol AAPL --imbalance-action-type PRE_OPEN` |
 | `stock-noii-snapshot` | NOII real-time snapshot | `--symbol AAPL --imbalance-action-type PRE_CLOSE` |
 
-### `stock-bars` / `stock-batch-bars` — Time Range Support
+### Bar actions — Time Range Support
 
-Both bar actions support optional time range filtering via `--start-time` and `--end-time` (Unix timestamp in **milliseconds**, long integer):
+All bar actions (`stock-bars`, `stock-batch-bars`, `option-bars`, `futures-bars`, `crypto-bars`, `event-bars`) support optional time range filtering via `--start-time` and `--end-time` (Unix timestamp in **milliseconds**, long integer):
 
 ```bash
 # Single symbol bars with time range
@@ -26,6 +26,10 @@ webull-skill market-data --action stock-bars --symbol AAPL --timespan D \
 
 # Batch bars with time range
 webull-skill market-data --action stock-batch-bars --symbols AAPL,TSLA --timespan H1 \
+  --start-time 1700000000000 --end-time 1710000000000
+
+# Option / futures / crypto / event bars with time range
+webull-skill market-data --action option-bars --symbols AAPL260522C00300000 --timespan D \
   --start-time 1700000000000 --end-time 1710000000000
 ```
 
@@ -110,8 +114,6 @@ These actions are only supported when `WEBULL_REGION_ID=us`.
 | `--category` | No | Default `US_STOCK` |
 | `--sort-by` | No | Secondary sort: `CHANGE_RATIO`, `VOLUME`, `MARKET_VALUE`, `TURNOVER`, `AMPLITUDE`, etc. Default `CHANGE_RATIO` |
 | `--direction` | No | `DESC` for gainers, `ASC` for losers |
-| `--page-index` | No | Page number starting from 1 |
-| `--page-size` | No | Records per page |
 
 ### `stock-most-active` Options
 
@@ -121,8 +123,6 @@ These actions are only supported when `WEBULL_REGION_ID=us`.
 | `--rank-type` | No | `VOLUME`, `RELATIVE_VOLUME_10D`, `TURNOVER`, `TURNOVER_RATE`, `AMPLITUDE`. Default `VOLUME` |
 | `--sort-by` | No | Secondary sort field |
 | `--direction` | No | `ASC` or `DESC`. Default `DESC` |
-| `--page-index` | No | Page number starting from 1 |
-| `--page-size` | No | Records per page |
 
 ### `stock-market-sectors` Options
 
@@ -131,9 +131,8 @@ These actions are only supported when `WEBULL_REGION_ID=us`.
 | `--category`   | Yes      | Default `US_STOCK`                                                |
 | `--agg-type`   | No       | Statistics type: `MARKET_VALUE`, `VOLUME`. Default `MARKET_VALUE` |
 | `--period`     | No       | Statistics period: `D1`, `D5`, `M01`, `M03`. Default `D1`         |
-| `--page-index` | No       | Page number starting from 1                                       |
-| `--page-size`  | No       | Records per page                                                  |
 | `--direction`  | No       | Sort direction: `ASC` or `DESC`                                   |
+| `--pagination-key` | No | Cursor from the previous page (`Next pagination_key` in the output); omit for the first page |
 
 ### `stock-market-sectors-detail` Options
 
@@ -142,10 +141,9 @@ These actions are only supported when `WEBULL_REGION_ID=us`.
 | `--sector-id`  | Yes      | Sector ID (obtained from `stock-market-sectors` response) |
 | `--category`   | Yes      | Default `US_STOCK`                                        |
 | `--period`     | No       | Statistics period: `D1`, `D5`, `M01`, `M03`. Default `D1` |
-| `--page-index` | No       | Page number starting from 1                               |
-| `--page-size`  | No       | Records per page                                          |
 | `--sort-by`    | No       | Sort field. Default `CHANGE_RATIO`                        |
 | `--direction`  | No       | Sort direction: `ASC` or `DESC`                           |
+| `--pagination-key` | No | Cursor from the previous page (`Next pagination_key` in the output); omit for the first page |
 
 ### `stock-high-dividend` Options
 
@@ -153,8 +151,6 @@ These actions are only supported when `WEBULL_REGION_ID=us`.
 |----------------|----------|---------------------------------|
 | `--category`   | Yes      | Default `US_STOCK`              |
 | `--sort-by`    | No       | Sort field. Default `YIELD`     |
-| `--page-index` | No       | Page number starting from 1     |
-| `--page-size`  | No       | Records per page                |
 | `--direction`  | No       | Sort direction: `ASC` or `DESC` |
 
 ### `stock-52-week-high-low` Options
@@ -164,18 +160,16 @@ These actions are only supported when `WEBULL_REGION_ID=us`.
 | `--category`   | Yes      | Default `US_STOCK`                                         |
 | `--rank-type`  | No       | Index code: `NEW_HIGH`, `NEAR_HIGH`, `NEW_LOW`, `NEAR_LOW` |
 | `--sort-by`    | No       | Sort field. Default `CHANGE_RATIO_52W`                     |
-| `--page-index` | No       | Page number starting from 1                                |
-| `--page-size`  | No       | Records per page                                           |
 | `--direction`  | No       | Sort direction: `ASC` or `DESC`                            |
 
 ```bash
-# Top 20 gainers today
+# Top gainers today
 webull-skill market-data --action stock-gainers-losers \
-  --rank-type DAY_1 --direction DESC --page-size 20
+  --rank-type DAY_1 --direction DESC
 
 # Top losers today
 webull-skill market-data --action stock-gainers-losers \
-  --rank-type DAY_1 --direction ASC --page-size 20
+  --rank-type DAY_1 --direction ASC
 
 # Most active by volume
 webull-skill market-data --action stock-most-active --rank-type VOLUME
@@ -189,10 +183,10 @@ webull-skill market-data --action stock-most-active --rank-type RELATIVE_VOLUME_
 webull-skill market-data --action stock-market-sectors --category US_STOCK --period D1
 
 # Get stocks in a specific sector
-webull-skill market-data --action stock-market-sectors-detail --sector-id 10001 --page-size 20
+webull-skill market-data --action stock-market-sectors-detail --sector-id 10001
 
 # High dividend stocks
-webull-skill market-data --action stock-high-dividend --category US_STOCK --page-size 20
+webull-skill market-data --action stock-high-dividend --category US_STOCK
 
 # 52-week new highs
 webull-skill market-data --action stock-52-week-high-low --rank-type NEW_HIGH --direction DESC
@@ -231,7 +225,7 @@ webull-skill market-data --action stock-52-week-high-low --rank-type NEW_HIGH --
 | `fundamentals-fund-performance` | Fund performance | `--symbol QQQ` |
 | `fundamentals-fund-rating` | Fund rating | `--symbol QQQ` |
 | `fundamentals-fund-net-value` | Fund net value history | `--symbol QQQ --last-date 2026-04-01 --fundamental-count 10` |
-| `fundamentals-fund-dividends` | Fund dividend history | `--symbol QQQ --page-index 1 --page-size 10` |
+| `fundamentals-fund-dividends` | Fund dividend history | `--symbol QQQ --pagination-key <cursor>` (optional) |
 | `fundamentals-fund-splits` | Fund split history | `--symbol QQQ` |
 | `fundamentals-fund-files` | Fund documents/files | `--symbol QQQ` |
 
@@ -320,7 +314,7 @@ webull-skill market-data --action fundamentals-fund-net-value --symbol QQQ \
   --last-date 2026-04-01 --fundamental-count 10
 
 # Fund dividends
-webull-skill market-data --action fundamentals-fund-dividends --symbol QQQ --page-size 10
+webull-skill market-data --action fundamentals-fund-dividends --symbol QQQ
 ```
 
 ## Watchlist (US, HK, JP)
@@ -425,8 +419,8 @@ webull-skill market-data --action community-my-posts
 | `--depth` | `1` | Order book depth levels |
 | `--extend-hour-required` | false | Include extended hours |
 | `--overnight-required` | false | Include overnight data |
-| `--start-time` | (none) | Start timestamp in milliseconds (Long), for bar actions |
-| `--end-time` | (none) | End timestamp in milliseconds (Long), for bar actions |
+| `--start-time` | (none) | Start timestamp in milliseconds (Long), for all bar actions |
+| `--end-time` | (none) | End timestamp in milliseconds (Long), for all bar actions |
 | `--imbalance-action-type` | `PRE_OPEN` | NOII type: `PRE_OPEN` or `PRE_CLOSE` |
 
 ## Category Values

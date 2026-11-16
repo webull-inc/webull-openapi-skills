@@ -9,6 +9,7 @@ crypto_order.py, and event_order.py.
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, Optional
 
 from webull_skill.errors import handle_sdk_exception
@@ -77,14 +78,31 @@ def cancel_order(
 # Order query functions
 # ---------------------------------------------------------------------------
 
+_ISO_UTC_SECONDS = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+
+
+def _normalize_iso_utc_millis(value: str) -> str:
+    """Upgrade a well-formed second-precision UTC timestamp (yyyy-MM-ddTHH:mm:ssZ) to millisecond form.
+
+    The history endpoint expects yyyy-MM-dd'T'HH:mm:ss.SSS'Z'. Any other value is returned
+    unchanged so that the server validates it and reports the error.
+    """
+    if _ISO_UTC_SECONDS.match(value):
+        return value[:-1] + ".000Z"
+    return value
+
+
 def get_order_history(
     sdk: "SDKClient",
     account_id: str,
-    start: Optional[str] = None,
-    end: Optional[str] = None,
-    limit: Optional[int] = 10,
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
+    pagination_key: Optional[str] = None,
 ) -> str:
     """Get historical orders, default last 7 days.
+
+    start_time/end_time: ISO 8601 UTC timestamps, e.g. 2025-01-05T22:59:59.012Z.
+    pagination_key: cursor returned by the previous page; omit for the first page.
 
     Returns: client_order_id, symbol, side, order_type, quantity,
     filled_quantity, price, avg_filled_price, status,
@@ -93,13 +111,13 @@ def get_order_history(
     account_id = normalize_account_id(account_id) or ""
     try:
         kwargs: dict = {}
-        if start:
-            kwargs["start_date"] = start
-        if end:
-            kwargs["end_date"] = end
-        if limit:
-            kwargs["page_size"] = limit
-        response = sdk.trade.order_v3.get_order_history(account_id=account_id, **kwargs)
+        if start_time:
+            kwargs["start_time"] = _normalize_iso_utc_millis(start_time)
+        if end_time:
+            kwargs["end_time"] = _normalize_iso_utc_millis(end_time)
+        if pagination_key:
+            kwargs["pagination_key"] = pagination_key
+        response = sdk.trade.order_v3.list_order_history(account_id=account_id, **kwargs)
         data = extract_response_data(response)
         return prepend_disclaimer(format_order_history(data))
     except Exception as e:
@@ -109,15 +127,18 @@ def get_order_history(
 def get_open_orders(
     sdk: "SDKClient",
     account_id: str,
-    limit: Optional[int] = 10,
+    pagination_key: Optional[str] = None,
 ) -> str:
-    """Get all current open/pending orders. Returns same fields as get_order_history."""
+    """Get current open/pending orders. Returns same fields as get_order_history.
+
+    pagination_key: cursor returned by the previous page; omit for the first page.
+    """
     account_id = normalize_account_id(account_id) or ""
     try:
         kwargs: dict = {}
-        if limit:
-            kwargs["page_size"] = limit
-        response = sdk.trade.order_v3.get_order_open(account_id=account_id, **kwargs)
+        if pagination_key:
+            kwargs["pagination_key"] = pagination_key
+        response = sdk.trade.order_v3.list_order_open(account_id=account_id, **kwargs)
         data = extract_response_data(response)
         return prepend_disclaimer(format_open_orders(data))
     except Exception as e:

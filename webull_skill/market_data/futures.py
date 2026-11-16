@@ -105,9 +105,12 @@ def get_futures_bars(
     timespan: str = "D",
     count: int = 200,
     real_time_required: bool = False,
+    start_time: Optional[int] = None,
+    end_time: Optional[int] = None,
 ) -> str:
     """Get futures OHLCV bars in batch.
 
+    start_time/end_time: optional range as timestamps in milliseconds.
     Returns: time, open, high, low, close, volume.
     """
     try:
@@ -116,6 +119,8 @@ def get_futures_bars(
             {"symbols": sym_list, "category": category, "timespan": timespan},
             count=str(count) if count != 200 else None,
             real_time_required=real_time_required,
+            start_time=start_time,
+            end_time=end_time,
         )
         data = extract_response_data(sdk.data.futures_market_data.get_futures_history_bars(**kwargs))
         return prepend_disclaimer(format_futures_bars(data))

@@ -119,6 +119,19 @@ def _get(d: dict, key: str, default: str = "N/A") -> str:
     return str(val)
 
 
+def _pagination_suffix(data: Any) -> str:
+    """Return a "Next pagination_key" line when a response carries a cursor.
+
+    Cursor endpoints return ``{"data": [...], "pagination_key": "..."}``; the
+    key is absent on the last page. Returns an empty string otherwise.
+    """
+    if isinstance(data, dict):
+        pagination_key = data.get("pagination_key") or data.get("next_pagination_key")
+        if pagination_key:
+            return f"\n\nNext pagination_key: {pagination_key}"
+    return ""
+
+
 def _get_any(d: dict, keys: tuple[str, ...], default: str = "N/A") -> str:
     """Return the first present value among *keys*."""
     for key in keys:
@@ -290,6 +303,7 @@ def format_position_details(data: list[dict] | dict | None) -> str:
     if not data:
         return _NO_DATA
 
+    suffix = _pagination_suffix(data)
     if isinstance(data, dict):
         items = None
         for key in ("items", "positions", "position_details", "data"):
@@ -336,7 +350,7 @@ def format_position_details(data: list[dict] | dict | None) -> str:
 
     if len(lines) == 1:
         return _NO_DATA
-    return "\n".join(lines)
+    return "\n".join(lines) + suffix
 
 
 # ---------------------------------------------------------------------------
@@ -980,26 +994,33 @@ def format_order_preview(data: dict | None) -> str:
     return "\n".join(lines)
 
 
-def format_order_history(data: list[dict] | None) -> str:
-    """Format order history response."""
-    if not data:
+def _format_order_page(data: Any, title: str) -> str:
+    """Format a page of orders from a list or a ``{data, pagination_key}`` dict."""
+    suffix = _pagination_suffix(data)
+    if isinstance(data, dict):
+        for key in ("data", "items", "orders", "result"):
+            if isinstance(data.get(key), list):
+                data = data[key]
+                break
+        else:
+            data = [data]
+    if not data or not isinstance(data, list):
         return _NO_DATA
-    lines: list[str] = ["=== Order History ==="]
+    lines: list[str] = [title]
     for i, order in enumerate(data, 1):
         lines.append(f"\n[Order Entry {i}]")
         lines.extend(_format_order_item(order))
-    return "\n".join(lines)
+    return "\n".join(lines) + suffix
 
 
-def format_open_orders(data: list[dict] | None) -> str:
-    """Format open orders response."""
-    if not data:
-        return _NO_DATA
-    lines: list[str] = ["=== Open Orders ==="]
-    for i, order in enumerate(data, 1):
-        lines.append(f"\n[Order Entry {i}]")
-        lines.extend(_format_order_item(order))
-    return "\n".join(lines)
+def format_order_history(data: Any) -> str:
+    """Format order history response, including the next-page cursor."""
+    return _format_order_page(data, "=== Order History ===")
+
+
+def format_open_orders(data: Any) -> str:
+    """Format open orders response, including the next-page cursor."""
+    return _format_order_page(data, "=== Open Orders ===")
 
 
 def format_order_detail(data: dict | None) -> str:
@@ -1085,8 +1106,9 @@ def _format_flat_list(data: Any, title: str) -> str:
     """Format a list of dicts as flat key-value output."""
     if not data:
         return _NO_DATA
+    suffix = _pagination_suffix(data)
     if isinstance(data, dict):
-        data = [data]
+        data = data["data"] if isinstance(data.get("data"), list) else [data]
     if not isinstance(data, list):
         return _NO_DATA
     lines: list[str] = [f"=== {title} ==="]
@@ -1096,7 +1118,7 @@ def _format_flat_list(data: Any, title: str) -> str:
         if i > 0:
             lines.append("")
         lines.extend(_format_flat_item(item))
-    return "\n".join(lines)
+    return "\n".join(lines) + suffix
 
 
 def format_instruments(data: Any) -> str:
@@ -1854,6 +1876,7 @@ def format_fund_dividends(data: Any) -> str:
     """Format fund dividends response."""
     if not data:
         return _NO_DATA
+    suffix = _pagination_suffix(data)
     if isinstance(data, dict):
         items = data.get("data") or data.get("result") or data.get("items")
         if items and isinstance(items, list):
@@ -1871,7 +1894,7 @@ def format_fund_dividends(data: Any) -> str:
         lines.append(f"  Record Date:     {_get(item, 'record_date')}")
         lines.append(f"  Pay Date:        {_get(item, 'pay_date')}")
         lines.append(f"  DPS:             {_get(item, 'dps')}")
-    return "\n".join(lines)
+    return "\n".join(lines) + suffix
 
 
 def format_fund_splits(data: Any) -> str:
@@ -1890,12 +1913,12 @@ def format_fund_files(data: Any) -> str:
 
 def format_market_sectors(data: Any) -> str:
     """Format market sectors overview response."""
-    return _format_generic_list(data, "Market Sectors", key_candidates=("sectors",))
+    return _format_paginated_list(data, "Market Sectors", key_candidates=("sectors",))
 
 
 def format_market_sectors_detail(data: Any) -> str:
     """Format market sectors detail response."""
-    return _format_generic_list(data, "Market Sectors Detail", key_candidates=("stocks",))
+    return _format_paginated_list(data, "Market Sectors Detail", key_candidates=("stocks",))
 
 
 def format_high_dividend(data: Any) -> str:
@@ -1907,7 +1930,7 @@ def format_52whl(data: Any) -> str:
     """Format 52-week high/low rank list response."""
     return _format_generic_list(data, "52-Week High/Low")
 
-def _format_paginated_list(data: Any, title: str) -> str:
+def _format_paginated_list(data: Any, title: str, key_candidates: tuple[str, ...] = ()) -> str:
     """List formatter that also surfaces the next-page cursor.
 
     Renders items via :func:`_format_generic_list`, then appends the
@@ -1915,7 +1938,7 @@ def _format_paginated_list(data: Any, title: str) -> str:
     Pass that value back as ``pagination_key`` to fetch the next page;
     it is absent on the last page.
     """
-    text = _format_generic_list(data, title)
+    text = _format_generic_list(data, title, key_candidates=key_candidates)
     if isinstance(data, dict):
         pagination_key = data.get("pagination_key") or data.get("next_pagination_key")
         if pagination_key:

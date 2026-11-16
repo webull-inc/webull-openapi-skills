@@ -259,7 +259,7 @@ See [.env.example](.env.example) for the full configuration template.
 |----------|---------|--------|
 | **Account** | `account-list` | US, HK, JP, SG, MY, UK, MX, BR, ZA |
 | **Assets** | `balance`, `position`, `position-detail` (position details by instrument, JP only) | US, HK, JP, SG, MY, UK, MX, BR, ZA |
-| **Instrument** | `instrument-stock`, `instrument-crypto`, `instrument-futures-products`, `instrument-futures-list`, `instrument-futures-by-code`, `instrument-option-contracts`, `instrument-event-series`, `instrument-event-list`, `instrument-event-categories`, `instrument-event-events` | varies |
+| **Instrument** | `instrument-stock`, `instrument-crypto`, `instrument-futures-products`, `instrument-futures-list`, `instrument-option-contracts`, `instrument-event-series`, `instrument-event-list`, `instrument-event-categories`, `instrument-event-events` | varies |
 | **Stock Order** | `place`, `preview`, `replace` | US, HK, JP, SG, MY, UK, MX, BR, ZA |
 | **Combo Order** | `batch-place` (OTO/OCO/OTOCO) | US |
 | **Option Order** | `option-place`, `option-preview`, `option-replace` (single-leg); `option-strategy-place` (multi-leg, US only) | US, HK, JP, SG, TH, MY, UK, MX, BR |
@@ -316,7 +316,7 @@ JP stock orders and JP US option orders (`option-place` / `option-preview`) requ
 |-------|----------|----------------|
 | `account_tax_type` | Yes for JP stock `place` / `preview` and JP US option `option-place` / `option-preview` | `GENERAL`, `SPECIFIC` |
 | `margin_type` | Margin account only | `ONE_DAY`, `INDEFINITE` |
-| `position_intent` | Stock orders: margin account only. Option orders: optional, not validated by the Skill and passed to the backend as is | `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE` |
+| `position_intent` | Stock orders: margin account only. Option orders: any region (not region-specific; JP and SG require it for `BUY` in testing), not validated by the Skill and passed to the backend as is | `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE` |
 | `close_contracts` | Optional JP-only close payload | Array of `{ "contract_id": "...", "quantity": ... }`, max 10 items |
 
 JP stock order example:
@@ -338,6 +338,24 @@ JP stock order example:
 ```
 
 ---
+
+## Migration Notes (1.2.4)
+
+This release moves the interface calls to the latest API paths and removes the old paging and range options without a compatibility layer. Scripts that still pass the removed options fail with `unrecognized arguments`.
+
+| Removed | Use instead |
+|---------|-------------|
+| `--page-size`, `--page-index`, `--last-id` on the paged list actions | `--pagination-key` (pass the `Next pagination_key` value from the previous page) |
+| `--page-size`, `--page-index` on `stock-gainers-losers`, `stock-most-active`, `stock-high-dividend`, `stock-52-week-high-low` | None. These endpoints return a single result set without paging |
+| `history`: `--start`, `--end`, `--limit` | `--start-time`, `--end-time` (ISO 8601 UTC, e.g. `2025-01-05T00:00:00Z`), `--pagination-key` |
+| `open`: `--limit` | `--pagination-key` |
+| Action `instrument-futures-by-code` | `instrument-futures-list --code ES` (by product code) or `--symbols ESM6` (by contract) |
+
+Behavior changes:
+
+- `option-snapshot`, `option-bars`, `option-tick` and `instrument-option-contracts` now default `--category` to `US_OPTION` (previously `US_STOCK`).
+- `--depth` has no parser default any more. `stock-quotes` sends it only when given; `futures-depth` and `event-depth` still default to 1.
+- Order history and open orders now use the v3 order endpoints.
 
 ## Security
 

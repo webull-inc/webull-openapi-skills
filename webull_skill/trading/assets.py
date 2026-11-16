@@ -57,13 +57,12 @@ def get_account_position_details(
     config: "SkillConfig",
     account_id: str,
     instrument_id: str,
-    page_size: int = 20,
-    last_id: str | None = None,
+    pagination_key: str | None = None,
 ) -> str:
     """Get JP account position details for a specific instrument.
 
     JP-only. Required: account_id and instrument_id. Supports pagination via
-    page_size and last_id.
+    pagination_key (returned by the previous page; omit for the first page).
     """
     if config.region_id.lower() != "jp":
         return "Validation error: account position details is only supported in region 'jp'"
@@ -72,15 +71,12 @@ def get_account_position_details(
         return "Validation error: account_id is required"
     if not instrument_id:
         return "Validation error: instrument_id is required"
-    if page_size <= 0:
-        return "Validation error: page_size must be > 0"
 
     try:
-        response = sdk.trade.account_v2.get_account_position_details(
+        response = sdk.trade.account_v2.list_position_details(
             account_id,
             instrument_id,
-            page_size=page_size,
-            last_id=last_id,
+            pagination_key=pagination_key,
         )
         data = extract_response_data(response)
         return prepend_disclaimer(format_position_details(data))
