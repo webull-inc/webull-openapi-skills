@@ -325,6 +325,7 @@ JP stock orders and JP US option orders (`option-place` / `option-preview`) requ
 |-------|----------|----------------|
 | `account_tax_type` | Yes for JP stock `place` / `preview` and JP US option `option-place` / `option-preview` | `GENERAL`, `SPECIFIC` |
 | `margin_type` | Margin account only | `ONE_DAY`, `INDEFINITE` |
+| `trade_currency` | Stock orders only. Required for `CASH` accounts, optional for margin accounts | `USD`, `JPY` |
 | `position_intent` | Stock orders: margin account only. Option orders: any region (not region-specific; JP and SG require it for `BUY` in testing), not validated by the Skill and passed to the backend as is | `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE` |
 | `close_contracts` | Optional JP-only close payload | Array of `{ "contract_id": "...", "quantity": ... }`, max 10 items |
 

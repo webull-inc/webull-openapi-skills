@@ -19,6 +19,7 @@ from webull_skill.constants import (
     JP_MARGIN_TYPES,
     JP_MAX_CLOSE_CONTRACTS,
     JP_POSITION_INTENTS,
+    JP_TRADE_CURRENCIES,
 )
 from webull_skill.errors import FeatureNotSupportedError, ValidationError, handle_sdk_exception
 from webull_skill.formatters import (
@@ -141,14 +142,15 @@ def _validate_jp_stock_order_extensions(
     position_intent: str | None,
     close_contracts: Any,
     require_account_tax_type: bool,
+    trade_currency: str | None = None,
 ) -> dict[str, Any]:
     """Validate JP-only stock order fields and return normalized values."""
     region_id = config.region_id.lower()
-    supplied = any(_is_present(v) for v in (account_tax_type, margin_type, position_intent)) or close_contracts is not None
+    supplied = any(_is_present(v) for v in (account_tax_type, margin_type, position_intent, trade_currency)) or close_contracts is not None
     if region_id != "jp":
         if supplied:
             raise ValidationError(
-                "account_tax_type, margin_type, position_intent, and close_contracts are JP-only fields",
+                "account_tax_type, margin_type, trade_currency, position_intent, and close_contracts are JP-only fields",
                 field="region_id",
             )
         return {}
@@ -164,6 +166,11 @@ def _validate_jp_stock_order_extensions(
         raise ValidationError(
             f"Invalid margin_type '{margin_type}'. Valid values: {', '.join(sorted(JP_MARGIN_TYPES))}",
             field="margin_type",
+        )
+    if _is_present(trade_currency) and trade_currency not in JP_TRADE_CURRENCIES:
+        raise ValidationError(
+            f"Invalid trade_currency '{trade_currency}'. Valid values: {', '.join(sorted(JP_TRADE_CURRENCIES))}",
+            field="trade_currency",
         )
     if _is_present(position_intent) and position_intent not in JP_POSITION_INTENTS:
         raise ValidationError(
@@ -189,6 +196,8 @@ def _validate_jp_stock_order_extensions(
         normalized["account_tax_type"] = account_tax_type
     if _is_present(margin_type):
         normalized["margin_type"] = margin_type
+    if _is_present(trade_currency):
+        normalized["trade_currency"] = trade_currency
     if _is_present(position_intent):
         normalized["position_intent"] = position_intent
     normalized_close_contracts = _normalize_close_contracts(close_contracts)
@@ -232,7 +241,7 @@ def _build_stock_order(params: dict) -> dict:
     if params.get("no_party_ids"):
         order["no_party_ids"] = params["no_party_ids"]
     for key in (
-        "account_tax_type", "margin_type", "position_intent", "close_contracts",
+        "account_tax_type", "margin_type", "trade_currency", "position_intent", "close_contracts",
         "leg_in_or_out", "position_id", "leg_in_strategy",
     ):
         if key in params:
@@ -335,6 +344,7 @@ def place_stock_order(
     no_party_ids: Optional[list[dict]] = None,
     account_tax_type: Optional[str] = None,
     margin_type: Optional[str] = None,
+    trade_currency: Optional[str] = None,
     position_intent: Optional[str] = None,
     close_contracts: Optional[list[dict]] = None,
     leg_in_or_out: Optional[str] = None,
@@ -345,6 +355,7 @@ def place_stock_order(
 
     Account: stock/option account (Individual Cash, Individual Margin, IRA).
     Call get_account_list first.
+    trade_currency: JP only. Settlement currency of the order, USD or JPY. Required for CASH accounts, optional for MARGIN accounts.
     leg_in_or_out: LEG_IN or LEG_OUT — leg into/out of an existing multi-leg position (US only).
     position_id: Required when leg_in_or_out is specified. Obtained from Account Positions API.
     leg_in_strategy: Target strategy after legging in (only when leg_in_or_out=LEG_IN).
@@ -400,6 +411,7 @@ def place_stock_order(
             position_intent=position_intent,
             close_contracts=close_contracts,
             require_account_tax_type=True,
+            trade_currency=trade_currency,
         )
     except ValidationError as e:
         return f"Validation error: {e.message}"
@@ -456,6 +468,7 @@ def preview_stock_order(
     support_trading_session: Optional[str] = None,
     account_tax_type: Optional[str] = None,
     margin_type: Optional[str] = None,
+    trade_currency: Optional[str] = None,
     position_intent: Optional[str] = None,
     close_contracts: Optional[list[dict]] = None,
     config: Optional["SkillConfig"] = None,
@@ -501,6 +514,7 @@ def preview_stock_order(
                 position_intent=position_intent,
                 close_contracts=close_contracts,
                 require_account_tax_type=True,
+                trade_currency=trade_currency,
             )
         except ValidationError as e:
             return f"Validation error: {e.message}"

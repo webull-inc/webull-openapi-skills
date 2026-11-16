@@ -121,7 +121,7 @@
 ### JP Market
 - `LIMIT`, `MARKET`
 - US market orders via JP: `LIMIT`, `MARKET`, `STOP_LOSS`, `STOP_LOSS_LIMIT`
-- JP-specific fields: `account_tax_type` (`GENERAL`/`SPECIFIC`), `margin_type`, `position_intent`, `close_contracts`
+- JP-specific fields: `account_tax_type` (`GENERAL`/`SPECIFIC`), `margin_type`, `trade_currency` (`USD`/`JPY`, stock orders only), `position_intent`, `close_contracts`
 - Single-leg US options (`US_OPTION`) are supported in JP; multi-leg option strategies are not
 - `account_tax_type` (`GENERAL`/`SPECIFIC`) is also required for JP US option orders (`option-place` / `option-preview`)
 - `position_intent` on JP option orders is passed to the backend without Skill-side validation

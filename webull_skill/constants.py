@@ -84,6 +84,8 @@ JP_CASH_ACCOUNT_TYPE = "CASH"
 
 JP_ACCOUNT_TAX_TYPES: frozenset[str] = frozenset({"GENERAL", "SPECIFIC"})
 JP_MARGIN_TYPES: frozenset[str] = frozenset({"ONE_DAY", "INDEFINITE"})
+# Settlement currency of JP stock orders (applies to US stock orders placed from JP)
+JP_TRADE_CURRENCIES: frozenset[str] = frozenset({"USD", "JPY"})
 JP_POSITION_INTENTS: frozenset[str] = frozenset({
     "BUY_TO_OPEN",
     "BUY_TO_CLOSE",
