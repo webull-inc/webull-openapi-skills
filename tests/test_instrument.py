@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pytest
+
 from webull_skill.trading.instrument import (
     get_company_profile,
     get_analyst_rating,
@@ -11,7 +13,8 @@ from webull_skill.trading.instrument import (
     get_futures_product_class,
     get_futures_products,
     get_futures_instruments,
-    get_futures_instruments_by_code,
+    get_instruments,
+    get_option_contracts,
 )
 
 
@@ -108,22 +111,17 @@ class _FakeInstrument:
             },
         ])
 
-    def get_futures_instrument_by_code(self, **kwargs: object) -> _FakeResponse:
-        self.calls.append(("get_futures_instrument_by_code", kwargs))
-        return _FakeResponse([
-            {
-                "symbol": "ESM6",
-                "name": "E-mini S&P 500 Jun 2026",
-                "instrument_type": "FUTURES",
-                "exchange": "CME",
-            },
-            {
-                "symbol": "ESU6",
-                "name": "E-mini S&P 500 Sep 2026",
-                "instrument_type": "FUTURES",
-                "exchange": "CME",
-            },
-        ])
+
+    def list_instruments(self, **kwargs: object) -> _FakeResponse:
+        self.calls.append(("list_instruments", kwargs))
+        return _FakeResponse({
+            "data": [{"symbol": "AAPL", "instrument_id": "913256135"}],
+            "pagination_key": "next-1",
+        })
+
+    def list_option_contracts(self, **kwargs: object) -> _FakeResponse:
+        self.calls.append(("list_option_contracts", kwargs))
+        return _FakeResponse({"data": [{"symbol": "AAPL250620C00150000"}]})
 
 
 def _fake_sdk(instrument: _FakeInstrument) -> object:
@@ -253,31 +251,125 @@ def test_get_futures_instruments_multiple_symbols():
     assert inst.calls[0] == ("get_futures_instrument", {"symbols": ["ESM6", "NQM6"], "category": "US_FUTURES"})
 
 
-# ---------------------------------------------------------------------------
-# Futures instruments by code tests
-# ---------------------------------------------------------------------------
-
-
-def test_get_futures_instruments_by_code_formats_response():
+def test_get_futures_instruments_by_product_code():
     inst = _FakeInstrument()
-    result = get_futures_instruments_by_code(_fake_sdk(inst), code="ES", category="US_FUTURES")
+    result = get_futures_instruments(_fake_sdk(inst), code="ES", category="US_FUTURES")
 
-    assert "=== Instruments ===" in result
     assert "ESM6" in result
-    assert "ESU6" in result
-    assert "E-mini S&P 500 Jun 2026" in result
-    assert "E-mini S&P 500 Sep 2026" in result
-    assert inst.calls[0] == ("get_futures_instrument_by_code", {"code": "ES", "category": "US_FUTURES"})
+    assert inst.calls[0] == ("get_futures_instrument", {"category": "US_FUTURES", "code": "ES"})
 
 
-def test_get_futures_instruments_by_code_with_contract_type():
+def test_get_futures_instruments_passes_status():
     inst = _FakeInstrument()
-    result = get_futures_instruments_by_code(
-        _fake_sdk(inst), code="ES", category="US_FUTURES", contract_type="MONTHLY"
+    get_futures_instruments(_fake_sdk(inst), code="ES", category="US_FUTURES", status="NT")
+
+    assert inst.calls[0] == ("get_futures_instrument", {"category": "US_FUTURES", "code": "ES", "status": "NT"})
+
+
+def test_get_futures_instruments_requires_symbols_or_code():
+    inst = _FakeInstrument()
+    result = get_futures_instruments(_fake_sdk(inst), category="US_FUTURES")
+
+    assert "Validation error" in result
+    assert inst.calls == []
+
+
+# ---------------------------------------------------------------------------
+# Cursor pagination (list_* endpoints)
+# ---------------------------------------------------------------------------
+
+def test_get_instruments_passes_pagination_key_and_shows_next_cursor():
+    inst = _FakeInstrument()
+    result = get_instruments(_fake_sdk(inst), symbols="AAPL", pagination_key="pk-0")
+    assert inst.calls[0] == (
+        "list_instruments",
+        {"symbols": ["AAPL"], "category": "US_STOCK", "pagination_key": "pk-0"},
+    )
+    assert "symbol: AAPL" in result
+    assert "Next pagination_key: next-1" in result
+
+
+def test_get_option_contracts_uses_option_symbols_and_omits_unset_pagination_key():
+    inst = _FakeInstrument()
+    result = get_option_contracts(_fake_sdk(inst), option_symbols="AAPL250620C00150000")
+    assert inst.calls[0] == (
+        "list_option_contracts",
+        {"category": "US_OPTION", "option_symbols": "AAPL250620C00150000"},
+    )
+    assert "AAPL250620C00150000" in result
+    assert "pagination_key" not in result
+
+
+def test_get_option_contracts_passes_all_filters():
+    inst = _FakeInstrument()
+    get_option_contracts(
+        _fake_sdk(inst),
+        underlying_symbols="AAPL",
+        status="DELISTING",
+        start_date="2025-06-20",
+        end_date="2025-06-01",
+        root_symbol="SPXW",
+        option_type="CALL",
+        style="AMERICAN",
+        strike_price_gte="150",
+        strike_price_lte="200.5",
+        ppind="false",
+        show_deliverables="true",
+    )
+    assert inst.calls[0] == (
+        "list_option_contracts",
+        {
+            "category": "US_OPTION",
+            "underlying_symbols": "AAPL",
+            "status": "DELISTING",
+            "start_date": "2025-06-20",
+            "end_date": "2025-06-01",
+            "root_symbol": "SPXW",
+            "option_type": "CALL",
+            "style": "AMERICAN",
+            "strike_price_gte": "150",
+            "strike_price_lte": "200.5",
+            "ppind": "false",
+            "show_deliverables": "true",
+        },
     )
 
-    assert "=== Instruments ===" in result
-    assert inst.calls[0] == (
-        "get_futures_instrument_by_code",
-        {"code": "ES", "category": "US_FUTURES", "contract_type": "MONTHLY"},
+
+def test_get_option_contracts_sends_explicit_false_ppind():
+    # "false" is a real filter value (non-Penny-Pilot) and must not be dropped as falsy.
+    inst = _FakeInstrument()
+    get_option_contracts(_fake_sdk(inst), underlying_symbols="AAPL", ppind="false")
+    assert inst.calls[0][1]["ppind"] == "false"
+
+
+def test_get_option_contracts_allows_equal_strike_bounds():
+    inst = _FakeInstrument()
+    get_option_contracts(
+        _fake_sdk(inst), underlying_symbols="AAPL", strike_price_gte="150", strike_price_lte="150",
     )
+    assert inst.calls[0][1]["strike_price_gte"] == "150"
+
+
+@pytest.mark.parametrize(
+    "kwargs, message",
+    [
+        ({"option_type": "STRADDLE"}, "Invalid option_type"),
+        ({"style": "ASIAN"}, "Invalid style"),
+        ({"status": "ACTIVE"}, "Invalid status"),
+        ({"ppind": "yes"}, "Invalid ppind"),
+        ({"show_deliverables": "1"}, "Invalid show_deliverables"),
+        ({"category": "US_STOCK"}, "Invalid category"),
+        ({"start_date": "2025/06/20"}, "start_date must use YYYY-MM-DD"),
+        ({"end_date": "20250620"}, "end_date must use YYYY-MM-DD"),
+        ({"strike_price_gte": "-5"}, "strike_price_gte must be a positive decimal"),
+        ({"strike_price_lte": "0"}, "strike_price_lte must be a positive decimal"),
+        ({"strike_price_gte": "abc"}, "strike_price_gte must be a positive decimal"),
+        ({"strike_price_gte": "300", "strike_price_lte": "200"}, "must not exceed"),
+    ],
+)
+def test_get_option_contracts_rejects_invalid_filters_without_calling_sdk(kwargs, message):
+    inst = _FakeInstrument()
+    result = get_option_contracts(_fake_sdk(inst), underlying_symbols="AAPL", **kwargs)
+    assert result.startswith("Validation error:")
+    assert message in result
+    assert inst.calls == []

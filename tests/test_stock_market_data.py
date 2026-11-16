@@ -25,11 +25,6 @@ class _FakeMarketData:
     def __init__(self) -> None:
         self.calls: list[tuple[str, dict]] = []
 
-    def get_history_bar(self, **kwargs: object) -> _FakeResponse:
-        self.calls.append(("get_history_bar", kwargs))
-        return _FakeResponse([
-            {"time": "2024-03-08", "open": "169", "high": "173", "low": "168", "close": "170", "volume": "76000000"}
-        ])
 
     def get_batch_history_bar(self, **kwargs: object) -> _FakeResponse:
         self.calls.append(("get_batch_history_bar", kwargs))
@@ -109,10 +104,10 @@ def test_get_stock_bars_single_passes_start_end_time():
 
     assert "=== Stock Bars (OHLCV) ===" in result
     call = md.calls[0]
-    assert call[0] == "get_history_bar"
+    assert call[0] == "get_batch_history_bar"
     assert call[1]["start_time"] == 1700000000000
     assert call[1]["end_time"] == 1710000000000
-    assert call[1]["symbol"] == "AAPL"
+    assert call[1]["symbols"] == ["AAPL"]
 
 
 def test_get_stock_bars_single_omits_none_time():

@@ -5,7 +5,7 @@ Provides: get_event_tick, get_event_snapshot, get_event_depth, get_event_bars.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from webull_skill.errors import handle_sdk_exception
 from webull_skill.formatters import (
@@ -102,9 +102,12 @@ def get_event_bars(
     timespan: str = "D",
     count: int = 200,
     real_time_required: bool = False,
+    start_time: Optional[int] = None,
+    end_time: Optional[int] = None,
 ) -> str:
     """Get event contract OHLCV bars.
 
+    start_time/end_time: optional range as timestamps in milliseconds.
     Returns: time, open, high, low, close, volume.
     """
     try:
@@ -113,6 +116,8 @@ def get_event_bars(
             {"symbols": sym_list, "timespan": timespan, "category": category},
             count=count if count != 200 else None,
             real_time_required=real_time_required,
+            start_time=start_time,
+            end_time=end_time,
         )
         data = extract_response_data(sdk.data.event_market_data.get_event_bars(**kwargs))
         return prepend_disclaimer(format_event_bars(data))

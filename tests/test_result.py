@@ -3,7 +3,7 @@
 import json
 import pytest
 
-from webull_skill.result import OperationResult, default_category, success, failure
+from webull_skill.result import OperationResult, success, failure
 
 
 class TestOperationResult:
@@ -75,9 +75,39 @@ class TestOperationResult:
         assert d["config_label"] == "hk/prod"
 
 
-@pytest.mark.parametrize(
-    "action",
-    ["option-place", "option-snapshot", "instrument-option-contracts"],
-)
-def test_default_category_for_option_actions(action):
-    assert default_category(action) == "US_OPTION"
+class TestDefaultCategory:
+    """default_category infers the market category from the action name."""
+
+    @pytest.mark.parametrize(
+        "action",
+        [
+            "instrument-option-contracts",
+            "option-snapshot",
+            "option-bars",
+            "option-tick",
+            "option-place",
+        ],
+    )
+    def test_option_actions_default_to_us_option(self, action):
+        from webull_skill.result import default_category
+
+        assert default_category(action) == "US_OPTION"
+
+    @pytest.mark.parametrize(
+        "action, expected",
+        [
+            ("instrument-futures-list", "US_FUTURES"),
+            ("futures-bars", "US_FUTURES"),
+            ("instrument-crypto", "US_CRYPTO"),
+            ("crypto-bars", "US_CRYPTO"),
+            ("instrument-event-events", "US_EVENT"),
+            ("event-bars", "US_EVENT"),
+            ("instrument-stock", "US_STOCK"),
+            ("stock-snapshot", "US_STOCK"),
+            ("balance", "US_STOCK"),
+        ],
+    )
+    def test_other_actions_keep_their_default(self, action, expected):
+        from webull_skill.result import default_category
+
+        assert default_category(action) == expected

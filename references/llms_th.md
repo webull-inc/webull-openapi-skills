@@ -1,3 +1,5 @@
+# Source: https://developer.webull.co.th/apis/llms.txt
+# Fetched: 2026-11-02
 # Webull OpenAPI Documentation
 
 ## Guides
@@ -8,6 +10,9 @@
 - [Getting Started](https://developer.webull.co.th/apis/docs/getting-started.md): Step-by-step guide from API access request to first API call, covering SDK installation, credentials setup, and API exploration.
 - [SDKs and Tools](https://developer.webull.co.th/apis/docs/sdk.md): SDK installation for Python and Java, API environments (production and test), shared test accounts, and management tools.
 - [Additional Resources](https://developer.webull.co.th/apis/docs/resources.md): Learning materials, SDK source code, support channels, and legal disclosures.
+
+### AI-Friendly Resources
+- [llms.txt](https://developer.webull.co.th/apis/docs/ai-friendly-resources/llm.md): Machine-readable documentation index following the llms.txt standard, Markdown access for all pages, and integration guides for Claude, Cursor, Kiro, ChatGPT, and Gemini.
 
 ### Authentication
 - [Authentication Overview](https://developer.webull.co.th/apis/docs/authentication/overview.md): Dual-layer security using HMAC-SHA256 signature and Token-based 2FA, required request headers, and credential management.
@@ -32,9 +37,6 @@
 
 ### General
 - [Webull OpenAPI FAQ](https://developer.webull.co.th/apis/docs/faq.md): General frequently asked questions about API application, supported languages, token verification, fees, and support channels.
-
-### AI-Friendly Resources
-- [llms.txt](https://developer.webull.co.th/apis/docs/ai-friendly-resources/llm.md): Machine-readable documentation index following the llms.txt standard, Markdown access for all pages, and integration guides for Claude, Cursor, Kiro, ChatGPT, and Gemini.
 
 ## API Reference
 
@@ -62,11 +64,13 @@
 - [Account Balance](https://developer.webull.co.th/apis/docs/reference/trade-api/account-balance.md): Query balance, buying power, and cash details for a specific account.
 - [Account Positions](https://developer.webull.co.th/apis/docs/reference/trade-api/account-position.md): Retrieve current holdings and positions for a specific account.
 
-### Order Management
+### Order Management - Trading
 - [Preview Order](https://developer.webull.co.th/apis/docs/reference/trade-api/common-order-preview.md): Estimate costs and fees before placing an order.
 - [Place Order](https://developer.webull.co.th/apis/docs/reference/trade-api/common-order-place.md): Submit orders for stocks.
 - [Replace Order](https://developer.webull.co.th/apis/docs/reference/trade-api/common-order-replace.md): Modify an existing open order.
 - [Cancel Order](https://developer.webull.co.th/apis/docs/reference/trade-api/common-order-cancel.md): Cancel a pending or open order.
+
+### Order Management - Query
 - [Order History](https://developer.webull.co.th/apis/docs/reference/trade-api/order-history.md): Query historical order records and execution details.
 - [Open Orders](https://developer.webull.co.th/apis/docs/reference/trade-api/order-open.md): Retrieve current open orders.
 - [Order Detail](https://developer.webull.co.th/apis/docs/reference/trade-api/order-detail.md): Get detailed information for a specific order.

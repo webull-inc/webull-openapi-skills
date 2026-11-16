@@ -82,10 +82,13 @@ def get_option_bars(
     timespan: str = "D",
     count: int = 200,
     real_time_required: bool = False,
+    start_time: Optional[int] = None,
+    end_time: Optional[int] = None,
 ) -> str:
     """Get option OHLCV bars in batch.
 
     Option symbol format: e.g. AAPL260522C00300000
+    start_time/end_time: optional range as timestamps in milliseconds.
     Returns: time, open, high, low, close, volume.
     """
     try:
@@ -94,6 +97,8 @@ def get_option_bars(
             {"symbols": sym_list, "category": category, "timespan": timespan},
             count=str(count) if count != 200 else None,
             real_time_required=real_time_required,
+            start_time=start_time,
+            end_time=end_time,
         )
         data = extract_response_data(
             sdk.data.option_market_data.get_option_history_bars(**kwargs)

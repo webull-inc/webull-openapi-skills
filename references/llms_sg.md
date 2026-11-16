@@ -1,43 +1,116 @@
+# Source: https://developer.webull.com.sg/apis/llms.txt
+# Fetched: 2026-11-02
 # Webull OpenAPI Documentation (SG)
 
-> Webull OpenAPI provides programmatic access to trading and market data on the US market for Singapore-based clients.
+## Guides
 
-## Documentation
+### Getting Started
+- [Welcome to Webull API](https://developer.webull.com.sg/apis/docs.md): Platform overview covering trading APIs, market data services, and tools for building trading applications for Singapore-based clients.
+- [About Webull OpenAPI](https://developer.webull.com.sg/apis/docs/about-open-api.md): OpenAPI platform capabilities and features overview.
+- [Getting Started](https://developer.webull.com.sg/apis/docs/getting-started.md): Step-by-step guide from API access request to first API call.
+- [SDKs and Tools](https://developer.webull.com.sg/apis/docs/sdk.md): SDK installation, API environments, endpoints, and test accounts.
+- [Additional Resources](https://developer.webull.com.sg/apis/docs/resources.md): SDK source code, support channels, and legal disclosures.
 
-- [Welcome](https://developer.webull.com.sg/apis/docs/index.md): Webull OpenAPI overview — Trading API, Market Data API, and available solutions
-- [About Webull OpenAPI](https://developer.webull.com.sg/apis/docs/about-open-api.md): Overview of Webull OpenAPI, supported protocols, markets, and authentication
-- [Getting Started](https://developer.webull.com.sg/apis/docs/getting-started.md): Step-by-step guide from API access request to first API call
-- [SDKs and Tools](https://developer.webull.com.sg/apis/docs/sdk.md): SDK installation, API environments, endpoints, and test accounts
-- [Additional Resources](https://developer.webull.com.sg/apis/docs/resources.md): SDK source code, support channels, and legal disclosures
+### AI Friendly Resources
+- [llms.txt](https://developer.webull.com.sg/apis/docs/ai-friendly-resources/llm.md): Machine-readable documentation for AI-assisted development with LLMs, RAG pipelines, and AI coding tools.
+- [MCP](https://developer.webull.com.sg/apis/docs/ai-friendly-resources/mcp.md): Model Context Protocol integration guide for connecting AI assistants to Webull trading and market data APIs.
+- [Skills](https://developer.webull.com.sg/apis/docs/ai-friendly-resources/skills.md): Pre-built AI skill definitions and prompts for common Webull API workflows.
 
-## Authentication
+### Authentication
+- [Authentication Overview](https://developer.webull.com.sg/apis/docs/authentication/overview.md): Signature and Token-based authentication mechanism with security best practices.
+- [Individual Application Process](https://developer.webull.com.sg/apis/docs/authentication/individual-application.md): Step-by-step guide for individual users to apply for API access and generate API keys.
+- [Signature](https://developer.webull.com.sg/apis/docs/authentication/signature.md): HMAC-SHA1 signature generation, request composition, and required headers for API authentication.
+- [Token](https://developer.webull.com.sg/apis/docs/authentication/token.md): Token lifecycle management including creation, 2FA verification, status checks, storage, and usage in API requests.
 
-- [Authentication Overview](https://developer.webull.com.sg/apis/docs/authentication/overview.md): Signature and Token-based authentication mechanism
-- [Individual Application Process](https://developer.webull.com.sg/apis/docs/authentication/individual-application.md): How to apply for API access and generate credentials
-- [Signature](https://developer.webull.com.sg/apis/docs/authentication/signature.md): HMAC-SHA1 signature computation and header requirements
-- [Token](https://developer.webull.com.sg/apis/docs/authentication/token.md): Two-Factor Authentication token creation and verification
+### Market Data API
+- [Market Data API Overview](https://developer.webull.com.sg/apis/docs/market-data-api/overview.md): HTTP-based historical and real-time data retrieval (tick, snapshot, quotes, bars) for stocks; MQTT streaming via WebSocket/TCP; rate limits and subscription requirements.
+- [Market Data API Getting Started](https://developer.webull.com.sg/apis/docs/market-data-api/getting-started.md): Quick start guide for SDK installation, API key setup, and requesting historical or real-time market data with code examples.
+- [Data API](https://developer.webull.com.sg/apis/docs/market-data-api/data-api.md): HTTP-based market data access covering supported markets and data types.
+- [Data Streaming API](https://developer.webull.com.sg/apis/docs/market-data-api/data-streaming-api.md): Real-time market data streaming via MQTT protocol implementation guide.
+- [Subscribe Advanced Quotes](https://developer.webull.com.sg/apis/docs/market-data-api/subscribe-quotes.md): Browser-based guide to purchase and activate advanced real-time market data subscriptions.
+- [Market Data API FAQ](https://developer.webull.com.sg/apis/docs/market-data-api/faq.md): Frequently asked questions about market data access and usage.
 
-## Market Data API
+### Trading API
+- [Trading API Overview](https://developer.webull.com.sg/apis/docs/trade-api/overview.md): Core trading functionality and capabilities overview.
+- [Trading API Getting Started](https://developer.webull.com.sg/apis/docs/trade-api/getting-started.md): Quick start guide for trading API integration.
+- [Trading API - Accounts](https://developer.webull.com.sg/apis/docs/trade-api/account.md): Account management, balance queries, and account information retrieval.
+- [Trading API - Stocks](https://developer.webull.com.sg/apis/docs/trade-api/stock.md): Stock order placement, modification, cancellation, and status tracking.
+- [Trading API - FAQs](https://developer.webull.com.sg/apis/docs/trade-api/faq.md): Common questions and troubleshooting for trading API.
 
-- [Market Data Overview](https://developer.webull.com.sg/apis/docs/market-data-api/overview.md): Available market data endpoints and rate limits
-- [Market Data Getting Started](https://developer.webull.com.sg/apis/docs/market-data-api/getting-started.md): Quick start guide for HTTP and streaming market data
-- [Data API](https://developer.webull.com.sg/apis/docs/market-data-api/data-api.md): HTTP-based on-demand market data queries
-- [Data Streaming API](https://developer.webull.com.sg/apis/docs/market-data-api/data-streaming-api.md): Real-time market data via MQTT protocol
-- [Subscribe Advanced Quotes](https://developer.webull.com.sg/apis/docs/market-data-api/subscribe-quotes.md): How to subscribe to advanced market data for OpenAPI
-- [Market Data FAQ](https://developer.webull.com.sg/apis/docs/market-data-api/faq.md): Frequently asked questions about market data
+### General
+- [Webull OpenAPI FAQs](https://developer.webull.com.sg/apis/docs/faq.md): General frequently asked questions about Webull OpenAPI platform.
 
-## Trading API
+## API Reference
 
-- [Trading API Overview](https://developer.webull.com.sg/apis/docs/trade-api/overview.md): Supported products, feature matrix, and API reference
-- [Trading API Getting Started](https://developer.webull.com.sg/apis/docs/trade-api/getting-started.md): Place your first trade in 5 steps
-- [Account](https://developer.webull.com.sg/apis/docs/trade-api/account.md): Query account list, balances, and positions
-- [Stock Trading](https://developer.webull.com.sg/apis/docs/trade-api/stock.md): Stock order placement, modification, and cancellation
-- [Trading API FAQ](https://developer.webull.com.sg/apis/docs/trade-api/faq.md): Frequently asked questions about trading
+### Authentication & Token Management
+- [Create Token](https://developer.webull.com.sg/apis/docs/reference/create-token.md): Generate authentication tokens for API access.
+- [Check Token](https://developer.webull.com.sg/apis/docs/reference/check-token.md): Verify token validity and status.
 
-## AI-Friendly Resources
+### Market Data - Stock
+- [Stock Tick](https://developer.webull.com.sg/apis/docs/reference/tick.md): Real-time tick-by-tick trade data for stocks.
+- [Stock Snapshot](https://developer.webull.com.sg/apis/docs/reference/snapshot.md): Current market snapshot with latest prices and statistics.
+- [Stock Quotes](https://developer.webull.com.sg/apis/docs/reference/quotes.md): Real-time bid/ask quotes and market depth.
+- [Stock Footprint](https://developer.webull.com.sg/apis/docs/reference/footprint.md): Order flow and volume profile analysis data.
+- [Stock Historical Bars](https://developer.webull.com.sg/apis/docs/reference/historical-bars.md): Historical OHLCV candlestick data for multiple symbols.
+- [Stock Historical Bars (Single Symbol)](https://developer.webull.com.sg/apis/docs/reference/bars.md): Historical OHLCV candlestick data for a single symbol.
 
-- [llms.txt](https://developer.webull.com.sg/apis/docs/ai-friendly-resources/llm.md): Machine-readable documentation for LLM integration
+### Market Data - Streaming
+- [Subscribe](https://developer.webull.com.sg/apis/docs/reference/subscribe.md): Subscribe to real-time market data streams via MQTT.
+- [Unsubscribe](https://developer.webull.com.sg/apis/docs/reference/unsubscribe.md): Unsubscribe from real-time market data streams.
 
-## General
+### Instruments & Symbols
+- [Get Stock Instrument](https://developer.webull.com.sg/apis/docs/reference/instrument-list.md): List of available stock symbols and instrument details.
 
-- [FAQ](https://developer.webull.com.sg/apis/docs/faq.md): General frequently asked questions
+### Account Management
+- [Account List](https://developer.webull.com.sg/apis/docs/reference/account-list.md): Retrieve list of user accounts and account IDs.
+- [Account Balance](https://developer.webull.com.sg/apis/docs/reference/account-balance.md): Query account balance, buying power, and cash details.
+- [Account Positions](https://developer.webull.com.sg/apis/docs/reference/account-position.md): Retrieve current positions and holdings.
+
+### Order Management - Trading
+- [Preview Order](https://developer.webull.com.sg/apis/docs/reference/common-order-preview.md): Preview order details and estimated costs before placement.
+- [Place Order](https://developer.webull.com.sg/apis/docs/reference/common-order-place.md): Submit new orders.
+- [Replace Order](https://developer.webull.com.sg/apis/docs/reference/common-order-replace.md): Modify existing open orders (price, quantity, etc.).
+- [Cancel Order](https://developer.webull.com.sg/apis/docs/reference/common-order-cancel.md): Cancel pending or open orders.
+
+### Order Management - Query
+- [Order History](https://developer.webull.com.sg/apis/docs/reference/order-history.md): Query historical order records and execution details.
+- [Open Orders](https://developer.webull.com.sg/apis/docs/reference/order-open.md): Retrieve list of current open orders.
+- [Order Detail](https://developer.webull.com.sg/apis/docs/reference/order-detail.md): Get detailed information for a specific order.
+
+### Trade Events
+- [Subscribe Trade Events](https://developer.webull.com.sg/apis/docs/reference/custom/subscribe-trade-events.md): Subscribe to real-time order status change notifications via gRPC.
+
+## Changelog
+- [Documentation Changelog](https://developer.webull.com.sg/apis/docs/changelog.md): Track updates, new features, and changes to the API documentation.
+
+## Base URLs
+
+### Production Environment
+
+| API | Service | Host |
+|-----|---------|------|
+| Trading API | HTTP API | `sg-api.uat.webullbroker.com` |
+| Connect API | HTTP API | `sg-oauth-open-api.uat.webullbroker.com` |
+
+### Test Environment
+
+| API | Service | Host |
+|-----|---------|------|
+| Trading API | HTTP API | `sg-api.pre.webullbroker.com` |
+| Connect API | HTTP API | `sg-oauth-open-api.pre.webullbroker.com` |
+
+## Official SDKs
+
+### Python
+```bash
+pip3 install --upgrade webull-openapi-python-sdk
+```
+
+### Java (Maven)
+```xml
+<dependency>
+    <groupId>com.webull.openapi</groupId>
+    <artifactId>webull-openapi-java-sdk</artifactId>
+    <version>1.0.3</version>
+</dependency>
+```

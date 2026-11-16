@@ -32,7 +32,6 @@ TRADING_ACTIONS = [
     "instrument-stock", "instrument-crypto",
     "instrument-futures-products", "instrument-futures-product-class",
     "instrument-futures-list",
-    "instrument-futures-by-code",
     "instrument-event-series", "instrument-event-list",
     "instrument-event-categories", "instrument-event-events",
     # Option instrument
@@ -120,7 +119,6 @@ _JP_UNSUPPORTED_TRADING_ACTIONS = frozenset({
     "instrument-futures-products",
     "instrument-futures-product-class",
     "instrument-futures-list",
-    "instrument-futures-by-code",
     "instrument-event-series",
     "instrument-event-list",
     "instrument-event-categories",
@@ -153,6 +151,28 @@ _OPTION_TRADING_ACTIONS = frozenset({
 _OPTION_MARKET_DATA_ACTIONS = frozenset({"option-snapshot", "option-bars", "option-tick"})
 
 
+# Allowed --status values per action (each endpoint documents its own enum).
+_STATUS_VALUES_BY_ACTION: dict[str, tuple[str, ...]] = {
+    "instrument-stock": ("OC", "CO", "NT"),
+    "instrument-crypto": ("OC", "CO", "NT"),
+    "instrument-futures-list": ("OC", "CO", "NT"),
+    "instrument-event-events": ("ACTIVE", "INACTIVE"),
+    "instrument-option-contracts": ("LISTING", "DELISTING"),
+}
+
+
+def _status_error(action: str, status: str) -> str:
+    """Return a validation error when --status is unsupported or invalid for the action."""
+    if not status:
+        return ""
+    allowed = _STATUS_VALUES_BY_ACTION.get(action)
+    if allowed is None:
+        return f"--status is not supported by action '{action}'"
+    if status not in allowed:
+        return f"Invalid --status '{status}' for '{action}'. Valid values: {', '.join(allowed)}"
+    return ""
+
+
 def _region_trading_error(config: SkillConfig, action: str, category: str) -> str:
     """Return a validation error for unsupported region/action pairs."""
     region_id = config.region_id.lower()
@@ -166,7 +186,6 @@ def _region_trading_error(config: SkillConfig, action: str, category: str) -> st
             "instrument-futures-products",
             "instrument-futures-product-class",
             "instrument-futures-list",
-            "instrument-futures-by-code",
         }
         if action in futures_actions:
             from webull_skill.constants import (
@@ -219,21 +238,54 @@ def build_parser() -> argparse.ArgumentParser:
     tp = subparsers.add_parser("trading", help="Instrument queries, account/asset, and order operations")
     tp.add_argument("--action", required=True, choices=TRADING_ACTIONS)
     tp.add_argument("--symbol", default="")
-    tp.add_argument("--symbols", default="")
-    tp.add_argument("--category", default="")
+    tp.add_argument("--symbols", default="",
+                    help="Symbols, comma-separated (also filters instrument-event-series and instrument-event-list)")
+    tp.add_argument("--code", default="", help="Futures product code, e.g. ES (instrument-futures-list)")
+    tp.add_argument("--status", default="", type=str.upper,
+                    help="Status filter. instrument-stock/crypto/futures-list: OC, CO, NT; "
+                         "instrument-event-events: ACTIVE, INACTIVE; instrument-option-contracts: LISTING, DELISTING")
+    tp.add_argument("--category", default="",
+                    help="Market category (e.g. US_STOCK). For instrument-event-series it is the event category "
+                         "(ECONOMICS, FINANCIALS, ...; see instrument-event-categories) and is optional")
     tp.add_argument("--sub-category", default="")
     tp.add_argument("--account-id", default="")
     tp.add_argument("--instrument-id", default="")
-    tp.add_argument("--last-id", default="")
-    tp.add_argument("--code", default="")
     tp.add_argument("--series-symbol", default="")
-    tp.add_argument("--page-size", type=int, default=500)
+    tp.add_argument("--event-symbol", default="",
+                    help="Event symbol filter (instrument-event-list)")
+    tp.add_argument("--expiration-date-after", default="",
+                    help="Only contracts expiring after this date, yyyy-MM-dd (instrument-event-list)")
+    tp.add_argument("--product-class-id", default="",
+                    help="Futures product class ID from instrument-futures-product-class (instrument-futures-products)")
     tp.add_argument("--order-json", default="")
     tp.add_argument("--order-file", default="")
     tp.add_argument("--client-order-id", default="")
-    tp.add_argument("--start-date", default="", help="Start date yyyy-MM-dd (order executions)")
-    tp.add_argument("--end-date", default="", help="End date yyyy-MM-dd (order executions)")
-    tp.add_argument("--pagination-key", default="", help="Pagination cursor for next page (order executions)")
+    tp.add_argument("--start-date", default="",
+                    help="yyyy-MM-dd. order executions: start date; "
+                         "instrument-option-contracts: exact expiration date")
+    tp.add_argument("--end-date", default="",
+                    help="yyyy-MM-dd. order executions: end date; "
+                         "instrument-option-contracts: expiration date lower bound (inclusive)")
+    # instrument-option-contracts filters
+    tp.add_argument("--option-symbols", default="",
+                    help="Option symbol(s), comma-separated, e.g. AAPL250620C00150000 (instrument-option-contracts)")
+    tp.add_argument("--root-symbol", default="",
+                    help="Root/series symbol, e.g. SPXW (instrument-option-contracts)")
+    tp.add_argument("--option-type", default="", type=str.upper, choices=["", "CALL", "PUT"],
+                    help="Contract type: CALL, PUT (instrument-option-contracts)")
+    tp.add_argument("--style", default="", type=str.upper, choices=["", "AMERICAN", "EUROPEAN"],
+                    help="Exercise style: AMERICAN, EUROPEAN (instrument-option-contracts)")
+    tp.add_argument("--strike-price-gte", default="",
+                    help="Strike price lower bound, inclusive (instrument-option-contracts)")
+    tp.add_argument("--strike-price-lte", default="",
+                    help="Strike price upper bound, inclusive (instrument-option-contracts)")
+    tp.add_argument("--ppind", default="", type=str.lower, choices=["", "true", "false"],
+                    help="Penny Program Indicator: true = Penny Pilot, false = non-Penny Pilot (instrument-option-contracts)")
+    tp.add_argument("--show-deliverables", default="", type=str.lower, choices=["", "true", "false"],
+                    help="Return the deliverables array in the response (instrument-option-contracts)")
+    tp.add_argument("--start-time", default="", help="Start time, ISO 8601 UTC e.g. 2025-01-05T00:00:00.000Z (order history)")
+    tp.add_argument("--end-time", default="", help="End time, ISO 8601 UTC e.g. 2025-01-06T00:00:00.000Z (order history)")
+    tp.add_argument("--pagination-key", default="", help="Pagination cursor from the previous page (instrument lists, position-detail, open, history, executions)")
 
     # market-data subcommand
     mp = subparsers.add_parser("market-data", help="Market data queries")
@@ -243,14 +295,15 @@ def build_parser() -> argparse.ArgumentParser:
     mp.add_argument("--category", default="")
     mp.add_argument("--timespan", default="D")
     mp.add_argument("--count", type=int, default=200)
-    mp.add_argument("--depth", type=int, default=1)
+    mp.add_argument("--depth", type=int, default=None,
+                    help="Order book depth (stock-quotes; futures-depth and event-depth default to 1)")
     mp.add_argument("--trading-sessions", default="")
     mp.add_argument("--real-time-required", action="store_true")
     mp.add_argument("--extend-hour-required", action="store_true")
     mp.add_argument("--overnight-required", action="store_true")
     mp.add_argument("--start-date", default="", help="Start date yyyy-MM-dd (economic calendar / news search)")
     mp.add_argument("--end-date", default="", help="End date yyyy-MM-dd (economic calendar / news search)")
-    mp.add_argument("--pagination-key", default="", help="Cursor for paginated market data (institution/insider/economic/news/community)")
+    mp.add_argument("--pagination-key", default="", help="Cursor for paginated market data (institution/insider/economic/news/community/market-sectors/fund-dividends)")
     mp.add_argument("--keyword", default="",
                     help="Search keyword (institution-search: name or CIK; news-search: news keyword; "
                          "community-posts-by-symbol: optional filter)")
@@ -279,8 +332,6 @@ def build_parser() -> argparse.ArgumentParser:
     mp.add_argument("--rank-type", default="", help="Rank type for screener (e.g. DAY_1, VOLUME)")
     mp.add_argument("--sort-by", default="", help="Secondary sort field for screener")
     mp.add_argument("--direction", default="", help="Sort direction: ASC or DESC")
-    mp.add_argument("--page-index", type=int, default=None, help="Page number starting from 1")
-    mp.add_argument("--page-size", type=int, default=None, help="Records per page")
     # Watchlist
     mp.add_argument("--watchlist-id", default="", help="Watchlist unique identifier")
     mp.add_argument("--watchlist-name", default="", help="Watchlist name")
@@ -353,6 +404,10 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
     if region_error:
         return failure(detail=f"Validation error: {region_error}")
 
+    status_error = _status_error(action, args.status)
+    if status_error:
+        return failure(detail=f"Validation error: {status_error}")
+
     from webull_skill.risk_engine import RiskEngine
     from webull_skill.sdk_client import SDKClient
     from webull_skill.trading.account import get_account_list
@@ -367,7 +422,6 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
         get_futures_products,
         get_futures_product_class,
         get_futures_instruments,
-        get_futures_instruments_by_code,
         get_event_series,
         get_event_instruments,
         get_event_categories,
@@ -406,30 +460,64 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
 
     # -- Instrument queries -------------------------------------------------
     if action == "instrument-stock":
-        return _wrap_tool_result(get_instruments(sdk, symbols_str, category=cat, sub_category=args.sub_category or None), action)
+        return _wrap_tool_result(get_instruments(sdk, symbols_str, category=cat, status=args.status or None, sub_category=args.sub_category or None, pagination_key=args.pagination_key or None), action)
     if action == "instrument-crypto":
-        return _wrap_tool_result(get_crypto_instruments(sdk, symbols_str, category=cat), action)
+        return _wrap_tool_result(get_crypto_instruments(sdk, symbols_str, category=cat, status=args.status or None, pagination_key=args.pagination_key or None), action)
     if action == "instrument-futures-products":
-        return _wrap_tool_result(get_futures_products(sdk, category=cat), action)
+        return _wrap_tool_result(get_futures_products(sdk, category=cat, product_class_id=args.product_class_id or None), action)
     if action == "instrument-futures-product-class":
         return _wrap_tool_result(get_futures_product_class(sdk, category=cat), action)
     if action == "instrument-futures-list":
-        return _wrap_tool_result(get_futures_instruments(sdk, symbols_str, category=cat), action)
-    if action == "instrument-futures-by-code":
-        return _wrap_tool_result(get_futures_instruments_by_code(sdk, code=args.code, category=cat), action)
+        return _wrap_tool_result(
+            get_futures_instruments(
+                sdk, symbols_str, category=cat, code=args.code or None, status=args.status or None,
+            ),
+            action,
+        )
     if action == "instrument-event-series":
-        return _wrap_tool_result(get_event_series(sdk, category=cat, page_size=args.page_size), action)
+        return _wrap_tool_result(get_event_series(sdk, symbols=symbols_str or None, category=args.category or None, pagination_key=args.pagination_key or None), action)
     if action == "instrument-event-list":
-        return _wrap_tool_result(get_event_instruments(sdk, series_symbol=args.series_symbol, page_size=args.page_size), action)
+        return _wrap_tool_result(
+            get_event_instruments(
+                sdk, series_symbol=args.series_symbol,
+                event_symbol=args.event_symbol or None,
+                symbols=symbols_str or None,
+                expiration_date_after=args.expiration_date_after or None,
+                pagination_key=args.pagination_key or None,
+            ),
+            action,
+        )
     if action == "instrument-event-categories":
         return _wrap_tool_result(get_event_categories(sdk), action)
     if action == "instrument-event-events":
-        return _wrap_tool_result(get_event_events(sdk, series_symbol=args.series_symbol), action)
+        return _wrap_tool_result(
+            get_event_events(
+                sdk, series_symbol=args.series_symbol,
+                symbols=symbols_str or None, status=args.status or None,
+            ),
+            action,
+        )
 
     # -- Option instrument --------------------------------------------------
     if action == "instrument-option-contracts":
         return _wrap_tool_result(
-            get_option_contracts(sdk, underlying_symbols=symbols_str or None, category=cat or "US_OPTION"),
+            get_option_contracts(
+                sdk,
+                underlying_symbols=symbols_str or None,
+                category=cat or "US_OPTION",
+                status=args.status or None,
+                start_date=args.start_date or None,
+                end_date=args.end_date or None,
+                root_symbol=args.root_symbol or None,
+                option_symbols=args.option_symbols or None,
+                option_type=args.option_type or None,
+                style=args.style or None,
+                strike_price_gte=args.strike_price_gte or None,
+                strike_price_lte=args.strike_price_lte or None,
+                ppind=args.ppind or None,
+                show_deliverables=args.show_deliverables or None,
+                pagination_key=args.pagination_key or None,
+            ),
             action,
         )
 
@@ -466,15 +554,13 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
             return failure(detail="--account-id is required for position-detail")
         if not args.instrument_id:
             return failure(detail="--instrument-id is required for position-detail")
-        page_size = args.page_size if args.page_size != 500 else 20
         return _wrap_tool_result(
             get_account_position_details(
                 sdk,
                 config,
                 account_id=aid,
                 instrument_id=args.instrument_id,
-                page_size=page_size,
-                last_id=args.last_id or None,
+                pagination_key=args.pagination_key or None,
             ),
             action,
         )
@@ -674,11 +760,20 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
     if action == "open":
         if not aid:
             return failure(detail="--account-id required")
-        return _wrap_tool_result(get_open_orders(sdk, aid), action)
+        return _wrap_tool_result(get_open_orders(sdk, aid, pagination_key=args.pagination_key or None), action)
     if action == "history":
         if not aid:
             return failure(detail="--account-id required")
-        return _wrap_tool_result(get_order_history(sdk, aid), action)
+        return _wrap_tool_result(
+            get_order_history(
+                sdk,
+                aid,
+                start_time=args.start_time or None,
+                end_time=args.end_time or None,
+                pagination_key=args.pagination_key or None,
+            ),
+            action,
+        )
     if action == "detail":
         if not aid:
             return failure(detail="--account-id required")
@@ -836,6 +931,7 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         return _wrap_tool_result(
             get_stock_bars_single(sdk, config, symbol, category=cat,
                                  timespan=args.timespan, count=args.count,
+                                 real_time_required=args.real_time_required,
                                  trading_sessions=args.trading_sessions or None,
                                  start_time=args.start_time,
                                  end_time=args.end_time),
@@ -845,6 +941,7 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         return _wrap_tool_result(
             get_stock_bars(sdk, config, symbols_str, category=cat,
                            timespan=args.timespan, count=args.count,
+                           real_time_required=args.real_time_required,
                            trading_sessions=args.trading_sessions or None,
                            start_time=args.start_time,
                            end_time=args.end_time),
@@ -859,6 +956,7 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
     if action == "stock-quotes":
         return _wrap_tool_result(
             get_stock_quotes(sdk, config, symbol, category=cat,
+                             depth=args.depth,
                              overnight_required=args.overnight_required),
             action,
         )
@@ -881,7 +979,8 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         return _wrap_tool_result(
             get_futures_bars(sdk, config, symbols_str, category=cat,
                              timespan=args.timespan, count=args.count,
-                             real_time_required=args.real_time_required),
+                             real_time_required=args.real_time_required,
+                             start_time=args.start_time, end_time=args.end_time),
             action,
         )
     if action == "futures-tick":
@@ -890,7 +989,7 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         )
     if action == "futures-depth":
         return _wrap_tool_result(
-            get_futures_depth(sdk, config, symbol, category=cat, depth=args.depth), action,
+            get_futures_depth(sdk, config, symbol, category=cat, depth=args.depth or 1), action,
         )
     if action == "futures-footprint":
         return _wrap_tool_result(
@@ -910,7 +1009,8 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         return _wrap_tool_result(
             get_crypto_bars(sdk, config, symbols_str, category=cat,
                             timespan=args.timespan, count=args.count,
-                            real_time_required=args.real_time_required),
+                            real_time_required=args.real_time_required,
+                            start_time=args.start_time, end_time=args.end_time),
             action,
         )
 
@@ -921,13 +1021,14 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         )
     if action == "event-depth":
         return _wrap_tool_result(
-            get_event_depth(sdk, config, symbol, category=cat, depth=args.depth), action,
+            get_event_depth(sdk, config, symbol, category=cat, depth=args.depth or 1), action,
         )
     if action == "event-bars":
         return _wrap_tool_result(
             get_event_bars(sdk, config, symbols_str, category=cat,
                            timespan=args.timespan, count=args.count,
-                           real_time_required=args.real_time_required),
+                           real_time_required=args.real_time_required,
+                           start_time=args.start_time, end_time=args.end_time),
             action,
         )
     if action == "event-tick":
@@ -962,7 +1063,8 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
         return _wrap_tool_result(
             get_option_bars(sdk, config, symbols_str, category=cat or "US_OPTION",
                             timespan=args.timespan, count=args.count,
-                            real_time_required=args.real_time_required),
+                            real_time_required=args.real_time_required,
+                            start_time=args.start_time, end_time=args.end_time),
             action,
         )
     if action == "option-tick":
@@ -983,8 +1085,6 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
                 category=cat or "US_STOCK",
                 sort_by=args.sort_by or "CHANGE_RATIO",
                 direction=args.direction or None,
-                page_index=args.page_index,
-                page_size=args.page_size,
             ),
             action,
         )
@@ -996,8 +1096,6 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
                 rank_type=args.rank_type or None,
                 sort_by=args.sort_by or None,
                 direction=args.direction or None,
-                page_index=args.page_index,
-                page_size=args.page_size,
             ),
             action,
         )
@@ -1010,9 +1108,8 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
                 category=cat or "US_STOCK",
                 agg_type=args.agg_type or None,
                 period=args.period or None,
-                page_index=args.page_index,
-                page_size=args.page_size,
                 direction=args.direction or None,
+                pagination_key=args.pagination_key or None,
             ),
             action,
         )
@@ -1025,10 +1122,9 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
                 sector_id=args.sector_id,
                 category=cat or "US_STOCK",
                 period=args.period or None,
-                page_index=args.page_index,
-                page_size=args.page_size,
                 sort_by=args.sort_by or None,
                 direction=args.direction or None,
+                pagination_key=args.pagination_key or None,
             ),
             action,
         )
@@ -1038,8 +1134,6 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
                 sdk, config,
                 category=cat or "US_STOCK",
                 sort_by=args.sort_by or None,
-                page_index=args.page_index,
-                page_size=args.page_size,
                 direction=args.direction or None,
             ),
             action,
@@ -1051,8 +1145,6 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
                 category=cat or "US_STOCK",
                 rank_type=args.rank_type or None,
                 sort_by=args.sort_by or None,
-                page_index=args.page_index,
-                page_size=args.page_size,
                 direction=args.direction or None,
             ),
             action,
@@ -1205,8 +1297,7 @@ def dispatch_market_data(args: argparse.Namespace, config: SkillConfig) -> str |
             return failure(detail=f"--symbol is required for {action}")
         return _wrap_tool_result(
             get_fund_dividends(sdk, config, symbol, category=cat or "US_STOCK",
-                              page_index=args.page_index,
-                              page_size=args.page_size),
+                              pagination_key=args.pagination_key or None),
             action,
         )
     if action == "fundamentals-fund-splits":

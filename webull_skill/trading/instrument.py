@@ -1,6 +1,6 @@
 """Instrument query tools for Webull OpenAPI Skill.
 
-Provides: get_instruments, get_futures_instruments, get_futures_instruments_by_code,
+Provides: get_instruments, get_futures_instruments,
           get_futures_products, get_futures_product_class,
           get_crypto_instruments, get_event_series,
           get_event_instruments, get_event_categories, get_event_events,
@@ -9,6 +9,8 @@ Provides: get_instruments, get_futures_instruments, get_futures_instruments_by_c
 
 from __future__ import annotations
 
+from datetime import datetime
+from decimal import Decimal, InvalidOperation
 from typing import TYPE_CHECKING, Any, Optional
 
 from webull_skill.errors import handle_sdk_exception
@@ -49,9 +51,12 @@ def get_instruments(
     category: str = "US_STOCK",
     status: Optional[str] = None,
     sub_category: Optional[str] = None,
+    pagination_key: Optional[str] = None,
 ) -> str:
     """Get stock/ETF instrument info.
 
+    :param pagination_key: Pagination key from the previous page response;
+        omit for the first page. Not returned on the last page.
     Returns: symbol, name, instrument_type, exchange, sub_category.
     """
     try:
@@ -59,8 +64,9 @@ def get_instruments(
             {"symbols": _split_symbols(symbols), "category": category},
             status=status,
             sub_category=sub_category,
+            pagination_key=pagination_key,
         )
-        data = extract_response_data(sdk.data.instrument.get_instrument(**kwargs))
+        data = extract_response_data(sdk.data.instrument.list_instruments(**kwargs))
         return prepend_disclaimer(format_instruments(data))
     except Exception as e:
         return handle_sdk_exception(e, "get_instruments")
@@ -68,54 +74,49 @@ def get_instruments(
 
 def get_futures_instruments(
     sdk: "SDKClient",
-    symbols: str,
+    symbols: str = "",
     category: str = "US_FUTURES",
+    code: Optional[str] = None,
+    status: Optional[str] = None,
 ) -> str:
     """Get futures instrument info.
 
+    Two ways to query: by contract symbols (e.g. ESM6) or by product code (e.g. ES).
+    At least one of symbols or code is required.
+    status: OC (Tradable), CO (Liquidate only), NT (Non-Tradable). Server default is OC.
     Returns: symbol, name, instrument_type, exchange.
     """
+    if not symbols and not code:
+        return "Validation error: provide --symbols (contract symbols, e.g. ESM6) or --code (product code, e.g. ES)"
     try:
-        sym_list = _split_symbols(symbols)
+        kwargs = _build_kwargs(
+            {"category": category},
+            symbols=_split_symbols(symbols) if symbols else None,
+            code=code,
+            status=status,
+        )
         data = extract_response_data(
-            sdk.data.instrument.get_futures_instrument(symbols=sym_list, category=category)
+            sdk.data.instrument.get_futures_instrument(**kwargs)
         )
         return prepend_disclaimer(format_instruments(data))
     except Exception as e:
         return handle_sdk_exception(e, "get_futures_instruments")
 
 
-def get_futures_instruments_by_code(
-    sdk: "SDKClient",
-    code: str,
-    category: str = "US_FUTURES",
-    contract_type: Optional[str] = None,
-) -> str:
-    """Get tradable futures contracts by product code (e.g. ES, NQ, CL).
-
-    Returns: symbol, name, instrument_type, exchange.
-    """
-    try:
-        kwargs = _build_kwargs(
-            {"code": code, "category": category},
-            contract_type=contract_type,
-        )
-        data = extract_response_data(sdk.data.instrument.get_futures_instrument_by_code(**kwargs))
-        return prepend_disclaimer(format_instruments(data))
-    except Exception as e:
-        return handle_sdk_exception(e, "get_futures_instruments_by_code")
-
-
 def get_futures_products(
     sdk: "SDKClient",
     category: str = "US_FUTURES",
+    product_class_id: Optional[str] = None,
 ) -> str:
-    """Get all futures products and product codes.
+    """Get futures products and product codes.
 
+    :param product_class_id: Product class ID (from get_futures_product_class)
+        used to filter products; omit to list all products.
     Returns: product_code, name, exchange.
     """
     try:
-        data = extract_response_data(sdk.data.instrument.get_futures_products(category=category))
+        kwargs = _build_kwargs({"category": category}, product_class_id=product_class_id)
+        data = extract_response_data(sdk.data.instrument.get_futures_products(**kwargs))
         return prepend_disclaimer(format_futures_products(data))
     except Exception as e:
         return handle_sdk_exception(e, "get_futures_products")
@@ -141,9 +142,12 @@ def get_crypto_instruments(
     symbols: Optional[str] = None,
     category: str = "US_CRYPTO",
     status: Optional[str] = None,
+    pagination_key: Optional[str] = None,
 ) -> str:
     """Get cryptocurrency instrument info. Returns all if symbols omitted.
 
+    :param pagination_key: Pagination key from the previous page response;
+        omit for the first page. Not returned on the last page.
     Returns: symbol, name, instrument_type, exchange.
     """
     try:
@@ -151,8 +155,9 @@ def get_crypto_instruments(
             {"category": category},
             symbols=_split_symbols(symbols) if symbols else None,
             status=status,
+            pagination_key=pagination_key,
         )
-        data = extract_response_data(sdk.data.instrument.get_crypto_instrument(**kwargs))
+        data = extract_response_data(sdk.data.instrument.list_crypto_instruments(**kwargs))
         return prepend_disclaimer(format_instruments(data))
     except Exception as e:
         return handle_sdk_exception(e, "get_crypto_instruments")
@@ -162,10 +167,12 @@ def get_event_series(
     sdk: "SDKClient",
     symbols: Optional[str] = None,
     category: Optional[str] = None,
-    page_size: int = 500,
+    pagination_key: Optional[str] = None,
 ) -> str:
     """Get event contract series (recurring event templates).
 
+    :param pagination_key: Pagination key from the previous page response;
+        omit for the first page. Not returned on the last page.
     Returns: series_id, name, category.
     """
     try:
@@ -173,9 +180,9 @@ def get_event_series(
             {},
             category=category,
             symbols=_split_symbols(symbols) if symbols else None,
-            page_size=page_size if page_size != 500 else None,
+            pagination_key=pagination_key,
         )
-        data = extract_response_data(sdk.data.instrument.get_event_series(**kwargs))
+        data = extract_response_data(sdk.data.instrument.list_event_series(**kwargs))
         return prepend_disclaimer(format_event_series(data))
     except Exception as e:
         return handle_sdk_exception(e, "get_event_series")
@@ -187,10 +194,12 @@ def get_event_instruments(
     event_symbol: Optional[str] = None,
     symbols: Optional[str] = None,
     expiration_date_after: Optional[str] = None,
-    page_size: int = 500,
+    pagination_key: Optional[str] = None,
 ) -> str:
     """Get event contract instruments by series.
 
+    :param pagination_key: Pagination key from the previous page response;
+        omit for the first page. Not returned on the last page.
     Returns: symbol, name, instrument_type, exchange.
     """
     try:
@@ -199,9 +208,9 @@ def get_event_instruments(
             event_symbol=event_symbol,
             symbols=_split_symbols(symbols) if symbols else None,
             expiration_date_after=expiration_date_after,
-            page_size=page_size if page_size != 500 else None,
+            pagination_key=pagination_key,
         )
-        data = extract_response_data(sdk.data.instrument.get_event_instrument(**kwargs))
+        data = extract_response_data(sdk.data.instrument.list_event_instruments(**kwargs))
         return prepend_disclaimer(format_instruments(data))
     except Exception as e:
         return handle_sdk_exception(e, "get_event_instruments")
@@ -302,6 +311,53 @@ def get_analyst_target_price(
         return handle_sdk_exception(e, "get_analyst_target_price")
 
 
+def _option_contracts_filter_error(
+    *,
+    category: str,
+    status: Optional[str],
+    start_date: Optional[str],
+    end_date: Optional[str],
+    option_type: Optional[str],
+    style: Optional[str],
+    strike_price_gte: Optional[str],
+    strike_price_lte: Optional[str],
+    ppind: Optional[str],
+    show_deliverables: Optional[str],
+) -> str:
+    """Validate option contract filters against the documented values. Returns "" when valid."""
+    enums = (
+        ("category", category, ("US_OPTION",)),
+        ("status", status, ("LISTING", "DELISTING")),
+        ("option_type", option_type, ("CALL", "PUT")),
+        ("style", style, ("AMERICAN", "EUROPEAN")),
+        ("ppind", ppind, ("true", "false")),
+        ("show_deliverables", show_deliverables, ("true", "false")),
+    )
+    for field, value, allowed in enums:
+        if value is not None and value not in allowed:
+            return f"Invalid {field} '{value}', must be one of {list(allowed)}"
+    for field, value in (("start_date", start_date), ("end_date", end_date)):
+        if value is not None:
+            try:
+                datetime.strptime(value, "%Y-%m-%d")
+            except ValueError:
+                return f"{field} must use YYYY-MM-DD format"
+    bounds: dict[str, Decimal] = {}
+    for field, value in (("strike_price_gte", strike_price_gte), ("strike_price_lte", strike_price_lte)):
+        if value is None:
+            continue
+        try:
+            number = Decimal(str(value))
+        except InvalidOperation:
+            return f"{field} must be a positive decimal"
+        if not number.is_finite() or number <= 0:
+            return f"{field} must be a positive decimal"
+        bounds[field] = number
+    if len(bounds) == 2 and bounds["strike_price_gte"] > bounds["strike_price_lte"]:
+        return "strike_price_gte must not exceed strike_price_lte"
+    return ""
+
+
 def get_option_contracts(
     sdk: "SDKClient",
     underlying_symbols: Optional[str] = None,
@@ -310,15 +366,14 @@ def get_option_contracts(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     root_symbol: Optional[str] = None,
-    option_symbol: Optional[str] = None,
+    option_symbols: Optional[str] = None,
     option_type: Optional[str] = None,
     style: Optional[str] = None,
-    strike_price_gte: Optional[float] = None,
-    strike_price_lte: Optional[float] = None,
+    strike_price_gte: Optional[str] = None,
+    strike_price_lte: Optional[str] = None,
     ppind: Optional[str] = None,
     show_deliverables: Optional[str] = None,
-    page_size: int = 10,
-    last_instrument_id: Optional[str] = None,
+    pagination_key: Optional[str] = None,
 ) -> str:
     """Query option contract list by underlying symbols, status, and other attributes.
 
@@ -328,17 +383,25 @@ def get_option_contracts(
     :param start_date: Expiration date exact match, format YYYY-MM-DD.
     :param end_date: Expiration date lower bound (inclusive), format YYYY-MM-DD.
     :param root_symbol: Root symbol filter (series symbol, e.g. SPXW).
-    :param option_symbol: Option symbol, e.g. AAPL250620C00150000.
+    :param option_symbols: Option symbol(s), comma-separated. e.g. AAPL250620C00150000.
     :param option_type: Contract type: CALL / PUT.
     :param style: Exercise style: AMERICAN / EUROPEAN.
     :param strike_price_gte: Strike price lower bound (inclusive).
     :param strike_price_lte: Strike price upper bound (inclusive).
     :param ppind: Penny Program Indicator: true / false.
     :param show_deliverables: Return deliverables array: true / false.
-    :param page_size: Page size, default 10, max 1000.
-    :param last_instrument_id: Last instrument_id from previous page for pagination.
+    :param pagination_key: Pagination key from the previous page response;
+        omit for the first page. Not returned on the last page.
     Returns: option contract static information.
     """
+    error = _option_contracts_filter_error(
+        category=category, status=status, start_date=start_date, end_date=end_date,
+        option_type=option_type, style=style,
+        strike_price_gte=strike_price_gte, strike_price_lte=strike_price_lte,
+        ppind=ppind, show_deliverables=show_deliverables,
+    )
+    if error:
+        return f"Validation error: {error}"
     try:
         kwargs = _build_kwargs(
             {"category": category},
@@ -347,17 +410,16 @@ def get_option_contracts(
             start_date=start_date,
             end_date=end_date,
             root_symbol=root_symbol,
-            option_symbol=option_symbol,
+            option_symbols=option_symbols,
             option_type=option_type,
             style=style,
             strike_price_gte=strike_price_gte,
             strike_price_lte=strike_price_lte,
             ppind=ppind,
             show_deliverables=show_deliverables,
-            page_size=page_size if page_size != 10 else None,
-            last_instrument_id=last_instrument_id,
+            pagination_key=pagination_key,
         )
-        data = extract_response_data(sdk.data.instrument.get_option_contracts(**kwargs))
+        data = extract_response_data(sdk.data.instrument.list_option_contracts(**kwargs))
         return prepend_disclaimer(format_instruments(data))
     except Exception as e:
         return handle_sdk_exception(e, "get_option_contracts")

@@ -30,7 +30,7 @@ class _FakeScreener:
         self.gainers_calls: list[dict] = []
         self.active_calls: list[dict] = []
 
-    def get_gainers_losers(self, **kwargs: object) -> _FakeResponse:
+    def list_gainers_losers(self, **kwargs: object) -> _FakeResponse:
         self.gainers_calls.append(kwargs)
         return _FakeResponse({
             "data": [
@@ -58,7 +58,7 @@ class _FakeScreener:
             "has_more": False,
         })
 
-    def get_most_active(self, **kwargs: object) -> _FakeResponse:
+    def list_most_active(self, **kwargs: object) -> _FakeResponse:
         self.active_calls.append(kwargs)
         return _FakeResponse({
             "data": [
@@ -106,8 +106,6 @@ def test_get_gainers_losers_formats_response():
         category="US_STOCK",
         sort_by="CHANGE_RATIO",
         direction="DESC",
-        page_index=1,
-        page_size=20,
     )
 
     assert "=== Gainers / Losers ===" in result
@@ -124,7 +122,7 @@ def test_get_gainers_losers_formats_response():
 
 def test_get_gainers_losers_empty_data():
     screener = _FakeScreener()
-    screener.get_gainers_losers = lambda **kw: _FakeResponse({"data": [], "has_more": False})
+    screener.list_gainers_losers = lambda **kw: _FakeResponse({"data": [], "has_more": False})
     sdk = _fake_sdk(screener)
     result = get_gainers_losers(sdk, _config(), rank_type="DAY_1", category="US_STOCK", sort_by="CHANGE_RATIO")
 

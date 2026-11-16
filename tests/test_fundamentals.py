@@ -100,7 +100,7 @@ class _FakeScreenerExt:
     def __init__(self) -> None:
         self.calls: list[dict] = []
 
-    def get_market_sectors(self, **kwargs):
+    def list_market_sectors(self, **kwargs):
         self.calls.append(("market_sectors", kwargs))
         return _FakeResponse({
             "data": [
@@ -109,7 +109,7 @@ class _FakeScreenerExt:
             ]
         })
 
-    def get_high_dividend(self, **kwargs):
+    def list_high_dividend(self, **kwargs):
         self.calls.append(("high_dividend", kwargs))
         return _FakeResponse({
             "data": [
@@ -119,16 +119,16 @@ class _FakeScreenerExt:
         })
 
     # Stubs needed by screener module (it imports all from the same class)
-    def get_gainers_losers(self, **kwargs):
+    def list_gainers_losers(self, **kwargs):
         return _FakeResponse({"data": []})
 
-    def get_most_active(self, **kwargs):
+    def list_most_active(self, **kwargs):
         return _FakeResponse({"data": []})
 
-    def get_market_sectors_detail(self, **kwargs):
+    def list_market_sectors_detail(self, **kwargs):
         return _FakeResponse({"data": []})
 
-    def get_52whl(self, **kwargs):
+    def list_52whl(self, **kwargs):
         return _FakeResponse({"data": []})
 
 
@@ -408,11 +408,12 @@ class TestScreenerExtIntegration:
     def test_get_market_sectors(self):
         screener = _FakeScreenerExt()
         sdk = _fake_sdk_screener(screener)
-        result = get_market_sectors(sdk, _config(), category="US_STOCK", period="D1")
+        result = get_market_sectors(sdk, _config(), category="US_STOCK", period="D1", pagination_key="pk-1")
         assert "=== Market Sectors ===" in result
         assert "sector_name: Technology" in result
         assert screener.calls[0][1]["category"] == "US_STOCK"
         assert screener.calls[0][1]["period"] == "D1"
+        assert screener.calls[0][1]["pagination_key"] == "pk-1"
 
     def test_get_high_dividend(self):
         screener = _FakeScreenerExt()

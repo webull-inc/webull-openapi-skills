@@ -1,21 +1,23 @@
-# Webull OpenAPI Documentation (BR)
+# Source: https://developer.webull.com.br/apis/llms.txt
+# Fetched: 2026-11-02
+# Webull OpenAPI Documentation (Brazil)
 
 ## Guides
 
 ### Getting Started
-- [Welcome to Webull API](https://developer.webull.com.br/apis/docs.md): Platform overview covering trading APIs, market data services, and tools for building trading applications for Brazil-based clients.
+- [Welcome to Webull API](https://developer.webull.com.br/apis/docs.md): Platform overview covering trading APIs, market data services, and tools for building trading applications.
 - [About Webull OpenAPI](https://developer.webull.com.br/apis/docs/about-open-api.md): OpenAPI platform capabilities and features overview.
-- [Getting Started](https://developer.webull.com.br/apis/docs/getting-started.md): Step-by-step guide from API access request to first API call.
-- [SDKs and Tools](https://developer.webull.com.br/apis/docs/sdk.md): SDK installation, API environments, endpoints, and test accounts.
-- [Additional Resources](https://developer.webull.com.br/apis/docs/resources.md): SDK source code, support channels, and legal disclosures.
+- [Getting Started](https://developer.webull.com.br/apis/docs/getting-started.md): Quick start guide for making your first API call.
+- [SDKs and Tools](https://developer.webull.com.br/apis/docs/sdk.md): SDK installation, development tools, and example code for trading and market data integration.
+- [Additional Resources](https://developer.webull.com.br/apis/docs/resources.md): Learning materials, blog updates, support channels, and regulatory disclosures.
 
 ### AI Friendly Resources
 - [llms.txt](https://developer.webull.com.br/apis/docs/ai-friendly-resources/llm.md): Machine-readable documentation for AI-assisted development with LLMs, RAG pipelines, and AI coding tools.
 
 ### Authentication
-- [Authentication Overview](https://developer.webull.com.br/apis/docs/authentication/overview.md): Signature and Token-based authentication mechanism with security best practices.
+- [Authentication Overview](https://developer.webull.com.br/apis/docs/authentication/overview.md): Signature-based authentication using App Key and App Secret with security best practices.
 - [Individual Application Process](https://developer.webull.com.br/apis/docs/authentication/individual-application.md): Step-by-step guide for individual users to apply for API access and generate API keys.
-- [Signature](https://developer.webull.com.br/apis/docs/authentication/signature.md): HMAC-SHA1 signature generation, request composition, and required headers for API authentication.
+- [Signature](https://developer.webull.com.br/apis/docs/authentication/signature.md): HMAC-SHA256 signature generation, request composition, and required headers for API authentication.
 - [Token](https://developer.webull.com.br/apis/docs/authentication/token.md): Token lifecycle management including creation, 2FA verification, status checks, storage, and usage in API requests.
 
 ### Market Data API
@@ -30,7 +32,7 @@
 - [Trading API Overview](https://developer.webull.com.br/apis/docs/trade-api/overview.md): Core trading functionality and capabilities overview.
 - [Trading API Getting Started](https://developer.webull.com.br/apis/docs/trade-api/getting-started.md): Quick start guide for trading API integration.
 - [Trading API - Accounts](https://developer.webull.com.br/apis/docs/trade-api/account.md): Account management, balance queries, and account information retrieval.
-- [Trading API - Stocks](https://developer.webull.com.br/apis/docs/trade-api/stock.md): Stock order placement, modification, cancellation, and status tracking.
+- [Trading API - Stocks](https://developer.webull.com.br/apis/docs/trade-api/stock.md): Stock and ETF order placement, modification, cancellation, and status tracking.
 - [Trading API - FAQs](https://developer.webull.com.br/apis/docs/trade-api/faq.md): Common questions and troubleshooting for trading API.
 
 ### General
@@ -64,7 +66,7 @@
 
 ### Order Management - Trading
 - [Preview Order](https://developer.webull.com.br/apis/docs/reference/common-order-preview.md): Preview order details and estimated costs before placement.
-- [Place Order](https://developer.webull.com.br/apis/docs/reference/common-order-place.md): Submit new orders.
+- [Place Order](https://developer.webull.com.br/apis/docs/reference/common-order-place.md): Submit new orders for stocks.
 - [Replace Order](https://developer.webull.com.br/apis/docs/reference/common-order-replace.md): Modify existing open orders (price, quantity, etc.).
 - [Cancel Order](https://developer.webull.com.br/apis/docs/reference/common-order-cancel.md): Cancel pending or open orders.
 
@@ -75,8 +77,3 @@
 
 ### Trade Events
 - [Subscribe Trade Events](https://developer.webull.com.br/apis/docs/reference/custom/subscribe-trade-events.md): Subscribe to real-time order status change notifications via gRPC.
-
-## Changelog
-- [Documentation Changelog](https://developer.webull.com.br/apis/docs/changelog.md): Track updates, new features, and changes to the API documentation.
-
----

@@ -12,18 +12,16 @@ class _FakeAccountV2:
     def __init__(self) -> None:
         self.calls: list[dict] = []
 
-    def get_account_position_details(
+    def list_position_details(
         self,
         account_id: str,
         instrument_id: str,
-        page_size: int | None = None,
-        last_id: str | None = None,
+        pagination_key: str | None = None,
     ) -> dict:
         self.calls.append({
             "account_id": account_id,
             "instrument_id": instrument_id,
-            "page_size": page_size,
-            "last_id": last_id,
+            "pagination_key": pagination_key,
         })
         return [
             {
@@ -71,15 +69,13 @@ def test_account_position_details_calls_sdk_and_formats_response():
         SkillConfig(app_key="k", app_secret="s", region_id="jp"),
         account_id=123,
         instrument_id="9001",
-        page_size=25,
-        last_id="cursor-1",
+        pagination_key="cursor-1",
     )
 
     assert account_v2.calls == [{
         "account_id": "123",
         "instrument_id": "9001",
-        "page_size": 25,
-        "last_id": "cursor-1",
+        "pagination_key": "cursor-1",
     }]
     assert "=== Position Details ===" in result
     assert "[Position Detail 1]" in result

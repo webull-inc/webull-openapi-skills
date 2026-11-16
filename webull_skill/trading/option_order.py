@@ -274,8 +274,8 @@ def place_option_single_order(
     Call get_account_list first.
     order_type: MARKET, LIMIT, STOP_LOSS, STOP_LOSS_LIMIT.
     time_in_force: DAY, GTC. trading_session: CORE only.
-    position_intent: BUY_TO_OPEN, BUY_TO_CLOSE, SELL_TO_OPEN, SELL_TO_CLOSE (optional, US and JP).
-        Not validated here; passed to the backend as is.
+    position_intent: BUY_TO_OPEN, BUY_TO_CLOSE, SELL_TO_OPEN, SELL_TO_CLOSE (all regions with options;
+        JP and SG require it for BUY orders in testing). Not validated here; passed to the backend as is.
     account_tax_type: GENERAL or SPECIFIC (required for JP option orders).
     sender_sub_id: Broker user UUID (optional, HK region institutional only).
     leg_in_or_out: LEG_IN or LEG_OUT - leg into/out of an existing multi-leg position (US only).

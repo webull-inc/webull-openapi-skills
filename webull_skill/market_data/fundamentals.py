@@ -489,22 +489,21 @@ def get_fund_dividends(
     config: "SkillConfig",
     symbol: str,
     category: str = "US_STOCK",
-    page_index: Optional[int] = None,
-    page_size: Optional[int] = None,
+    pagination_key: Optional[str] = None,
 ) -> str:
     """Query fund dividends.
 
     :param symbol: Security symbol, e.g. QQQ.
     :param category: Security type.
-    :param page_index: Page index, default 1.
-    :param page_size: Records per page, default 10, max 20.
+    :param pagination_key: Pagination key from the previous page response;
+        omit for the first page. Not returned on the last page.
     Returns: fund dividend data.
     """
     try:
         data = extract_response_data(
-            sdk.data.fundamentals.get_fund_dividends(
+            sdk.data.fundamentals.list_fund_dividends(
                 symbol=symbol, category=category,
-                page_index=page_index, page_size=page_size,
+                pagination_key=pagination_key,
             )
         )
         return prepend_disclaimer(format_fund_dividends(data))

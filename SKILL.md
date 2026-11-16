@@ -181,6 +181,8 @@ Optional:
 
 ## Region Support
 
+Region-specific API documentation index: `references/llms_{region}.md` (e.g. `references/llms_hk.md`). Read it when checking whether an API or feature is available in a region, or to find the doc link for an endpoint.
+
 | Feature | US | HK | JP | SG | TH | MY | UK | MX | BR | ZA |
 |---------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | Stock trading | ✓ | ✓ (US/HK/CN) | ✓ (US/JP) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) | ✓ (US) |
@@ -224,7 +226,7 @@ Optional:
 - `account_tax_type` is required for JP stock `place` and `preview`; valid values are `GENERAL` and `SPECIFIC`.
 - `account_tax_type` is also required for JP US option `option-place` and `option-preview`; valid values are `GENERAL` and `SPECIFIC`.
 - JP option accounts are identified by `account_type`: `US_OPTION`.
-- `margin_type` and `position_intent` are valid only for JP `US_MARGIN` accounts (for stock orders). For US and JP option orders, `position_intent` is supported via `option-place` / `option-preview`; the Skill does not validate it and passes it to the backend as is.
+- `margin_type` and `position_intent` are valid only for JP `US_MARGIN` accounts (for stock orders). For option orders in any region, `position_intent` is supported via `option-place` / `option-preview` (it is not region-specific; testing showed JP and SG require it for `BUY` orders); the Skill does not validate it and passes it to the backend as is.
 - `close_contracts` is JP-only and accepts up to 10 objects with `contract_id` and positive `quantity`.
 
 ### SG-Specific Notes
