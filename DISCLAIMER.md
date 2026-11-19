@@ -26,6 +26,10 @@ Webull OpenAPI Skills is provided "as is" without any warranties of any kind, wh
 
 Webull OpenAPI Skills is capable of placing real trades and accessing portfolio information. Users must treat their API keys as highly sensitive credentials and safeguard them against unauthorized access. All actions proposed by the system should be reviewed carefully by the user, particularly in the case of complex option strategies or multi-leg trades. While Webull implements reasonable technical and organizational measures to protect system integrity, no system can be guaranteed to be completely secure. Users are responsible for maintaining appropriate security practices on their own devices, including the use of updated operating systems, secure passwords, and reliable network connections. By using Webull OpenAPI Skills, users acknowledge that they assume the risks associated with data transmission over the internet and agree to take necessary precautions to protect their accounts and personal information.
 
-## 7. Applicable Laws and Regulations
+## 7. Australia (AU) Region
+
+For the AU region, the following disclaimer applies: "Webull Agent Skills offers technical integration only, not financial advice. AI outputs may be inaccurate or trigger unintended trades. You are responsible for monitoring activity. Webull is not responsible for the independent actions of third-party AI tools to the extent permitted by law."
+
+## 8. Applicable Laws and Regulations
 
 This disclaimer is intended to comply with applicable laws and regulations in any jurisdiction where the service is offered. In case of any inconsistency, the governing law and regulatory requirements of the relevant jurisdiction shall prevail.
