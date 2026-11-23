@@ -1,6 +1,6 @@
 ---
 name: webull-openapi
-description: Trade stocks, options, futures, crypto, and event contracts on Webull. Query real-time and historical market data. Manage accounts and positions. Supports US, HK, JP, SG, TH, MY, UK, MX, BR, and ZA regions with configurable risk controls.
+description: Trade stocks, options, futures, crypto, and event contracts on Webull. Query real-time and historical market data. Manage accounts and positions. Supports US, HK, JP, SG, TH, MY, UK, MX, BR, ZA, and AU regions with configurable risk controls.
 ---
 
 # Webull OpenAPI Skill
@@ -121,6 +121,7 @@ All operations output formatted text directly to stdout, with a region-aware dis
 - Success: disclaimer + formatted data to stdout, exit code 0
 - Error: error message to stderr, exit code 1
 - US/JP/SG/TH/MY/UK/MX/BR/ZA region: English disclaimer only
+- AU region: English technical-integration disclaimer (see Disclaimer section)
 - HK region: English + Simplified Chinese + Traditional Chinese disclaimer
 
 ---
@@ -165,7 +166,7 @@ Optional:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `WEBULL_ENVIRONMENT` | `uat` | `uat` (sandbox) or `prod` (live) |
-| `WEBULL_REGION_ID` | `us` | `us`, `hk`, `jp`, `sg`, `th`, `my`, `uk`, `mx`, `br`, or `za` |
+| `WEBULL_REGION_ID` | `us` | `us`, `hk`, `jp`, `sg`, `th`, `my`, `uk`, `mx`, `br`, `za`, or `au` |
 | `WEBULL_MAX_ORDER_NOTIONAL_USD` | `10000` | Max order value (USD) |
 | `WEBULL_MAX_ORDER_NOTIONAL_HKD` | `80000` | Max order value for HK market (HKD) |
 | `WEBULL_MAX_ORDER_NOTIONAL_CNH` | `70000` | Max order value for CN market (CNH) |
@@ -295,6 +296,12 @@ Region-specific API documentation index: `references/llms_{region}.md` (e.g. `re
 - BR supports single-leg US options (`US_OPTION`): contracts, market data, positions, and the order lifecycle (preview, place, replace, cancel). Multi-leg option strategies are not supported.
 - No futures, crypto, event contracts, combo orders, or algo orders in BR region.
 
+### AU-Specific Notes
+
+- Configure AU with `WEBULL_REGION_ID=au`; sandbox uses `WEBULL_ENVIRONMENT=uat`.
+- AU supports US stock/ETF trading only (order market `US`).
+- No futures, crypto, options, event contracts, combo orders, or algo orders in AU region.
+
 ### ZA-Specific Notes
 
 - Configure ZA with `WEBULL_REGION_ID=za`; sandbox uses `WEBULL_ENVIRONMENT=uat`.
@@ -390,5 +397,7 @@ Region-specific API documentation index: `references/llms_{region}.md` (e.g. `re
 ---
 
 ## Disclaimer
+
+AU region: "Webull Agent Skills offers technical integration only, not financial advice. AI outputs may be inaccurate or trigger unintended trades. You are responsible for monitoring activity. Webull is not responsible for the independent actions of third-party AI tools to the extent permitted by law."
 
 The information provided by this tool is for reference only and does not constitute investment advice. Trading involves risk; please make decisions carefully.

@@ -5,6 +5,7 @@ a human-readable formatted string. The disclaimer prefix is region-aware:
 - US: English only
 - HK: English + Simplified Chinese + Traditional Chinese
 - JP: English + Japanese
+- AU: English, technical-integration disclaimer
 """
 
 from __future__ import annotations
@@ -37,6 +38,14 @@ _DISCLAIMER_JP = (
     "取引にはリスクがあります。慎重に判断してください。\n\n"
 )
 
+_DISCLAIMER_AU = (
+    "⚠ Disclaimer: "
+    "Webull Agent Skills offers technical integration only, not financial advice. "
+    "AI outputs may be inaccurate or trigger unintended trades. "
+    "You are responsible for monitoring activity. "
+    "Webull is not responsible for the independent actions of third-party AI tools "
+    "to the extent permitted by law.\n\n"
+)
 # Default (backward compatibility)
 DISCLAIMER = _DISCLAIMER_US
 
@@ -52,6 +61,8 @@ def set_disclaimer_region(region_id: str) -> None:
         DISCLAIMER = _DISCLAIMER_HK
     elif _current_region == "jp":
         DISCLAIMER = _DISCLAIMER_JP
+    elif _current_region == "au":
+        DISCLAIMER = _DISCLAIMER_AU
     else:
         # US, SG, TH, MY, UK, MX, BR, ZA — English only
         DISCLAIMER = _DISCLAIMER_US

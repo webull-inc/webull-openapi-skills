@@ -135,3 +135,41 @@ def test_za_has_no_option_account_classes():
     classes = get_region_config("za").asset_type_account_classes
     assert classes is not None
     assert "option" not in classes
+
+
+def test_au_region_is_supported_and_eu_is_not():
+    import pytest
+    from webull_skill.errors import UnsupportedRegionError
+
+    assert "au" in SUPPORTED_REGIONS
+    assert get_region_config("AU").region_id == "au"
+    assert "eu" not in SUPPORTED_REGIONS
+    with pytest.raises(UnsupportedRegionError):
+        get_region_config("eu")
+
+
+def test_au_region_config_is_stock_only():
+    config = get_region_config("au")
+    assert config.valid_order_markets == frozenset({"US"})
+    assert config.valid_market_categories == frozenset({"US_STOCK", "US_ETF"})
+    assert config.supports_futures is False
+    assert config.supports_crypto is False
+    assert config.supports_event_contracts is False
+
+
+def test_au_uat_endpoints_and_disclaimer():
+    from webull_skill import formatters
+    from webull_skill.env_router import DEFAULT_HOSTS, UAT_ENDPOINTS
+
+    assert UAT_ENDPOINTS["au"]["api"] == "au-api.uat.webullbroker.com"
+    assert UAT_ENDPOINTS["au"]["quotes-api"] == "au-api.uat.webullbroker.com"
+    assert UAT_ENDPOINTS["au"]["events-api"] == "au-events-api.uat.webullbroker.com"
+    assert DEFAULT_HOSTS[("prod", "au")] == "api.webull.com.au"
+    assert DEFAULT_HOSTS[("uat", "au")] == "au-api.uat.webullbroker.com"
+    try:
+        formatters.set_disclaimer_region("au")
+        assert "Webull Agent Skills offers technical integration only" in formatters.DISCLAIMER
+        formatters.set_disclaimer_region("za")
+        assert formatters.DISCLAIMER == formatters._DISCLAIMER_US
+    finally:
+        formatters.set_disclaimer_region("us")
