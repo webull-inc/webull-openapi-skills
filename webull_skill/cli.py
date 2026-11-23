@@ -609,6 +609,7 @@ def dispatch_trading(args: argparse.Namespace, config: SkillConfig) -> str | Ope
             "no_party_ids": o.get("no_party_ids"),
             "account_tax_type": o.get("account_tax_type"),
             "margin_type": o.get("margin_type"),
+            "trade_currency": o.get("trade_currency"),
             "position_intent": o.get("position_intent"),
             "close_contracts": o.get("close_contracts"),
             "leg_in_or_out": o.get("leg_in_or_out"),

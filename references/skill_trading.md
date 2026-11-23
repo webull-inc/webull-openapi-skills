@@ -136,6 +136,7 @@ Orders are passed via `--order-json` (inline string) or `--order-file` (path to 
 | `no_party_ids` | No (HK broker) | array | BCAN party identifiers for HK stock orders (institutional only). See below |
 | `account_tax_type` | JP stock orders | string | JP-only. Required for JP stock `place` / `preview`. Values: `GENERAL`, `SPECIFIC` |
 | `margin_type` | JP margin account only | string | JP-only. `US_MARGIN` accounts only. Values: `ONE_DAY`, `INDEFINITE` |
+| `trade_currency` | JP stock orders | string | JP-only. Settlement currency of the order, supported for stock `place` / `preview` only. Required for `CASH` accounts, optional for `US_MARGIN` accounts. Values: `USD`, `JPY` |
 | `position_intent` | JP margin account only | string | For stock orders: JP-only, `US_MARGIN` accounts only. For option orders, use `option-place` / `option-preview` instead (all regions that support options). Values: `BUY_TO_OPEN`, `BUY_TO_CLOSE`, `SELL_TO_OPEN`, `SELL_TO_CLOSE` |
 | `close_contracts` | No (JP only) | array | JP-only close payload. Max 10 `{ "contract_id": "...", "quantity": ... }` items |
 | `leg_in_or_out` | No | string | **US only.** `LEG_IN` / `LEG_OUT` — leg into/out of an existing multi-leg position when this order's stock leg is part of a strategy (e.g. COVERED_STOCK) |
@@ -230,6 +231,7 @@ JP margin-account example:
   "combo_type": "NORMAL",
   "account_tax_type": "GENERAL",
   "margin_type": "ONE_DAY",
+  "trade_currency": "JPY",
   "position_intent": "BUY_TO_OPEN"
 }
 ```
